@@ -1,3 +1,4 @@
+import logging
 import os
 import ROOT
 
@@ -44,8 +45,10 @@ class AraDataset:
     def open_tfile(self):
         try:
             self._root_tfile = ROOT.TFile(self.path_to_data_file, "READ")
+            logging.info(f"Successfully opened {self.path_to_data_file}")
         except:
-            raise Exception(f"Opening {self.path_to_data_file} failed")
+            logging.critical(f"Opening {self.path_to_data_file} failed")
+            raise
 
 
 
