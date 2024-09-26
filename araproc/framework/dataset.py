@@ -80,6 +80,7 @@ class AraDataset:
         # set the TTree
         try:
             self.event_tree = self.root_tfile.Get("eventTree")
+            logging.info(f"Successfully got eventTree")
         except:
             logging.critical("Loading the eventTree failed")
             self.root_tfile.Close() # close the file
@@ -89,11 +90,33 @@ class AraDataset:
         self.raw_event_ptr = ROOT.RawAtriStationEvent()
         try:
             self.event_tree.SetBranchAddress("event",ROOT.AddressOf(self.raw_event_ptr))
+            logging.info(f"Successfully assigned RawAtriStationEvent branch")
         except:
             logging.critical("Assigning the rawEventPtr in the eventTree failed")
             self.root_tfile.Close() # close the file
             raise
 
-    
-    # def get_calibrated_event(self):
+    def get_calibrated_event(self, 
+                             event_idx : int = None
+                             ):
 
+        logging.info(f"Trying to fetch event {event_idx}")
+
+        if event_idx is None:
+            raise KeyError(f"Requested event index {event_idx} is invalid")
+        if event_idx >= self.num_events:
+            raise KeyError(f"Requested event index {event_idx} exceeds number of events in the run ({self.num_events})")
+        if event_idx <0:
+            raise KeyError(f"Requested event index {event_idx} is invalid (negative)")
+        
+        calibrated_event = None
+        try:
+            self.event_tree.GetEntry(event_idx)
+            calibrated_event = ROOT.UsefulAtriStationEvent(self.raw_event_ptr,
+                                                           ROOT.AraCalType.kLatestCalib)
+            logging.info(f"Got calibrated event {event_idx}")
+        except:
+            logging.critical(f"Calibrating event {event_idx} failed.")
+            raise 
+
+        return calibrated_event
