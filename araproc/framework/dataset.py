@@ -135,7 +135,7 @@ class AraDataset:
     def load_pedestal(self):
         try:
             self.calibrator = ROOT.AraEventCalibrator.Instance()
-            logging.info("Instantiating the AraEventCalibrator was successful")
+            logging.debug("Instantiating the AraEventCalibrator was successful")
         except:
             logging.critical("Instantiating the AraEventCalibrator failed")
             raise
@@ -152,7 +152,7 @@ class AraDataset:
                              event_idx : int = None
                              ):
 
-        logging.info(f"Trying to fetch event {event_idx}")
+        logging.debug(f"Trying to fetch calibrated event {event_idx}")
 
         if event_idx is None:
             raise KeyError(f"Requested event index {event_idx} is invalid")
@@ -163,7 +163,7 @@ class AraDataset:
         
         try:
             self.event_tree.GetEntry(event_idx)
-            logging.info(f"Called root get entry {event_idx}")
+            logging.debug(f"Called root get entry {event_idx}")
         except:
             logging.critical(f"Getting entry {event_idx} failed.")
             raise 
@@ -172,7 +172,7 @@ class AraDataset:
         try:
             calibrated_event = ROOT.UsefulAtriStationEvent(self.raw_event_ptr,
                                                            ROOT.AraCalType.kLatestCalib)
-            logging.info(f"Got calibrated event {event_idx}")
+            logging.debug(f"Got calibrated event {event_idx}")
         except:
             logging.critical(f"Calibrating event index {event_idx} failed.")
             raise 
