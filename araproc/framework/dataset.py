@@ -3,9 +3,6 @@ import os
 import ROOT
 from ctypes import *
 
-
-ROOT.gSystem.Load(os.environ.get('ARA_UTIL_INSTALL_DIR')+"/lib/libAraEvent.so")
-
 class AraDataset:
 
     """

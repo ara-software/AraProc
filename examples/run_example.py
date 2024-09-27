@@ -1,6 +1,7 @@
 import logging
 logging.getLogger().setLevel(logging.INFO)
 
+import araproc
 from araproc.framework import dataset 
 
 d = dataset.AraDataset(
