@@ -1,5 +1,6 @@
 import ctypes
 import logging
+import numpy as np
 import os
 import ROOT
 
@@ -7,6 +8,9 @@ class AraDataset:
 
     """
     A class for representing an ARA dataset
+
+    This is really a wrapper class that opens ARA root files, loads calibrators, etc.
+    This wrapper currently only supports
 
     ...
 
@@ -33,7 +37,7 @@ class AraDataset:
     """
 
     def __init__(self, 
-                 station_id : str,
+                #  station_id : str,
                  path_to_data_file : str,
                  path_to_pedestal_file : str,
                  ):
@@ -46,13 +50,6 @@ class AraDataset:
         self.station_id = None
         self.num_events = None
         self.calibrator = None
-
-        # sanitize station id
-        if not isinstance(station_id, int):
-            raise TypeError("station_id must be a string")
-        if station_id not in [1, 2, 3, 4, 5, 100]:
-            raise ValueError(f"The requested station id ({station_id}) is not supported")
-        self.station_id = station_id
         
         # check if they gave us strings
         if not isinstance(path_to_data_file, str):
@@ -82,6 +79,7 @@ class AraDataset:
         self.num_events = self.event_tree.GetEntries()
 
         self.establish_run_number() # set the run number
+        self.establish_station_id()
         self.load_pedestal() # load the custom pedestals
 
     def open_tfile_load_ttree(self):
@@ -97,7 +95,7 @@ class AraDataset:
         # set the TTree
         try:
             self.event_tree = self.root_tfile.Get("eventTree")
-            logging.debug(f"Successfully got eventTree")
+            logging.debug("Successfully got eventTree")
         except:
             logging.critical("Loading the eventTree failed")
             self.root_tfile.Close() # close the file
@@ -107,7 +105,7 @@ class AraDataset:
         self.raw_event_ptr = ROOT.RawAtriStationEvent()
         try:
             self.event_tree.SetBranchAddress("event",ROOT.AddressOf(self.raw_event_ptr))
-            logging.debug(f"Successfully assigned RawAtriStationEvent branch")
+            logging.debug("Successfully assigned RawAtriStationEvent branch")
         except:
             logging.critical("Assigning the rawEventPtr in the eventTree failed")
             self.root_tfile.Close() # close the file
@@ -132,6 +130,30 @@ class AraDataset:
     
         self.run_number = run_ptr.value
 
+    def establish_station_id(self):
+
+        """
+        This function works to find the station id.
+        It's a bit hacky. The reason we have to be a bit hacky is that
+        pyroot doesn't seem to convert the UChar_t that's used in AraRoot
+        to store the stationId. So we have to do a song and dance to get it.
+
+        What this does is first uses the TTree Draw function to pull
+        the information from the tree for event zero, but using "goff"
+        to suppress the graphical output.
+        GetV1 stores the array of values you requested for each entry in the ttree.
+        Which we force root to internally treat as a float, and *that* seems
+        to properly convert the UChar_t. We can then cast it to an int.
+
+        """
+        try:
+            test = self.event_tree.Draw("abs(event.stationId)", "Entry$==0", "goff")
+            self.station_id = int(np.frombuffer(self.event_tree.GetV1(), np.dtype('float'), test)[0])
+            logging.debug(f"Got the station id {self.station_id}")
+        except:
+            logging.critical("Gettig the station id from the eventTree failed")
+            raise
+
     def load_pedestal(self):
         try:
             self.calibrator = ROOT.AraEventCalibrator.Instance()
@@ -151,6 +173,22 @@ class AraDataset:
     def get_calibrated_event(self, 
                              event_idx : int = None
                              ):
+        
+        """
+        Fetch a specific calibrated event
+
+        Parameters
+        ----------
+        event_idx : int
+            The ROOT event index to be passed to GetEntry().
+            Please note this is the ROOT TTree event index!
+            Not the rawAtriEvPtr->eventNumber variable!
+
+        Returns
+        -------
+        calibrated_event : UsefulAtriStationEvent
+            A fully calibrated UsefulatriStationEvent
+        """
 
         logging.debug(f"Trying to fetch calibrated event {event_idx}")
 
