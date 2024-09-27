@@ -1,6 +1,8 @@
 import logging
 import os
 import ROOT
+from ctypes import *
+
 
 ROOT.gSystem.Load(os.environ.get('ARA_UTIL_INSTALL_DIR')+"/lib/libAraEvent.so")
 
@@ -19,14 +21,20 @@ class AraDataset:
         the full path to the pedestal file to be used to calibrate this data file
     root_tfile : ROOT TFile
         the pointer to the ROOT TFile that corresponds to the opened data event file
-    event_tree : 
+    event_tree : ROOT TTree
         the sound that the animal makes
+    run_number: int
+        ARA run number for this dataset
+        This will be inferred from the data itself
+    station_id: 
+        station id from 1->5, 100 (only A1-A5 supported for now)
     num_events: int
         number of data events in the data ROOT file
 
     """
 
     def __init__(self, 
+                 station_id : str,
                  path_to_data_file : str,
                  path_to_pedestal_file : str,
                  ):
@@ -35,25 +43,32 @@ class AraDataset:
         self.path_to_pedestal_file = None
         self.root_tfile = None
         self.event_tree = None
+        self.run_number = None
+        self.station_id = None
+        self.num_events = None
+
+        # sanitize station id
+        if not isinstance(station_id, int):
+            raise TypeError("station_id must be a string")
+        if station_id not in [1, 2, 3, 4, 5, 100]:
+            raise ValueError(f"The requested station id ({station_id}) is not supported")
+        self.station_id = station_id
         
         # check if they gave us strings
         if not isinstance(path_to_data_file, str):
             raise TypeError("Path to root data file must be a string")
-
         if not isinstance(path_to_pedestal_file, str):
             raise TypeError("Path to pedestal file must be a string")
 
         # check if the file exists
         if not os.path.exists(path_to_data_file):
             raise FileNotFoundError(f"Data root File ({path_to_data_file}) not found")
-
         if not os.path.exists(path_to_pedestal_file):
             raise FileNotFoundError(f"Pedestal File ({path_to_pedestal_file}) not found")
 
         # check they gave us files and not directories
         if not os.path.isfile(path_to_data_file):
             raise ValueError(f"{path_to_data_file} looks like a directory, not a file")
-
         # check they gave us files and not directories
         if not os.path.isfile(path_to_pedestal_file):
             raise ValueError(f"{path_to_pedestal_file} looks like a directory, not a file")
@@ -65,7 +80,6 @@ class AraDataset:
         # open the file, establish the tree, and its properties
         self.open_tfile_load_ttree()
         self.num_events = self.event_tree.GetEntries()
-
 
     def open_tfile_load_ttree(self):
 
@@ -109,14 +123,20 @@ class AraDataset:
         if event_idx <0:
             raise KeyError(f"Requested event index {event_idx} is invalid (negative)")
         
-        calibrated_event = None
         try:
             self.event_tree.GetEntry(event_idx)
+            logging.info(f"Called root get entry {event_idx}")
+        except:
+            logging.critical(f"Getting entry {event_idx} failed.")
+            raise 
+
+        calibrated_event = None
+        try:
             calibrated_event = ROOT.UsefulAtriStationEvent(self.raw_event_ptr,
                                                            ROOT.AraCalType.kLatestCalib)
             logging.info(f"Got calibrated event {event_idx}")
         except:
-            logging.critical(f"Calibrating event {event_idx} failed.")
+            logging.critical(f"Calibrating event index {event_idx} failed.")
             raise 
-
+        
         return calibrated_event
