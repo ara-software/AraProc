@@ -1,7 +1,7 @@
+import ctypes
 import logging
 import os
 import ROOT
-from ctypes import *
 
 class AraDataset:
 
@@ -27,6 +27,8 @@ class AraDataset:
         station id from 1->5, 100 (only A1-A5 supported for now)
     num_events: int
         number of data events in the data ROOT file
+    calibrator: AraEventCalibrator
+        the AraEventCalibrator that carries the appropriate pedestals for this run
 
     """
 
@@ -43,6 +45,7 @@ class AraDataset:
         self.run_number = None
         self.station_id = None
         self.num_events = None
+        self.calibrator = None
 
         # sanitize station id
         if not isinstance(station_id, int):
@@ -78,12 +81,15 @@ class AraDataset:
         self.open_tfile_load_ttree()
         self.num_events = self.event_tree.GetEntries()
 
+        self.establish_run_number() # set the run number
+        self.load_pedestal() # load the custom pedestals
+
     def open_tfile_load_ttree(self):
 
         # open the TFile
         try:
             self.root_tfile = ROOT.TFile(self.path_to_data_file, "READ")
-            logging.info(f"Successfully opened {self.path_to_data_file}")
+            logging.debug(f"Successfully opened {self.path_to_data_file}")
         except:
             logging.critical(f"Opening {self.path_to_data_file} failed")
             raise
@@ -91,7 +97,7 @@ class AraDataset:
         # set the TTree
         try:
             self.event_tree = self.root_tfile.Get("eventTree")
-            logging.info(f"Successfully got eventTree")
+            logging.debug(f"Successfully got eventTree")
         except:
             logging.critical("Loading the eventTree failed")
             self.root_tfile.Close() # close the file
@@ -101,11 +107,46 @@ class AraDataset:
         self.raw_event_ptr = ROOT.RawAtriStationEvent()
         try:
             self.event_tree.SetBranchAddress("event",ROOT.AddressOf(self.raw_event_ptr))
-            logging.info(f"Successfully assigned RawAtriStationEvent branch")
+            logging.debug(f"Successfully assigned RawAtriStationEvent branch")
         except:
             logging.critical("Assigning the rawEventPtr in the eventTree failed")
             self.root_tfile.Close() # close the file
             raise
+
+    def establish_run_number(self):
+
+        run_ptr = ctypes.c_int()
+        try:
+            self.event_tree.SetBranchAddress("run",run_ptr)
+            logging.debug("Setting the run branch address worked")
+        except:
+            logging.critical("Could not assign run branch address")
+            raise
+
+        try:
+            self.event_tree.GetEntry(0)
+            logging.debug("Got entry zero for purposes of establishing run number")
+        except:
+            logging.critical("Could not get entry zero for purposes of establishing run number")
+            raise
+    
+        self.run_number = run_ptr.value
+
+    def load_pedestal(self):
+        try:
+            self.calibrator = ROOT.AraEventCalibrator.Instance()
+            logging.info("Instantiating the AraEventCalibrator was successful")
+        except:
+            logging.critical("Instantiating the AraEventCalibrator failed")
+            raise
+        
+        try:
+            self.calibrator.setAtriPedFile(self.path_to_pedestal_file, 
+                                           self.station_id)
+        except:
+            logging.critical("Setting the AtriPedFile failed")
+            raise
+
 
     def get_calibrated_event(self, 
                              event_idx : int = None
