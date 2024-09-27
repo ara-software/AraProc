@@ -170,7 +170,7 @@ class AraDataset:
             raise
 
 
-    def get_calibrated_event(self, 
+    def get_useful_event(self, 
                              event_idx : int = None
                              ):
         
@@ -206,13 +206,13 @@ class AraDataset:
             logging.critical(f"Getting entry {event_idx} failed.")
             raise 
 
-        calibrated_event = None
+        useful_event = None
         try:
-            calibrated_event = ROOT.UsefulAtriStationEvent(self.raw_event_ptr,
+            useful_event = ROOT.UsefulAtriStationEvent(self.raw_event_ptr,
                                                            ROOT.AraCalType.kLatestCalib)
             logging.debug(f"Got calibrated event {event_idx}")
         except:
             logging.critical(f"Calibrating event index {event_idx} failed.")
             raise 
         
-        return calibrated_event
+        return useful_event
