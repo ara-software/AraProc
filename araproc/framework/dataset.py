@@ -41,6 +41,16 @@ class AraDataset:
                  path_to_data_file : str,
                  path_to_pedestal_file : str,
                  ):
+
+        """
+        Parameters
+        ----------
+        path_to_data_file : str
+            The full path to the ARA event root data file
+        path_to_pedestal_file : str
+            The full path to the accompanying ARA pedestal file
+
+        """
           
         self.path_to_root_file = None
         self.path_to_pedestal_file = None
