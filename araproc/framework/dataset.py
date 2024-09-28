@@ -4,6 +4,9 @@ import numpy as np
 import os
 import ROOT
 
+from araproc.framework import analysis_event as av
+
+
 class AraDataset:
 
     """
@@ -85,14 +88,14 @@ class AraDataset:
         self.path_to_pedestal_file = path_to_pedestal_file
         
         # open the file, establish the tree, and its properties
-        self.open_tfile_load_ttree()
+        self.__open_tfile_load_ttree()
         self.num_events = self.event_tree.GetEntries()
 
-        self.establish_run_number() # set the run number
-        self.establish_station_id()
-        self.load_pedestal() # load the custom pedestals
+        self.__establish_run_number() # set the run number
+        self.__establish_station_id()
+        self.__load_pedestal() # load the custom pedestals
 
-    def open_tfile_load_ttree(self):
+    def __open_tfile_load_ttree(self):
 
         # open the TFile
         try:
@@ -121,7 +124,7 @@ class AraDataset:
             self.root_tfile.Close() # close the file
             raise
 
-    def establish_run_number(self):
+    def __establish_run_number(self):
 
         run_ptr = ctypes.c_int()
         try:
@@ -140,7 +143,7 @@ class AraDataset:
     
         self.run_number = run_ptr.value
 
-    def establish_station_id(self):
+    def __establish_station_id(self):
 
         """
         This function works to find the station id.
@@ -164,7 +167,7 @@ class AraDataset:
             logging.critical("Gettig the station id from the eventTree failed")
             raise
 
-    def load_pedestal(self):
+    def __load_pedestal(self):
         try:
             self.calibrator = ROOT.AraEventCalibrator.Instance()
             logging.debug("Instantiating the AraEventCalibrator was successful")
@@ -226,3 +229,23 @@ class AraDataset:
             raise 
         
         return useful_event
+    
+    def get_analysis_event(self, 
+                             event_idx : int = None
+                             ):
+        
+        """
+        Fetch a specific calibrated event
+
+        Parameters
+        ----------
+        event_idx : int
+            The ROOT event index to be passed to GetEntry().
+            Please note this is the ROOT TTree event index!
+            Not the rawAtriEvPtr->eventNumber variable!
+
+        Returns
+        -------
+        calibrated_event : UsefulAtriStationEvent
+            A fully calibrated UsefulatriStationEvent
+        """

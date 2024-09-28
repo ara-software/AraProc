@@ -36,12 +36,31 @@ class AraAnalysisEvent:
         self.event_number = useful_event.eventNumber # make sure the run knows who it is
         
         self.waveform_sets = {}
-        self.waveform_sets["calibrated"] = self.get_calibrated_waveforms(useful_event)
 
-    def get_calibrated_waveforms(self, useful_event):
+        # always load up the calibrated waveforms
+        self.__get_calibrated_waveforms(useful_event)
+        self.__get_interpolated_waveforms(useful_event)
+
+    def __del__(self):
 
         """
-        Fetch the RF channel TGraphs for a calibrated event
+        Tear down elegantly to prevent memory leaks.
+        Most important thing to do here is make sure we wipe all the TGraphs
+        that we created while analyzing the event.
+        Python's garbage collector is *probably* smart enough to manage this cleanup on its own,
+        but better safe than sorry, since who has control of the objects in memory
+        is sometimes fuzzy in pyroot.
+        """
+        for waveset_i, waveset in self.waveform_sets.items():
+            for wave_i, wave in waveset.items():
+                del wave
+
+    def __get_calibrated_waveforms(self, useful_event):
+
+        """
+        Fetch the RF channel TGraphs for a calibrated event.
+        This method is intentionally private. The user shouldn't be calling this.
+        They should access calibrated waveforms by doing `ana_event.waveform_sets["calibrated"]`.
 
         Parameters
         ----------
@@ -59,7 +78,7 @@ class AraAnalysisEvent:
         """
 
         calibrated_waveforms = {}
-
+        
         for ch in self.rf_channel_indices:
             try:
                 calibrated_waveforms[ch] = useful_event.getGraphFromRFChan(ch)
@@ -68,4 +87,44 @@ class AraAnalysisEvent:
                 logging.critical(f"Getting the wave for ch {ch} failed")
                 raise
         
-        return calibrated_waveforms
+        self.waveform_sets["calibrated"] = calibrated_waveforms
+
+    def __get_interpolated_waveforms(self, 
+                                   useful_event, 
+                                   interp_tstep=0.5):
+
+        """
+        Get the calibrated waveforms, and interpolate them.
+        This method is intentionally private. The user shouldn't be calling this.
+        They should access interpolated waveforms by doing `ana_event.waveform_sets["interpolated"]`.
+
+
+        Parameters
+        ----------
+        useful_event : ROOT.UsefulAtriStationEvent()
+            The AraRoot UsefulAtriStationEvent.
+        interp_tstep: float
+            The interpolation timestep (as a float) you want used
+        
+
+        Returns
+        -------
+        None : None
+            This private method has the job to set up the interpolated
+            waveforms in self.waveform_sets["interpolated"].
+        """
+
+        self.waveform_sets["interpolated"] = {}
+
+        if "calibrated" not in self.waveform_sets:
+            raise KeyError(f"Calibrated waveforms are not in this event. Something has gone wrong.")
+        cal_waves = self.waveform_sets["calibrated"]
+
+        for chan_key, wave in cal_waves.items():
+            try:
+                print(type(wave))
+                self.waveform_sets["interpolated"][chan_key] = ROOT.FFTtools.getInterpolatedGraph(wave,interp_tstep)
+                logging.debug(f"Got and interpolated channel {chan_key}")
+            except:
+                logging.critical(f"Getting or interpolating wave for ch {chan_key} failed")
+                raise
