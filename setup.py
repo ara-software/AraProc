@@ -6,6 +6,8 @@ setup(
     author='Brian Clark',
     author_email='baclark@umd.edu',
     packages=['araproc'],
+    package_data = {'araproc': ['analysis/data/*']},
+    include_package_data=True,
     python_requires='>= 3.7',
     install_requires=['numpy', 'scipy', 'matplotlib'],
     version='0.1',

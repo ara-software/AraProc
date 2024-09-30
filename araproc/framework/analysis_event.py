@@ -122,7 +122,6 @@ class AraAnalysisEvent:
 
         for chan_key, wave in cal_waves.items():
             try:
-                print(type(wave))
                 self.waveform_sets["interpolated"][chan_key] = ROOT.FFTtools.getInterpolatedGraph(wave,interp_tstep)
                 logging.debug(f"Got and interpolated channel {chan_key}")
             except:
