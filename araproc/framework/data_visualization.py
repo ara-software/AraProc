@@ -3,15 +3,22 @@ import numpy as np
 import os
 import ROOT
 import matplotlib.pyplot as plt
-from araproc.framework import analysis_event
+import matplotlib 
+matplotlib.use('Agg')
 from araproc.framework import waveform_utilities as wu
 
-def plot_analysis_event(
-    analysis_event : analysis_event.AraAnalysisEvent,
-    set_to_visualize = "calibrated",
+def plot_waveform_bundle(
+    waveform_dict = None,
     time_or_freq = "time",
     ouput_file_path = None
     ):
+    """
+    Code to plot a bundle of waveforms.
+    Please be aware that because this is matplotlib,
+    this function is very slow (about 2.5 s per event).
+    As a result, you probably shouldn't use it to draw many events.
+    It's meant for debugging and visualization.
+    """
     
     ####################
     # sanitize inputs
@@ -28,22 +35,18 @@ def plot_analysis_event(
     }
     ylabel_options = {
         "time" : "Voltage (V)",
-        "freq" : "Spectrum (au)"
+        "freq" : "log10 Spectrum (au)"
     }    
 
     if not isinstance(ouput_file_path, str):
         raise TypeError("Path to output file must be a string")
-    
-    # make sure the waveforms they want to plot are actually in the analysis event
-    if set_to_visualize not in analysis_event.waveform_sets:
-        raise KeyError(f"Requested waveform set ({set_to_visualize}) is not in available list: {analysis_event.waveform_sets.keys()}")
-    
+        
     ####################
     # actually make plots
     ####################
 
     # get the waves to plot
-    tgraphs_to_plot = analysis_event.waveform_sets[set_to_visualize]
+    tgraphs_to_plot = waveform_dict
 
     # set up fig and axes
     fig, axd = plt.subplot_mosaic(
@@ -66,24 +69,24 @@ def plot_analysis_event(
             # if they frequested frequency domain, do the FFT
             freqs, spectrum = wu.time2freq(times, volts)
             xvals = freqs
-            yvals = np.abs(spectrum)
+            yvals = np.log10(np.abs(spectrum))
 
         axd[f"ch{wave_key}"].plot(xvals, yvals) # make the plot
         axd[f"ch{wave_key}"].set_title(f"Channel {wave_key}")
 
-    # label axes
-    
-    # bottom row gets time label
+    # label axes  
     for ax in [axd["ch12"], axd["ch13"], axd["ch14"], axd["ch15"]]:
         ax.set_xlabel(xlabel_options[time_or_freq])
-    # left column gets voltage label
     for ax in [axd["ch0"], axd["ch4"], axd["ch8"], axd["ch12"]]:
         ax.set_ylabel(ylabel_options[time_or_freq])
     
-    # if the frequency representation as requested, set the y-axis to log
+    # make limits look nice
     if time_or_freq == "freq":
-        for ax_i in axd:
-            axd[ax_i].set_yscale("log")
+        ax.set_ylim([1,4])
 
     # save figure
     fig.savefig(ouput_file_path)
+
+    # careful cleanup
+    plt.close(fig)
+    del fig, axd

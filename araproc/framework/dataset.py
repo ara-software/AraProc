@@ -4,8 +4,8 @@ import numpy as np
 import os
 import ROOT
 
-from araproc.framework import analysis_event as av
-
+from araproc.framework import waveform_utilities as wu
+from araproc.analysis import dedisperse as dd
 
 class AraDataset:
 
@@ -36,11 +36,14 @@ class AraDataset:
         number of data events in the data ROOT file
     calibrator: AraEventCalibrator
         the AraEventCalibrator that carries the appropriate pedestals for this run
+    num_rf_channels: int
+        number of RF channels for this dataset (usually just 16)
+    rf_channel_indices : list of ints
+        List of the channel indices (used for looping)
 
     """
 
     def __init__(self, 
-                #  station_id : str,
                  path_to_data_file : str,
                  path_to_pedestal_file : str,
                  ):
@@ -63,6 +66,24 @@ class AraDataset:
         self.station_id = None
         self.num_events = None
         self.calibrator = None
+
+        self.num_rf_channels = 16 # hard coded, but a variable
+        self.rf_channel_indices = np.arange(0, self.num_rf_channels).tolist() # make indices
+        
+        # open the file, establish the tree, and its properties
+        self.__sanitize_input_strings(path_to_data_file, path_to_pedestal_file)
+        self.__open_tfile_load_ttree()
+        self.num_events = self.event_tree.GetEntries()
+        self.__establish_run_number() # set the run number
+        self.__establish_station_id() # set the station ID
+        self.__load_pedestal() # load the pedestals
+
+        # establish the properties of the dedisperser
+        self.__phase_spline = dd.load_arasim_phase_response_as_spline()
+
+    def __sanitize_input_strings(self,
+                           path_to_data_file,
+                           path_to_pedestal_file):
         
         # check if they gave us strings
         if not isinstance(path_to_data_file, str):
@@ -86,14 +107,6 @@ class AraDataset:
         # now that we're sure these are clean, we can assign the variables
         self.path_to_data_file = path_to_data_file
         self.path_to_pedestal_file = path_to_pedestal_file
-        
-        # open the file, establish the tree, and its properties
-        self.__open_tfile_load_ttree()
-        self.num_events = self.event_tree.GetEntries()
-
-        self.__establish_run_number() # set the run number
-        self.__establish_station_id()
-        self.__load_pedestal() # load the custom pedestals
 
     def __open_tfile_load_ttree(self):
 
@@ -182,7 +195,6 @@ class AraDataset:
             logging.critical("Setting the AtriPedFile failed")
             raise
 
-
     def get_useful_event(self, 
                              event_idx : int = None
                              ):
@@ -230,22 +242,86 @@ class AraDataset:
         
         return useful_event
     
-    def get_analysis_event(self, 
-                             event_idx : int = None
-                             ):
-        
+    def get_waveforms(self,
+                      useful_event = None,
+                      interp_tstep : float = 0.5, # ns
+                      which_traces = "dedispersed"
+                      ):
+                     
         """
-        Fetch a specific calibrated event
+        Get waveforms for a calibrated event.
 
         Parameters
         ----------
-        event_idx : int
-            The ROOT event index to be passed to GetEntry().
-            Please note this is the ROOT TTree event index!
-            Not the rawAtriEvPtr->eventNumber variable!
+        useful_event : UsefulAtriStationEvent
+            The pointer to the UsefulAtriStationEvent
+        
+        which_traces : str
+            The type of traces you want.
+            Currently supports "calibrated", "interpolated", "dedispersed".
+            If "interpolated" or "dedispersed" is selected, the returned
+            waveform is itnerpolatd with a time bases of timestep "inter_tstep"
+        
+        interp_tstep : float
+            The time sampling you want used for the interpolated traces
 
         Returns
         -------
-        calibrated_event : UsefulAtriStationEvent
-            A fully calibrated UsefulatriStationEvent
+        waveforms : 
+            A dictionary, mapping RF channel ID to waveforms.
+            Keys are channel id (an integer)
+            Values are TGraphs
         """
+
+        if which_traces not in ["calibrated", "interpolated", "dedispersed"]:
+            raise KeyError(f"Requested waveform treatment ({which_traces}) is not supported")
+
+        # first, get the standard calibrated waves
+        cal_waves = {}
+        for ch in self.rf_channel_indices:
+            try:
+                wave = useful_event.getGraphFromRFChan(ch)
+                ROOT.SetOwnership(wave, True) # give python full ownership (see README.md for more info)
+                cal_waves[ch] = wave
+                logging.debug(f"Got channel {ch}")
+            except:
+                logging.critical(f"Getting the wave for ch {ch} failed")
+                raise
+        
+        if which_traces == "calibrated":
+            return cal_waves
+    
+        # for anything else, we need interpolation
+
+        interp_waves = {}
+        for chan_key, wave in cal_waves.items():
+            try:
+                interp_wave = ROOT.FFTtools.getInterpolatedGraph(wave,interp_tstep)
+                ROOT.SetOwnership(interp_wave, True) # give python full ownership
+                interp_waves[chan_key] = interp_wave
+                logging.debug(f"Got and interpolated channel {chan_key}")
+            except:
+                logging.critical(f"Interpolating wave for ch {chan_key} failed")
+                raise
+        
+        # if they wanted interpolated waves, just return those
+        if which_traces == "interpolated":
+            return interp_waves
+
+        # and if they want a dedispersed wave, do that too
+        dedispersed_waves = {}
+        for chan_key, wave in interp_waves.items():
+            try:
+                times, volts = wu.tgraph_to_arrays(wave)
+                times_dd, volts_dd = dd.dedisperse_wave(times, 
+                                                        volts, 
+                                                        self.__phase_spline
+                                                        )
+                
+                dedispersed_waves[chan_key] = wu.arrays_to_tgraph(times_dd, volts_dd)
+            except:
+                logging.critical(f"Dedispersing wave for ch {chan_key} failed")
+                raise
+        
+        if which_traces == "dedispersed":
+            return dedispersed_waves

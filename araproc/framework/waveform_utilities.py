@@ -1,3 +1,4 @@
+from array import array
 import numpy as np
 import ROOT
 
@@ -5,6 +6,11 @@ def tgraph_to_arrays(the_graph):
     xvals = np.asarray(the_graph.GetX())
     yvals = np.asarray(the_graph.GetY())
     return xvals, yvals
+
+def arrays_to_tgraph(xvals, yvals):
+    if len(xvals) != len(yvals):
+        raise Exception("Lenfth of x and y arrays is mismatched. Abort.")
+    return ROOT.TGraph(len(xvals), xvals, yvals)
 
 def get_freqs(times):
     # really simple function to get the frequencies
@@ -51,7 +57,7 @@ def time2freq(times, volts):
     
     return freqs, the_fft
 
-def freq2time(times, freqs, spectrum):
+def freq2time(times, spectrum):
     """
     Performs backward FFT with correct normalization that conserves the power.
     Please note that it is the user's job to supply the time axis.
@@ -62,8 +68,6 @@ def freq2time(times, freqs, spectrum):
     ----------
     times: np.array
         time samples
-    freqs: np.array
-        the frequencies at which the fft was evaluated
     spectrum: complex np array
         the complex numpy array containing the fft
 

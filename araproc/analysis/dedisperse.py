@@ -7,6 +7,8 @@ from scipy import interpolate
 import importlib.resources as pkg_resources
 from . import data
 
+from araproc.framework import waveform_utilities as wu
+
 def load_arasim_phase_response_as_spline():
 
     """
@@ -72,5 +74,20 @@ def dedisperse_wave(
     if len(times) != len(volts):
         raise Exception("The time and volts arrays are mismatched in length. Abort.")
 
-    
+    # first thing to do is get the frequency domain representation of the trace
 
+
+    freqs, spectrum = wu.time2freq(times, volts)
+
+    # interpolate the *unwrapped phases* to the correct frequency base
+    phased_interpolated = phase_spline(freqs) 
+    
+    # conver these into a complex number
+    phased_rewrapped = np.exp((0 + 1j)*phased_interpolated)
+    
+    # do complex division to do the dedispersion
+    spectrum /= phased_rewrapped
+
+    # back to the time domain
+    times, volts = wu.freq2time(times, spectrum)
+    return times, volts
