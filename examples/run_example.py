@@ -5,7 +5,7 @@ from araproc.framework import data_visualization as dv
 import logging
 logging.getLogger().setLevel(logging.INFO)
 
-# uncomment this dataset loade to see a nice CW contaminated A2 event
+# uncomment this dataset loader to see a nice CW contaminated A2 event
 # a nice A2 dataset with CW (go after eventNumber 213179, which is TTree index 20695 in the burn sample file)
 d = dataset.AraDataset(
     path_to_data_file="/data/exp/ARA/2013/filtered/burnSample1in10/ARA02/root/run1548/event1548.root",
