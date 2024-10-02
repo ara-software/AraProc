@@ -8,7 +8,7 @@ setup(
     packages=['araproc'],
     package_data = {'araproc': ['analysis/data/*']},
     include_package_data=True,
-    python_requires='>= 3.7',
+    python_requires='>= 3.9',
     install_requires=['numpy', 'scipy', 'matplotlib', 'yaml'],
     version='0.1',
     license='GPLv3',
