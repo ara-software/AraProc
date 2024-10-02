@@ -1,0 +1,16 @@
+station1:
+  filt1 : { min_freq : 0.400, max_freq : 0.420, min_power_ratio : 0.02 }
+
+station2:
+  filt1 : { min_freq : 0.400, max_freq : 0.420, min_power_ratio : 0.02 }
+
+station3:
+  filt1 : { min_freq : 0.400, max_freq : 0.420, min_power_ratio : 0.02 }
+
+station4:
+  filt1 : { min_freq : 0.400, max_freq : 0.420, min_power_ratio : 0.02 }
+
+station5:
+  filt1 : { min_freq : 0.400, max_freq : 0.420, min_power_ratio : 0.02 }
+  filt2 : { min_freq : 0.135, max_freq : 0.140, min_power_ratio : 0.05 }
+  filt3 : { min_freq : 0.150, max_freq : 0.750, min_power_ratio : 0.10 }

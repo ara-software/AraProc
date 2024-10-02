@@ -1,3 +1,4 @@
+import array
 import ctypes
 import logging
 import numpy as np
@@ -6,6 +7,7 @@ import ROOT
 
 from araproc.framework import waveform_utilities as wu
 from araproc.analysis import dedisperse as dd
+from araproc.analysis import cw_filter as cwf
 
 class AraDataset:
 
@@ -13,7 +15,7 @@ class AraDataset:
     A class for representing an ARA dataset
 
     This is really a wrapper class that opens ARA root files, loads calibrators, etc.
-    This wrapper currently only supports
+    This wrapper currently only supports A1-5.
 
     ...
 
@@ -40,12 +42,16 @@ class AraDataset:
         number of RF channels for this dataset (usually just 16)
     rf_channel_indices : list of ints
         List of the channel indices (used for looping)
+    interp_tstep : float
+        The time step you want wavforms interpolated with for later.
+        In nanoseconds.
 
     """
 
     def __init__(self, 
                  path_to_data_file : str,
                  path_to_pedestal_file : str,
+                 interp_tstep : float = 0.5 
                  ):
 
         """
@@ -55,6 +61,9 @@ class AraDataset:
             The full path to the ARA event root data file
         path_to_pedestal_file : str
             The full path to the accompanying ARA pedestal file
+        interp_tstep : float 
+            The time step you want wavforms interpolated with for later.
+            In nanoseconds.
 
         """
           
@@ -66,12 +75,13 @@ class AraDataset:
         self.station_id = None
         self.num_events = None
         self.calibrator = None
+        self.interp_tstep = None
 
         self.num_rf_channels = 16 # hard coded, but a variable
         self.rf_channel_indices = np.arange(0, self.num_rf_channels).tolist() # make indices
         
         # open the file, establish the tree, and its properties
-        self.__sanitize_input_strings(path_to_data_file, path_to_pedestal_file)
+        self.__sanitize_inputs(path_to_data_file, path_to_pedestal_file, interp_tstep)
         self.__open_tfile_load_ttree()
         self.num_events = self.event_tree.GetEntries()
         self.__establish_run_number() # set the run number
@@ -81,9 +91,15 @@ class AraDataset:
         # establish the properties of the dedisperser
         self.__phase_spline = dd.load_arasim_phase_response_as_spline()
 
-    def __sanitize_input_strings(self,
+        # and the properties of the CW filter, and the bandpass filters
+        self.__cw_filters = cwf.get_filters(self.station_id)
+        self.__setup_bandpass_filters()
+
+    def __sanitize_inputs(self,
                            path_to_data_file,
-                           path_to_pedestal_file):
+                           path_to_pedestal_file,
+                           interp_tstep
+                           ):
         
         # check if they gave us strings
         if not isinstance(path_to_data_file, str):
@@ -107,6 +123,10 @@ class AraDataset:
         # now that we're sure these are clean, we can assign the variables
         self.path_to_data_file = path_to_data_file
         self.path_to_pedestal_file = path_to_pedestal_file
+
+        if (interp_tstep < 0) or not np.isfinite(interp_tstep):
+            raise ValueError(f"Something is wrong with the requested interpolation time step: {interp_tstep}")
+        self.interp_tstep = interp_tstep
 
     def __open_tfile_load_ttree(self):
 
@@ -195,6 +215,26 @@ class AraDataset:
             logging.critical("Setting the AtriPedFile failed")
             raise
 
+    def __setup_bandpass_filters(self):
+            
+        # apparenty we need this line CUZ REASONS?
+        # it must activate something in FFTW behind the scenes. This was very not obvious, 
+        # and I don't understand how to fix it tbh...
+        dummy = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 2, 100)
+        ROOT.SetOwnership(dummy, True) # give python full ownership
+
+        nyquist = 1./(2.*self.interp_tstep*1E-9) # interp speed in seconds
+        freq_lopass = 800E6/nyquist # lowpass fitler at 900 MHz, in units of nyquist
+        freq_hipass = 90E6/nyquist # highpass filter at 90 MHz, in units of nyquist
+
+        lp = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 5, freq_lopass)
+        hp = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.HIGHPASS, 5, freq_hipass)
+        ROOT.SetOwnership(lp, True) # give python full ownership
+        ROOT.SetOwnership(hp, True) # give python full ownership
+
+        self.__lowpass_filter = lp
+        self.__highpass_filter = hp
+    
     def get_useful_event(self, 
                              event_idx : int = None
                              ):
@@ -244,8 +284,7 @@ class AraDataset:
     
     def get_waveforms(self,
                       useful_event = None,
-                      interp_tstep : float = 0.5, # ns
-                      which_traces = "dedispersed"
+                      which_traces = "filtered"
                       ):
                      
         """
@@ -262,8 +301,6 @@ class AraDataset:
             If "interpolated" or "dedispersed" is selected, the returned
             waveform is itnerpolatd with a time bases of timestep "inter_tstep"
         
-        interp_tstep : float
-            The time sampling you want used for the interpolated traces
 
         Returns
         -------
@@ -273,7 +310,7 @@ class AraDataset:
             Values are TGraphs
         """
 
-        if which_traces not in ["calibrated", "interpolated", "dedispersed"]:
+        if which_traces not in ["calibrated", "interpolated", "dedispersed", "filtered"]:
             raise KeyError(f"Requested waveform treatment ({which_traces}) is not supported")
 
         # first, get the standard calibrated waves
@@ -296,7 +333,7 @@ class AraDataset:
         interp_waves = {}
         for chan_key, wave in cal_waves.items():
             try:
-                interp_wave = ROOT.FFTtools.getInterpolatedGraph(wave,interp_tstep)
+                interp_wave = ROOT.FFTtools.getInterpolatedGraph(wave,self.interp_tstep)
                 ROOT.SetOwnership(interp_wave, True) # give python full ownership
                 interp_waves[chan_key] = interp_wave
                 logging.debug(f"Got and interpolated channel {chan_key}")
@@ -325,3 +362,47 @@ class AraDataset:
         
         if which_traces == "dedispersed":
             return dedispersed_waves
+    
+        # and if they want filtered waves
+        filtered_waves = cwf.apply_filters(self.__cw_filters, dedispersed_waves)
+
+        # and finally, apply some bandpass cleanup filters
+        for chan_key in list(filtered_waves.keys()):
+
+            """
+            This takes some explaining, why I'm not just calling
+                digitalFilter.filterGraph(...)
+            
+            Basically, the DigitalFilter class function `filterGraph` calls
+            the function `filter()`. The `filter` function calls the function
+            `filterOut`, which returns a POINTER to the filtered array.
+            Pyroot doesn't know how to clean this up properly.
+            So here, I create a pointer to an array via `array.array`,
+            and pass that pointer myself via the `filterOut` function.
+            That way python has proper ownership of it, and can destroy it
+            and avoid a memory leak.
+
+            I discovered this leak because when I called `filterGraph`,
+            I ended up with a huge memory leak.
+            Beware these python <-> c++ interfaces, especially around pointers...
+            """
+
+            wave = filtered_waves[chan_key]
+            n = wave.GetN()
+            x = wave.GetX()
+            y = wave.GetY()
+            y_filt_lp = array.array("d", [0]*len(y))
+            y_filt_hp = array.array("d", [0]*len(y))
+            self.__lowpass_filter.filterOut(n, y, y_filt_lp)
+            self.__highpass_filter.filterOut(n, y_filt_lp, y_filt_hp)
+
+            filt_graph = ROOT.TGraph(n, x, y_filt_hp)
+            ROOT.SetOwnership(filt_graph, True)
+
+            del wave
+            del filtered_waves[chan_key]
+            filtered_waves[chan_key] = filt_graph
+
+
+        if which_traces == "filtered":
+            return filtered_waves
