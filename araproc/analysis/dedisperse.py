@@ -29,14 +29,25 @@ def load_arasim_phase_response_as_spline():
     freq_ghz = file_content["freq"]/1.E3 # convert to GHz
     phs_unwrapped = np.unwrap(file_content["phase"]) # unwrapped phase in radians
 
-    the_phase_spline = interpolate.interp1d(
+    the_phase_spline = interpolate.Akima1DInterpolator(
         freq_ghz, phs_unwrapped,
-        bounds_error=False,
-        fill_value=0
+        method="makima",
     )
+    # turn off extrapolation outside the region of support
+    the_phase_spline.extrapolate = False
     file.close()
 
     return the_phase_spline
+
+def eval_splined_phases(phase_spline, freqs_to_evaluate):
+    """"
+    Just a little helper function.
+    This is necessary because the Akima Interpolator will return NaN 
+    when called out of the range of support, but we'd rather it gave zeros.
+    """
+    these_phases = phase_spline(freqs_to_evaluate)
+    these_phases = np.nan_to_num(these_phases) # convert nans to zeros
+    return these_phases
 
 def dedisperse_wave(
         times, # in nanoseconds,
@@ -77,7 +88,7 @@ def dedisperse_wave(
     freqs, spectrum = wu.time2freq(times, volts)
 
     # interpolate the *unwrapped phases* to the correct frequency base
-    phased_interpolated = phase_spline(freqs) 
+    phased_interpolated = eval_splined_phases(phase_spline, freqs)
     
     # conver these into a complex number
     phased_rewrapped = np.exp((0 + 1j)*phased_interpolated)
