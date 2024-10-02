@@ -75,6 +75,8 @@ class AraDataset:
         self.station_id = None
         self.num_events = None
         self.calibrator = None
+        self.num_rf_channels = None
+        self.rf_channel_indices = None
         self.interp_tstep = None
 
         self.num_rf_channels = 16 # hard coded, but a variable
@@ -309,6 +311,9 @@ class AraDataset:
             Keys are channel id (an integer)
             Values are TGraphs
         """
+
+        if useful_event is None:
+            raise KeyError("Passed useful event is None for some reason")
 
         if which_traces not in ["calibrated", "interpolated", "dedispersed", "filtered"]:
             raise KeyError(f"Requested waveform treatment ({which_traces}) is not supported")

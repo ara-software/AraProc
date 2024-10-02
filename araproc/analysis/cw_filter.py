@@ -37,7 +37,8 @@ def get_filters(station_id):
     try:
         this_station_filter_configs = file_content[f"station{station_id}"]
     except:
-        raise KeyError(f"Could not find station {station_id} in the cw filter config file")
+        logging.error(f"Could not find station {station_id} in the cw filter config file")
+        raise
     
     if this_station_filter_configs is not None:
         for filter_name, config_settings in this_station_filter_configs.items():
@@ -65,8 +66,9 @@ def apply_filters_one_channel(cw_filters, waveform_in):
     ----------
     cw_filters : dictionary
         A dictionary of sine subtract filters to be applied.
-        Key is channel id.
+        Key is a string, and is the name of the filter from the config file.
         Value is the sine subtract filter to applied.
+        This is normally the output of `cw_filter.get_filters`.
     waveform_in : ROOT.TGraph
         A single waveform to be filtered.
     
@@ -97,19 +99,19 @@ def apply_filters(cw_filters, waveform_bundle):
     ----------
     cw_filters : dictionary
         A dictionary of sine subtract filters to be applied.
-        Key is channel id.
+        Key is a string, and is the name of the filter from the config file.
         Value is the sine subtract filter to applied.
         This is normally the output of `cw_filter.get_filters`.
     waveform_bundle : dictionary
         A dictionary of waveforms to be processed.
         Key is channel id.
-        Value is the TGraph to be filtered
+        Value is the TGraph to be filtered.
 
     Returns
     -------
     filtered_waveforms : dictionary
         A dictionary of filtered wavforms.
-        The keys channel ids
+        The keys channel ids.
         The values are TGraphs after the application of all filters.
     """
 

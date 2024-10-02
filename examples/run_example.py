@@ -1,9 +1,10 @@
+import araproc # noqa: F401
+from araproc.framework import dataset 
+from araproc.framework import data_visualization as dv
+
 import logging
 logging.getLogger().setLevel(logging.INFO)
 
-import araproc
-from araproc.framework import dataset 
-from araproc.framework import data_visualization as dv
 
 # a nice A2 dataset with CW (go after eventNumber 213179, which is TTree index 20695 in the burn sample file)
 d = dataset.AraDataset(

@@ -1,7 +1,4 @@
-import logging
 import numpy as np
-import numpy.typing as npt
-import ROOT
 from scipy import interpolate
 
 import importlib.resources as pkg_resources

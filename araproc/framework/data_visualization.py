@@ -1,10 +1,5 @@
-import logging
 import numpy as np
-import os
-import ROOT
 import matplotlib.pyplot as plt
-import matplotlib 
-matplotlib.use('Agg')
 from araproc.framework import waveform_utilities as wu
 
 def plot_waveform_bundle(
