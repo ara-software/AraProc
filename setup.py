@@ -9,7 +9,7 @@ setup(
     package_data = {'araproc': ['analysis/data/*']},
     include_package_data=True,
     python_requires='>= 3.9',
-    install_requires=['numpy', 'scipy', 'matplotlib', 'yaml'],
+    install_requires=['numpy', 'scipy', 'matplotlib', 'pyyaml'],
     version='0.1',
     license='GPLv3',
     description='ARA data analysis framework',

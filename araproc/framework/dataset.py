@@ -281,7 +281,7 @@ class AraDataset:
         except:
             logging.critical(f"Calibrating event index {event_idx} failed.")
             raise 
-        
+        ROOT.SetOwnership(useful_event, True)
         return useful_event
     
     def get_waveforms(self,
