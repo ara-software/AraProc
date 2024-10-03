@@ -1,5 +1,32 @@
 # AraProc
 
+## Installation
+
+You are **strongly encouraged** to install AraProc into a 
+python virtual environment built on the already existing
+ARA cvmfs installation.
+You are also strongly encouraged to install it in "editable"
+mode so that you can make changes to the analysis classes,
+which you are very likely to do.
+
+```
+
+# activate the python in cvmfs
+source /cvmfs/ara.opensciencegrid.org/trunk/RHEL_7_x86_64/setup.sh
+
+# build a virtual environment
+python3 -m venv -n araproc_venv /path/to/venv_dir
+
+# then activate your new virtual environment
+source /path/to/venv_dir
+
+# then get, and install, AraProg
+(araproc_venv) git clone git@github.com:clark2668/AraProc.git
+(araproc_venv) cd AraProc
+(araproc_venv) pip install -e .
+
+```
+
 ### Some Warnings
 
 One issue we encountered early were memory leaks.
