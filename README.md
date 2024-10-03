@@ -15,12 +15,12 @@ which you are very likely to do.
 source /cvmfs/ara.opensciencegrid.org/trunk/RHEL_7_x86_64/setup.sh
 
 # build a virtual environment
-python3 -m venv -n araproc_venv /path/to/venv_dir
+python3 -m venv /path/to/araproc_venv
 
 # then activate your new virtual environment
-source /path/to/venv_dir
+source /path/to/araproc_venv/bin/activate
 
-# then get, and install, AraProg
+# then get, and install, AraProc
 (araproc_venv) git clone git@github.com:clark2668/AraProc.git
 (araproc_venv) cd AraProc
 (araproc_venv) pip install -e .
