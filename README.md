@@ -3,11 +3,15 @@
 ## Installation
 
 You are **strongly encouraged** to install AraProc into a 
-python virtual environment built on the already existing
-ARA cvmfs installation.
+python virtual environment built on an already existing ARA software stack.
+The easiest way to do this is to grab the ARA software stack from cvmfs.
+You can also build your own via the cvmfs scripts (https://github.com/ara-software/cvmfs).
+
 You are also strongly encouraged to install it in "editable"
 mode so that you can make changes to the analysis classes,
 which you are very likely to do.
+
+The instructions below show you the steps to the recommended installation method.
 
 ```
 
@@ -26,6 +30,16 @@ source /path/to/araproc_venv/bin/activate
 (araproc_venv) pip install -e .
 
 ```
+
+To do work in the future, you will always need to start up your environment,
+and then your virtual env. So you will always start by doing:
+```
+source /cvmfs/ara.opensciencegrid.org/trunk/RHEL_7_x86_64/setup.sh
+source /path/to/araproc_venv/bin/activate
+```
+The former is necessary so that you get all the *other* ARA depenencies
+(e.g. ROOT, GSL, etc.).
+The latter actually turns on your venv.
 
 ### Some Warnings
 
