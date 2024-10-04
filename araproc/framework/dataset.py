@@ -215,9 +215,7 @@ class DataWrapper:
 class SimWrapper:
 
     """
-    A class for representing an ARA dataset.
-
-    This wraps around an AraSim file.
+    A wrapper class for accessing AraSim files.
 
     ...
 
@@ -288,6 +286,13 @@ class SimWrapper:
             self.root_tfile.Close() # close the file
             raise
 
+        # check to make sure eventTree and AraTree2 have matching number of entries
+        # if this isn't true, understanding what's in the file is very, very hard
+        if self.event_tree.GetEntries() != self.sim_tree.GetEntries():
+            raise Exception("eventTree and AraTree2 have a different number"
+                            f"of entries ({self.event_tree.GetEntries()} vs {self.sim_tree.GetEntries})."
+                            "This is not supported by AraProc.")
+
         # load up the ARA event
         self.useful_event_ptr = ROOT.UsefulAtriStationEvent()
         self.report_ptr = ROOT.Report()
@@ -302,7 +307,19 @@ class SimWrapper:
             self.root_tfile.Close() # close the file
             raise
 
-    def get_useful_event(self, event_idx):
+    def __check_event_idx_sanity(self, event_idx):
+        if event_idx is None:
+            raise KeyError(f"Requested event index {event_idx} is invalid")
+        if event_idx >= self.num_events:
+            raise KeyError(f"Requested event index {event_idx} exceeds number of events in the run ({self.num_events})")
+        if event_idx <0:
+            raise KeyError(f"Requested event index {event_idx} is invalid (negative)")
+        return True
+
+
+    def get_useful_event(self, 
+                         event_idx : int = None
+                         ):
         """
         Fetch a specific calibrated event
 
@@ -318,13 +335,9 @@ class SimWrapper:
         calibrated_event : UsefulAtriStationEvent
             A fully calibrated UsefulatriStationEvent
         """
-        if event_idx is None:
-            raise KeyError(f"Requested event index {event_idx} is invalid")
-        if event_idx >= self.num_events:
-            raise KeyError(f"Requested event index {event_idx} exceeds number of events in the run ({self.num_events})")
-        if event_idx <0:
-            raise KeyError(f"Requested event index {event_idx} is invalid (negative)")
         
+        self.__check_event_idx_sanity(event_idx)
+
         try:
             self.event_tree.GetEntry(event_idx)
             logging.debug(f"Called root get entry {event_idx}")
@@ -335,6 +348,43 @@ class SimWrapper:
         useful_event = copy.deepcopy(self.useful_event_ptr) # make a copy and pass that back
         ROOT.SetOwnership(useful_event, True)
         return useful_event
+
+    def get_sim_information(self, 
+                            event_idx : int = None
+                            ):
+        """
+        Fetch simulation / Monte Carlo truth about a simulated event
+
+        Parameters
+        ----------
+        event_idx : int
+            The ROOT event index to be passed to GetEntry().
+            Please note this is the ROOT TTree event index!
+            Not the rawAtriEvPtr->eventNumber variable!
+
+        Returns
+        -------
+        sim_info : dictionary
+            A python dictionary of useful information about this event.
+            For example, the weight, etc.
+            This is likely to change over time, and probably it's best to 
+            just look at what objects are getting stored below.
+        """
+
+        self.__check_event_idx_sanity(event_idx)
+    
+        try:
+            self.sim_tree.GetEntry(event_idx)
+            logging.debug(f"Called sim_tree get entry {event_idx}")
+        except:
+            logging.critical(f"Getting entry {event_idx} in sim_tree failed.")
+            raise 
+
+        sim_info = {}
+        sim_info["weight"] = self.event_ptr.Nu_Interaction[0].weight
+        sim_info["enu"] = self.event_ptr.pnu
+
+        return sim_info
 
 class AnalysisDataset:
 
@@ -454,7 +504,15 @@ class AnalysisDataset:
         
         return useful_event
 
-    
+    def get_event_sim_info(self, 
+                             event_idx : int = None
+                             ):
+        if not self.is_simulation:
+            raise ValueError("You requested simulation information, but this dataset is marked as data. Abort!")
+
+        sim_info = self.__dataset_wrapper.get_sim_information(event_idx)
+        return sim_info
+
     def get_waveforms(self,
                       useful_event = None,
                       which_traces = "filtered"
