@@ -1,5 +1,12 @@
 # AraProc
 
+AraProc is a python-based analysis framework for doing ARA data analysis.
+
+To get started, see the example in `examples`, which you should run like:
+```
+python run_example.py
+```
+
 ## Installation
 
 You are **strongly encouraged** to install AraProc into a 
@@ -40,6 +47,17 @@ source /path/to/araproc_venv/bin/activate
 The former is necessary so that you get all the *other* ARA depenencies
 (e.g. ROOT, GSL, etc.).
 The latter actually turns on your venv.
+
+### Dependencies
+
+AraProc dependsd heavily on the entire ARA software stack, including AraRoot.
+This means that any dependency of AraRoot is a dependency of AraProc.
+See [the AraRoot documentation](dohttps://github.com/ara-software/AraRoot).
+As a result, you are strongly encouraged to either use the ARA cvmfs installation,
+or to you use the ARA cvmfs builder scripts in a local directory,
+in order to get AraProc installed.
+See above for more words on installation.
+
 
 ### Some Warnings
 
