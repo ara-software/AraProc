@@ -299,10 +299,28 @@ class AraDataset:
         
         which_traces : str
             The type of traces you want.
-            Currently supports "calibrated", "interpolated", "dedispersed".
-            If "interpolated" or "dedispersed" is selected, the returned
-            waveform is itnerpolatd with a time bases of timestep "inter_tstep"
-        
+            Currently supports "calibrated", "interpolated", "dedispersed", and "filtered."
+            
+                "calibrated" : 
+                    These are the waveforms direct from AraRoot,
+                    e.g. the product of evt.getGraphFromRFChan.
+                    They have no processing applied at all.
+                "interpolated" :
+                    These are calibrated waves with interpolation applied.
+                    The interpoaltion timestep is given by "self.interp_tstep"
+                    (the time step is set when the dataset object was created)
+                "dedispersed" : 
+                    These are interpoltaed waves with dedispersion applied.
+                    For the dedispersion, we assume the phase response
+                    of the ARA system as found in AraSim, specifically
+                    the "ARA_Electronics_TotalGain_TwoFilters.txt" file.
+                    The same response is assumed for all channels.
+                "filtered" : 
+                    These are dedispersed waves that are additionally
+                    filtered of CW via the FFTtools SineSubtract filter.
+                    They are then bandpass filtered to remove out of band noise.
+                    Most people should use the "filtered" traces,
+                    and so they are the default argument.
 
         Returns
         -------
