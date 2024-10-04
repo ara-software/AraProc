@@ -1,14 +1,7 @@
-import array
-import copy
-import ctypes
-import logging
 import numpy as np
 import os
 import ROOT
 
-from araproc.framework import waveform_utilities as wu
-from araproc.analysis import dedisperse as dd
-from araproc.analysis import cw_filter as cwf
 
 class RayTraceCorrelatorWrapper:
 
@@ -16,7 +9,7 @@ class RayTraceCorrelatorWrapper:
     A wrapper class around the AraRoot RayTraceCorrelator
 
     This things has the responsibility to manage interferometry
-    via the AraRoot RayTraceCorrelator
+    via the AraRoot RayTraceCorrelator.
     
     ...
 
@@ -126,139 +119,3 @@ class RayTraceCorrelatorWrapper:
         the_correlator.LoadTables()
         self.correlators[ref_name] = the_correlator
 
-    def get_pairs(pol : str = "vpol",
-                  excluded_channels =  None
-                  ):
-        print("hello")
-
-class StandardReco:
-
-
-    def __init__(self,
-                 station_id : int,
-                 ):
-        if station_id not in [1, 2, 3, 4, 5]:
-            raise KeyError(f"Station {station_id} is not supported")
-        self.station_id = station_id
-        
-        num_channels_library = {
-            1 : 16,
-            2 : 16,
-            3 : 16,
-            4 : 16,
-            5 : 16
-        }
-
-        excluded_channels_library = {
-            1 : np.array([], dtype=int),
-            2 : np.array([15], dtype=int),
-            3 : np.array([], dtype=int),
-            4 : np.array([], dtype=int),
-            5 : np.array([], dtype=int),
-        }
-        excluded_channels = excluded_channels_library[self.station_id]
-        excluded_channels_vec = ROOT.std.vector("int")(excluded_channels)
-
-
-        # each station has a slightly different distance for the cal pulser reco,
-        # so look that up
-        calpulser_r_library = {
-            1 : "40.00",
-            2 : "40.00",
-            3 : "40.00",
-            4 : "40.00",
-            5 : "40.00"
-        }
-
-        self.num_channels = num_channels_library[station_id]
-        self.excluded_channels = excluded_channels_library[station_id]
-        self.station_id = station_id
-
-        self.rtc_wrapper = RayTraceCorrelatorWrapper(self.station_id)
-
-        # always add a "nearby" correlator for 41m away
-        dir_path = os.path.join("/data/user/brianclark/rt_tables",
-                                f"arrivaltimes_station_{self.station_id}_icemodel_50_radius_{calpulser_r_library[station_id]}_angle_1.00_solution_0.root"
-                                )
-        ref_path = os.path.join("/data/user/brianclark/rt_tables",
-                                f"arrivaltimes_station_{self.station_id}_icemodel_50_radius_{calpulser_r_library[station_id]}_angle_1.00_solution_1.root"
-                                )
-        self.rtc_wrapper.add_rtc(ref_name = "nearby",
-                radius=float(calpulser_r_library[station_id]),
-                path_to_dir_file=dir_path,
-                path_to_ref_file=ref_path
-                )
-
-        # always add a "distant" correlator for 300m away
-        dir_path = os.path.join("/data/user/brianclark/rt_tables",
-                                f"arrivaltimes_station_{self.station_id}_icemodel_50_radius_300.00_angle_1.00_solution_0.root"
-                                )
-        ref_path = os.path.join("/data/user/brianclark/rt_tables",
-                                f"arrivaltimes_station_{self.station_id}_icemodel_50_radius_300.00_angle_1.00_solution_1.root"
-                                )
-        self.rtc_wrapper.add_rtc(ref_name = "distant",
-                radius=300,
-                path_to_dir_file=dir_path,
-                path_to_ref_file=ref_path
-                )
-        
-        # we need a geomtool
-        geom_tool = ROOT.AraGeomTool.Instance()
-        ROOT.SetOwnership(geom_tool, True)
-        the_pairs_v = self.rtc_wrapper.correlators["distant"].SetupPairs(self.station_id,
-                                                       geom_tool,
-                                                       ROOT.AraAntPol.kVertical,
-                                                       excluded_channels_vec
-                                                       )
-        ROOT.SetOwnership(the_pairs_v, True) # take posession
-        self.pairs_v = the_pairs_v
-        the_pairs_h = self.rtc_wrapper.correlators["distant"].SetupPairs(self.station_id,
-                                                       geom_tool,
-                                                       ROOT.AraAntPol.kHorizontal,
-                                                       excluded_channels_vec
-                                                       )
-        ROOT.SetOwnership(the_pairs_h, True) # take posession
-        self.pairs_h = the_pairs_h
-
-
-    def go_basic_reco(self, waveform_bundle):
-
-        # set up the waveform map the way AraRoot wants it
-        # as a std::map<int, TGraph*>
-        waveform_map = ROOT.std.map("int", "TGraph*")()
-        ROOT.SetOwnership(waveform_map, True)
-        for chan_i in waveform_bundle.keys():
-            waveform_map[chan_i] = waveform_bundle[chan_i]
-        
-        # get the correlation functions
-        corr_functions_v = self.rtc_wrapper.correlators["distant"].GetCorrFunctions(
-                                                                    self.pairs_v,
-                                                                    waveform_map
-                                                                    )
-        corr_functions_h = self.rtc_wrapper.correlators["distant"].GetCorrFunctions(
-                                                                    self.pairs_h,
-                                                                    waveform_map
-                                                                    )
-
-        dir_map = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v,
-            corr_functions_v,
-            0
-        )
-        ROOT.SetOwnership(dir_map, True)
-
-
-        # It's really important to pass memory ownership of the correlation
-        # function map back to python only AFTER we are completely done using them.
-        # Otherwise this memory leaks, for reasons I don't totally understand.
-        ROOT.SetOwnership(corr_functions_v, True)
-        ROOT.SetOwnership(corr_functions_h, True)
-        for c in corr_functions_v:
-            ROOT.SetOwnership(c, True)
-        for c in corr_functions_h:
-            ROOT.SetOwnership(c, True)
-
-        del corr_functions_v
-        del corr_functions_h
-        del waveform_map
-        return dir_map

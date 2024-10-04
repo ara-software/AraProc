@@ -1,6 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from araproc.framework import waveform_utilities as wu
+from araproc.framework import map_utilities as mu
+import ROOT
+ROOT.gStyle.SetOptStat(0)
+import gc
+
+"""
+It's important to use a non-GUI backend!
+Otherwise using matplotlib functions in a loop can memory leak.
+See this thread for an interesting discussion:
+https://github.com/matplotlib/matplotlib/issues/20300.
+"""
+import matplotlib
+matplotlib.use("agg")
 
 def plot_waveform_bundle(
     waveform_dict = None,
@@ -85,3 +98,26 @@ def plot_waveform_bundle(
     # careful cleanup
     plt.close(fig)
     del fig, axd
+
+def plot_skymap(the_map = None,
+                ouput_file_path = None
+                ):
+    
+    if the_map is None:
+        raise Exception("the_map is None")
+
+    if not isinstance(ouput_file_path, str):
+        raise TypeError("Path to output file must be a string")
+
+    corr_peak, peak_phi, peak_theta = mu.get_corr_map_peak(the_map)
+    the_map.SetTitle(f"Peak Phi/Theta = {peak_phi:.1f}, {peak_theta:.1f}")
+    the_map.GetXaxis().SetTitle("Phi (deg)")
+    the_map.GetYaxis().SetTitle("Theta (deg)")
+    the_map.GetZaxis().SetTitle("Correlation")
+
+    c = ROOT.TCanvas("c", "c", 700, 500)
+    c.cd()
+    the_map.Draw("z aitoff")
+    c.SaveAs(ouput_file_path)
+
+    del c
