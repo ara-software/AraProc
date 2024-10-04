@@ -1,8 +1,6 @@
-import ctypes
 import numpy as np
 import os
 import ROOT
-
 
 from araproc.analysis import interferometry as interf
 from araproc.framework import map_utilities as mu

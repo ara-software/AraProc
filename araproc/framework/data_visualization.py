@@ -4,7 +4,6 @@ from araproc.framework import waveform_utilities as wu
 from araproc.framework import map_utilities as mu
 import ROOT
 ROOT.gStyle.SetOptStat(0)
-import gc
 
 """
 It's important to use a non-GUI backend!
@@ -12,7 +11,7 @@ Otherwise using matplotlib functions in a loop can memory leak.
 See this thread for an interesting discussion:
 https://github.com/matplotlib/matplotlib/issues/20300.
 """
-import matplotlib
+import matplotlib # noqa : E402
 matplotlib.use("agg")
 
 def plot_waveform_bundle(
