@@ -52,7 +52,7 @@ The latter actually turns on your venv.
 
 AraProc dependsd heavily on the entire ARA software stack, including AraRoot.
 This means that any dependency of AraRoot is a dependency of AraProc.
-See [the AraRoot documentation](dohttps://github.com/ara-software/AraRoot).
+See [the AraRoot documentation](https://github.com/ara-software/AraRoot).
 As a result, you are strongly encouraged to either use the ARA cvmfs installation,
 or to you use the ARA cvmfs builder scripts in a local directory,
 in order to get AraProc installed.
