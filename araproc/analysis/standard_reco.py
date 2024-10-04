@@ -70,7 +70,7 @@ class StandardReco:
             1 : np.array([], dtype=int),
             2 : np.array([15], dtype=int),
             3 : np.array([], dtype=int),
-            4 : np.array([], dtype=int),
+            4 : np.array([3, 7, 11, 15], dtype=int), # string 4 is dead on A4
             5 : np.array([], dtype=int),
         }
         excluded_channels = excluded_channels_library[self.station_id]

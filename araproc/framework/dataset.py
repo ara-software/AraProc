@@ -1,4 +1,5 @@
 import array
+import copy
 import ctypes
 import logging
 import numpy as np
@@ -9,19 +10,30 @@ from araproc.framework import waveform_utilities as wu
 from araproc.analysis import dedisperse as dd
 from araproc.analysis import cw_filter as cwf
 
-class AraDataset:
+def file_is_safe(file_path):
+    
+    if not isinstance(file_path, str):
+        raise TypeError("Path to file must be a string")
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File ({file_path}) not found")
+    if not os.path.isfile(file_path):
+        raise ValueError(f"{file_path} looks like a directory, not a file")
+    
+    return True
+
+
+class DataWrapper:
 
     """
-    A class for representing an ARA dataset
+    A class for representing an ARA dataset.
 
-    This is really a wrapper class that opens ARA root files, loads calibrators, etc.
-    This wrapper currently only supports A1-5.
+    This wraps around real ara data.
 
     ...
 
     Attributes
     ----------
-    path_to_root_file : str
+    path_to_data_file : str
        the full path to the data root file (event data)
     path_to_pedestal_file : str
         the full path to the pedestal file to be used to calibrate this data file
@@ -38,36 +50,15 @@ class AraDataset:
         number of data events in the data ROOT file
     calibrator: AraEventCalibrator
         the AraEventCalibrator that carries the appropriate pedestals for this run
-    num_rf_channels: int
-        number of RF channels for this dataset (usually just 16)
-    rf_channel_indices : list of ints
-        List of the channel indices (used for looping)
-    interp_tstep : float
-        The time step you want wavforms interpolated with for later.
-        In nanoseconds.
-
     """
 
-    def __init__(self, 
-                 path_to_data_file : str,
-                 path_to_pedestal_file : str,
-                 interp_tstep : float = 0.5 
+    def __init__(self,
+                 path_to_data_file : str = None,
+                 path_to_pedestal_file : str = None,
+                 station_id : int = None
                  ):
-
-        """
-        Parameters
-        ----------
-        path_to_data_file : str
-            The full path to the ARA event root data file
-        path_to_pedestal_file : str
-            The full path to the accompanying ARA pedestal file
-        interp_tstep : float 
-            The time step you want wavforms interpolated with for later.
-            In nanoseconds.
-
-        """
-          
-        self.path_to_root_file = None
+        
+        self.path_to_data_file = None
         self.path_to_pedestal_file = None
         self.root_tfile = None
         self.event_tree = None
@@ -75,60 +66,20 @@ class AraDataset:
         self.station_id = None
         self.num_events = None
         self.calibrator = None
-        self.num_rf_channels = None
-        self.rf_channel_indices = None
-        self.interp_tstep = None
+        self.raw_event_ptr = None
 
-        self.num_rf_channels = 16 # hard coded, but a variable
-        self.rf_channel_indices = np.arange(0, self.num_rf_channels).tolist() # make indices
+        if station_id not in [1, 2, 3, 4, 5]:
+            raise Exception(f"Station id {station_id} is not supported")
+        self.station_id = station_id
+
+        if file_is_safe(path_to_data_file) and file_is_safe(path_to_pedestal_file):
+            self.path_to_data_file = path_to_data_file
+            self.path_to_pedestal_file = path_to_pedestal_file
         
-        # open the file, establish the tree, and its properties
-        self.__sanitize_inputs(path_to_data_file, path_to_pedestal_file, interp_tstep)
         self.__open_tfile_load_ttree()
-        self.num_events = self.event_tree.GetEntries()
         self.__establish_run_number() # set the run number
-        self.__establish_station_id() # set the station ID
+        self.num_events = self.event_tree.GetEntries()
         self.__load_pedestal() # load the pedestals
-
-        # establish the properties of the dedisperser
-        self.__phase_spline = dd.load_arasim_phase_response_as_spline()
-
-        # and the properties of the CW filter, and the bandpass filters
-        self.__cw_filters = cwf.get_filters(self.station_id)
-        self.__setup_bandpass_filters()
-
-    def __sanitize_inputs(self,
-                           path_to_data_file,
-                           path_to_pedestal_file,
-                           interp_tstep
-                           ):
-        
-        # check if they gave us strings
-        if not isinstance(path_to_data_file, str):
-            raise TypeError("Path to root data file must be a string")
-        if not isinstance(path_to_pedestal_file, str):
-            raise TypeError("Path to pedestal file must be a string")
-
-        # check if the file exists
-        if not os.path.exists(path_to_data_file):
-            raise FileNotFoundError(f"Data root File ({path_to_data_file}) not found")
-        if not os.path.exists(path_to_pedestal_file):
-            raise FileNotFoundError(f"Pedestal File ({path_to_pedestal_file}) not found")
-
-        # check they gave us files and not directories
-        if not os.path.isfile(path_to_data_file):
-            raise ValueError(f"{path_to_data_file} looks like a directory, not a file")
-        # check they gave us files and not directories
-        if not os.path.isfile(path_to_pedestal_file):
-            raise ValueError(f"{path_to_pedestal_file} looks like a directory, not a file")
-        
-        # now that we're sure these are clean, we can assign the variables
-        self.path_to_data_file = path_to_data_file
-        self.path_to_pedestal_file = path_to_pedestal_file
-
-        if (interp_tstep < 0) or not np.isfinite(interp_tstep):
-            raise ValueError(f"Something is wrong with the requested interpolation time step: {interp_tstep}")
-        self.interp_tstep = interp_tstep
 
     def __open_tfile_load_ttree(self):
 
@@ -158,7 +109,7 @@ class AraDataset:
             logging.critical("Assigning the rawEventPtr in the eventTree failed")
             self.root_tfile.Close() # close the file
             raise
-
+ 
     def __establish_run_number(self):
 
         run_ptr = ctypes.c_int()
@@ -193,6 +144,9 @@ class AraDataset:
         Which we force root to internally treat as a float, and *that* seems
         to properly convert the UChar_t. We can then cast it to an int.
 
+        This helper function isn't actually used, but it's nice to have it preserved.
+        Since it's kind of clever (thanks Marco!)
+
         """
         try:
             test = self.event_tree.Draw("abs(event.stationId)", "Entry$==0", "goff")
@@ -216,6 +170,261 @@ class AraDataset:
         except:
             logging.critical("Setting the AtriPedFile failed")
             raise
+
+    def get_useful_event(self, event_idx):
+        """
+        Fetch a specific calibrated event
+
+        Parameters
+        ----------
+        event_idx : int
+            The ROOT event index to be passed to GetEntry().
+            Please note this is the ROOT TTree event index!
+            Not the rawAtriEvPtr->eventNumber variable!
+
+        Returns
+        -------
+        calibrated_event : UsefulAtriStationEvent
+            A fully calibrated UsefulatriStationEvent
+        """
+        if event_idx is None:
+            raise KeyError(f"Requested event index {event_idx} is invalid")
+        if event_idx >= self.num_events:
+            raise KeyError(f"Requested event index {event_idx} exceeds number of events in the run ({self.num_events})")
+        if event_idx <0:
+            raise KeyError(f"Requested event index {event_idx} is invalid (negative)")
+        
+        try:
+            self.event_tree.GetEntry(event_idx)
+            logging.debug(f"Called root get entry {event_idx}")
+        except:
+            logging.critical(f"Getting entry {event_idx} failed.")
+            raise 
+
+        useful_event = None
+        try:
+            useful_event = ROOT.UsefulAtriStationEvent(self.raw_event_ptr,
+                                                           ROOT.AraCalType.kLatestCalib)
+            logging.debug(f"Got calibrated event {event_idx}")
+        except:
+            logging.critical(f"Calibrating event index {event_idx} failed.")
+            raise 
+        ROOT.SetOwnership(useful_event, True)
+        return useful_event
+
+class SimWrapper:
+
+    """
+    A class for representing an ARA dataset.
+
+    This wraps around an AraSim file.
+
+    ...
+
+    Attributes
+    ----------
+    path_to_data_file : str
+       the full path to the data root file (event data)
+    root_tfile : ROOT TFile
+        the pointer to the ROOT TFile that corresponds to the opened data event file
+    event_tree : ROOT TTree
+        the ARA event tree (looks like data)
+    sim_tree : ROOT TTree
+        the AraSim AraTree2 (exlcusive to simulation)
+    run_number: int
+        ARA run number for this dataset
+        This will be inferred from the data itself
+    station_id: 
+        station id from 1->5, 100 (only A1-A5 supported for now)
+    num_events: int
+        number of data events in the data ROOT file
+    """
+
+    def __init__(self,
+                 path_to_data_file : str = None,
+                 station_id : int = None
+                 ):
+        
+        self.path_to_data_file = None
+        self.root_tfile = None
+        self.event_tree = None
+        self.sim_tree = None
+        self.run_number = -10 # this doesn't make sense for AraSim
+        self.station_id = None
+        self.num_events = None
+        
+        # AraSim specific stuff
+        self.useful_event_ptr = None
+        self.report_ptr = None
+        self.event_ptr = None
+
+        if station_id not in [1, 2, 3, 4, 5]:
+            raise Exception(f"Station id {station_id} is not supported")
+        self.station_id = station_id
+
+        if file_is_safe(path_to_data_file):
+            self.path_to_data_file = path_to_data_file
+        
+        self.__open_tfile_load_ttree()
+        self.num_events = self.event_tree.GetEntries()
+
+    def __open_tfile_load_ttree(self):
+
+        # open the TFile
+        try:
+            self.root_tfile = ROOT.TFile(self.path_to_data_file, "READ")
+            logging.debug(f"Successfully opened {self.path_to_data_file}")
+        except:
+            logging.critical(f"Opening {self.path_to_data_file} failed")
+            raise
+
+        # set the TTree
+        try:
+            self.event_tree = self.root_tfile.Get("eventTree")
+            self.sim_tree = self.root_tfile.Get("AraTree2")
+            logging.debug("Successfully got eventTree and AraTree2")
+        except:
+            logging.critical("Loading the eventTree or AraTree2 failed")
+            self.root_tfile.Close() # close the file
+            raise
+
+        # load up the ARA event
+        self.useful_event_ptr = ROOT.UsefulAtriStationEvent()
+        self.report_ptr = ROOT.Report()
+        self.event_ptr = ROOT.Event()
+        try:
+            self.event_tree.SetBranchAddress("UsefulAtriStationEvent",ROOT.AddressOf(self.useful_event_ptr))
+            self.sim_tree.SetBranchAddress("report", ROOT.AddressOf(self.report_ptr))
+            self.sim_tree.SetBranchAddress("event", ROOT.AddressOf(self.event_ptr))
+            logging.debug("Successfully assigned UsefulAtriStationEvent, report, and event branch")
+        except:
+            logging.critical("Assigning the useful_event_ptr, report_ptr, or event_ptr failed")
+            self.root_tfile.Close() # close the file
+            raise
+
+    def get_useful_event(self, event_idx):
+        """
+        Fetch a specific calibrated event
+
+        Parameters
+        ----------
+        event_idx : int
+            The ROOT event index to be passed to GetEntry().
+            Please note this is the ROOT TTree event index!
+            Not the rawAtriEvPtr->eventNumber variable!
+
+        Returns
+        -------
+        calibrated_event : UsefulAtriStationEvent
+            A fully calibrated UsefulatriStationEvent
+        """
+        if event_idx is None:
+            raise KeyError(f"Requested event index {event_idx} is invalid")
+        if event_idx >= self.num_events:
+            raise KeyError(f"Requested event index {event_idx} exceeds number of events in the run ({self.num_events})")
+        if event_idx <0:
+            raise KeyError(f"Requested event index {event_idx} is invalid (negative)")
+        
+        try:
+            self.event_tree.GetEntry(event_idx)
+            logging.debug(f"Called root get entry {event_idx}")
+        except:
+            logging.critical(f"Getting entry {event_idx} failed.")
+            raise 
+
+        useful_event = copy.deepcopy(self.useful_event_ptr) # make a copy and pass that back
+        ROOT.SetOwnership(useful_event, True)
+        return useful_event
+
+class AnalysisDataset:
+
+    """
+    A class for representing an ARA dataset.
+
+    This wraps around both data and simulation sets.
+
+    ...
+
+    Attributes
+    ----------
+    is_simulation : bool
+        Is this a simulated dataset or not? 
+    path_to_data_file : str
+       the full path to the data root file (event data)
+    path_to_pedestal_file : str
+        the full path to the pedestal file to be used to calibrate this data file
+    run_number: int
+        ARA run number for this dataset
+        This will be inferred from the data itself
+    station_id:
+        station id from 1->5, 100 (only A1-A5 supported for now)
+    num_events: int
+        number of data events in the data ROOT file
+    num_rf_channels: int
+        number of RF channels for this dataset (usually just 16)
+    rf_channel_indices : list of ints
+        List of the channel indices (used for looping)        
+    interp_tstep : float
+        The time step you want wavforms interpolated with for later.
+        In nanoseconds.
+    __dataset_wrapper
+        Either a DataWrapper or a SimWrapper based on is_simulation.
+        This allows this meta class to access either a SimWrapper or the DataWrapper
+        behind the scenes, and the user doesn't have to worry about which is 
+        which, except for getting the "is_simulation" flag right.
+
+    """
+
+    def __init__(self, 
+                 path_to_data_file : str,
+                 station_id : int,
+                 path_to_pedestal_file : str = None,
+                 interp_tstep : float = 0.5 ,
+                 is_simulation : bool = False
+                 ):
+    
+        self.is_simulation = is_simulation
+
+        self.path_to_data_file = None
+        self.pedestal_file = None # not requried if simulation
+        self.run_number = None
+        self.station_id = None
+        self.num_events = None
+        self.num_rf_channels = None
+        self.rf_channel_indices = None
+        self.interp_tstep = None
+        self.__dataset_wrapper = None
+
+        self.num_rf_channels = 16 # hard coded, but a variable
+        self.rf_channel_indices = np.arange(0, self.num_rf_channels).tolist() # make indices
+
+        if (interp_tstep < 0) or not np.isfinite(interp_tstep):
+            raise ValueError(f"Something is wrong with the requested interpolation time step: {interp_tstep}")
+        self.interp_tstep = interp_tstep
+        
+        if not self.is_simulation:
+            self.__dataset_wrapper = DataWrapper(path_to_data_file,
+                                                 path_to_pedestal_file,
+                                                 station_id=station_id
+                                             )
+        else:
+            self.__dataset_wrapper = SimWrapper(path_to_data_file,
+                                                station_id=station_id
+                                                )
+        
+        if self.__dataset_wrapper is None:
+            raise Exception("Something went wrong with creating either the sim or data wrapper")
+        
+        self.run_number = self.__dataset_wrapper.run_number
+        self.station_id = self.__dataset_wrapper.station_id
+        self.num_events = self.__dataset_wrapper.num_events
+
+        # establish the properties of the dedisperser
+        self.__phase_spline = dd.load_arasim_phase_response_as_spline()
+
+        # and the properties of the CW filter, and the bandpass filters
+        self.__cw_filters = cwf.get_filters(self.station_id)
+        self.__setup_bandpass_filters()
 
     def __setup_bandpass_filters(self):
             
@@ -241,48 +450,10 @@ class AraDataset:
                              event_idx : int = None
                              ):
         
-        """
-        Fetch a specific calibrated event
-
-        Parameters
-        ----------
-        event_idx : int
-            The ROOT event index to be passed to GetEntry().
-            Please note this is the ROOT TTree event index!
-            Not the rawAtriEvPtr->eventNumber variable!
-
-        Returns
-        -------
-        calibrated_event : UsefulAtriStationEvent
-            A fully calibrated UsefulatriStationEvent
-        """
-
-        logging.debug(f"Trying to fetch calibrated event {event_idx}")
-
-        if event_idx is None:
-            raise KeyError(f"Requested event index {event_idx} is invalid")
-        if event_idx >= self.num_events:
-            raise KeyError(f"Requested event index {event_idx} exceeds number of events in the run ({self.num_events})")
-        if event_idx <0:
-            raise KeyError(f"Requested event index {event_idx} is invalid (negative)")
+        useful_event = self.__dataset_wrapper.get_useful_event(event_idx)
         
-        try:
-            self.event_tree.GetEntry(event_idx)
-            logging.debug(f"Called root get entry {event_idx}")
-        except:
-            logging.critical(f"Getting entry {event_idx} failed.")
-            raise 
-
-        useful_event = None
-        try:
-            useful_event = ROOT.UsefulAtriStationEvent(self.raw_event_ptr,
-                                                           ROOT.AraCalType.kLatestCalib)
-            logging.debug(f"Got calibrated event {event_idx}")
-        except:
-            logging.critical(f"Calibrating event index {event_idx} failed.")
-            raise 
-        ROOT.SetOwnership(useful_event, True)
         return useful_event
+
     
     def get_waveforms(self,
                       useful_event = None,

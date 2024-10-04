@@ -1,5 +1,4 @@
 import ctypes
-import ROOT
 
 def get_corr_map_peak(the_map  = None):
         
@@ -22,7 +21,7 @@ def get_corr_map_peak(the_map  = None):
         """
         
         if the_map is None:
-            raise Exception(f"No TH2D map was passed")
+            raise Exception("No TH2D map was passed")
     
         # peakZ, peakTheta, peakPhi = None
         _peakZ = ctypes.c_int()
