@@ -33,7 +33,7 @@ for e in range(20690, 20700, 1):
       
         # by default, you get all the bells and whistles
         # (interpolated, dedispersed, cw filtered, and bandpassed)
-        wave_bundle = d.get_waveforms(useful_event, which_traces="filtered")
+        wave_bundle = d.get_waveforms(useful_event)
         
         # run our standard suite of reconstructions
         reco_results = reco.do_standard_reco(wave_bundle)
