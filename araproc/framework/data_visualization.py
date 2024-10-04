@@ -4,6 +4,7 @@ from araproc.framework import waveform_utilities as wu
 from araproc.framework import map_utilities as mu
 import ROOT
 ROOT.gStyle.SetOptStat(0)
+ROOT.gROOT.SetBatch(True) # tell root not to open gui windows
 
 """
 It's important to use a non-GUI backend!
