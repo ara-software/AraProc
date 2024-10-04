@@ -118,6 +118,8 @@ def plot_skymap(the_map = None,
     c = ROOT.TCanvas("c", "c", 700, 500)
     c.cd()
     the_map.Draw("z aitoff")
+    ROOT.gPad.SetRightMargin(0.15) # make space for the z axis
     c.SaveAs(ouput_file_path)
+    ROOT.gPad.SetRightMargin(0) # reset, so we don't affect settings globally
 
     del c
