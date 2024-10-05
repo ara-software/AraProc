@@ -10,7 +10,7 @@ def get_vpp(waveform):
     Parameters
     ----------
     waveform: TGraph
-        A numpy array of floats containing the voltages for the trace.
+        A TGraph of the waveform.
 
     Returns
     -------
@@ -35,7 +35,7 @@ def get_min_segmented_rms(waveform, nsegs=8):
     Parameters
     ----------
     waveform: TGraph
-        A numpy array of floats containing the voltages for the trace.
+        A TGraph of the waveform.
     nsegs: int
         Number of segments to break waveform into.
 
@@ -71,3 +71,60 @@ def get_min_segmented_rms(waveform, nsegs=8):
         rms = thisRms
 
     return rms
+
+def get_snr(waveform):
+
+    """
+    Calculates SNR of a single voltage trace.
+
+    Parameters
+    ----------
+    waveform: TGraph
+        A TGraph of the waveform.
+
+    Returns
+    -------
+    snr : float
+        The SNR of the waveform.
+    """
+
+    vpp = get_vpp(waveform)
+    rms = get_min_segmented_rms(waveform)
+    if(rms == 0.0):
+      return 0
+
+    snr = vpp/rms/2.0
+
+    return snr
+
+def get_avg_snr(wave_bundle, chans=None):
+
+    """
+    Calculates channel-wise averaged SNR.
+
+    Parameters
+    ----------
+    wave_bundle: dict of TGraphs
+        Dictionary of waveform TGraphs to be averaged.
+    chans: list
+        List of dictionary keys to average over. If None,
+        averages over all keys in dictionary.
+
+    Returns
+    -------
+    avg_snr : float
+        The average SNR.
+    """
+
+    if(chans is None):
+      chans = list(wave_bundle.keys())
+
+    avg_snr = []
+    for chan in chans:
+      waveform = wave_bundle[chan]
+      snr = get_snr(waveform)
+      avg_snr.append(snr)
+
+    avg_snr = np.mean(avg_snr)
+
+    return avg_snr
