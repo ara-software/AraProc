@@ -2,6 +2,7 @@ import araproc # noqa: F401
 from araproc.framework import dataset 
 from araproc.analysis import standard_reco as sr
 from araproc.framework import data_visualization as dv
+from araproc.analysis import snr
 
 import logging
 logging.getLogger().setLevel(logging.INFO)
@@ -79,7 +80,10 @@ for e in range(iter_start, iter_stop, 1):
         # by default, you get all the bells and whistles
         # (interpolated, dedispersed, cw filtered, and bandpassed)
         wave_bundle = d.get_waveforms(useful_event)
-        
+
+        # print the average snr across channels 
+        print(snr.get_avg_snr(wave_bundle))      
+ 
         # run our standard suite of reconstructions
         reco_results = reco.do_standard_reco(wave_bundle)
 
