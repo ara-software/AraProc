@@ -2,10 +2,7 @@
 
 AraProc is a python-based analysis framework for doing ARA data analysis.
 
-To get started, see the example in `examples`, which you should run like:
-```
-python run_example.py
-```
+To get started, see the example in the `examples` folder.
 
 ## Installation
 
