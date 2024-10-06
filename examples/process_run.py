@@ -9,14 +9,17 @@ from araproc.analysis import standard_reco as sr
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("-i", type=str,  dest="input_file", required=True,
+parser.add_argument("--input_file", type=str, required=True,
     help="full path to the input file")
-parser.add_argument("-t", type=int, default=0, dest="is_simulation", required=True,
-	help="is simulation; 0 = not simulation (default), 1 = is simulation")
-parser.add_argument("-p", type=str,default=None, dest="ped_file", required=False, 
+parser.add_argument("--ped_file", type=str,default=None, required=False, 
     help="path to pedestal file")
-parser.add_argument("-s", type=int, dest="station", required=True,
+parser.add_argument("--is_simulation", type=int, default=0, required=True,
+	help="is simulation; 0 = not simulation (default), 1 = is simulation")
+parser.add_argument("--station", type=int, required=True,
     help="station id")
+parser.add_argument("--output_file", type=str, required=True,
+    help="full path to the output file")
+
 args = parser.parse_args()
 args.is_simulation = bool(args.is_simulation)
 
@@ -36,7 +39,7 @@ d = dataset.AnalysisDataset(
 reco = sr.StandardReco(d.station_id)
 
 # set up outputs
-f = ROOT.TFile( f"station_{d.station_id}_run_{d.run_number}.root", 
+f = ROOT.TFile( args.output_file, 
                "RECREATE")
 tree = ROOT.TTree("results_tree", "results_tree")
 
@@ -47,7 +50,9 @@ reco_result_pulser_v = array( "d", [0]*3 )
 tree.Branch("reco_result_pulser_v", reco_result_pulser_v, "reco_result_pulser_v[3]/D")
 
 
-for e in range(0, 20, 1):
+for e in range(0, 5, 1):
+
+    print(e)
 
     useful_event = d.get_useful_event(e)
 
