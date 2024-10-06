@@ -1,0 +1,6 @@
+xtick.labelsize: 14
+ytick.labelsize: 14
+xtick.major.size: 5
+ytick.major.size: 5
+axes.titlesize: 14
+axes.labelsize: 14
