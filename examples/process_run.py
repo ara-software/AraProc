@@ -25,10 +25,10 @@ args = parser.parse_args()
 args.is_simulation = bool(args.is_simulation)
 
 if args.is_simulation and (args.ped_file is not None):
-    raise KeyError(f"You cannot mix a simulation with a pedestal file")
+    raise KeyError("You cannot mix a simulation with a pedestal file")
 
 if (not args.is_simulation) and (args.ped_file is None):
-    raise KeyError(f"If you are analyzing data, you must provide a pedestal file")
+    raise KeyError("If you are analyzing data, you must provide a pedestal file")
 
 # set up input 
 d = dataset.AnalysisDataset(
