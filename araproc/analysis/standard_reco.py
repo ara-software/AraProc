@@ -80,11 +80,11 @@ class StandardReco:
         # each station has a slightly different distance for the cal pulser reco,
         # so look that up
         calpulser_r_library = {
-            1 : "40.00",
-            2 : "40.00",
-            3 : "40.00",
-            4 : "40.00",
-            5 : "40.00"
+            1 : "48.67",
+            2 : "42.86",
+            3 : "41.08",
+            4 : "52.60",
+            5 : "49.23"
         }
 
         self.num_channels = num_channels_library[station_id]
@@ -94,10 +94,12 @@ class StandardReco:
         self.rtc_wrapper = interf.RayTraceCorrelatorWrapper(self.station_id)
 
         # always add a "nearby" correlator for 41m away
-        dir_path = os.path.join("/data/user/brianclark/rt_tables",
+        dir_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
+                                "/PUBLIC/groups/arasoft/raytrace_timing_tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_50_radius_{calpulser_r_library[station_id]}_angle_1.00_solution_0.root"
                                 )
-        ref_path = os.path.join("/data/user/brianclark/rt_tables",
+        ref_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
+                                "/PUBLIC/groups/arasoft/raytrace_timing_tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_50_radius_{calpulser_r_library[station_id]}_angle_1.00_solution_1.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "nearby",
@@ -107,10 +109,12 @@ class StandardReco:
                 )
 
         # always add a "distant" correlator for 300m away
-        dir_path = os.path.join("/data/user/brianclark/rt_tables",
+        dir_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
+                                "/PUBLIC/groups/arasoft/raytrace_timing_tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_50_radius_300.00_angle_1.00_solution_0.root"
                                 )
-        ref_path = os.path.join("/data/user/brianclark/rt_tables",
+        ref_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
+                                "/PUBLIC/groups/arasoft/raytrace_timing_tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_50_radius_300.00_angle_1.00_solution_1.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "distant",
