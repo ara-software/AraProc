@@ -6,6 +6,7 @@ from array import array
 import araproc # noqa: F401
 from araproc.framework import dataset 
 from araproc.analysis import standard_reco as sr
+from araproc.analysis import snr
 
 parser = argparse.ArgumentParser()
 
@@ -43,11 +44,17 @@ f = ROOT.TFile( args.output_file,
                "RECREATE")
 tree = ROOT.TTree("results_tree", "results_tree")
 
-event_number = ctypes.c_int()
-tree.Branch("event_number", event_number, "event_number/I")
+# this shows you how to store an integer
+output_event_number = ctypes.c_int()
+tree.Branch("event_number", output_event_number, "event_number/I")
 
-reco_result_pulser_v = array( "d", [0]*3 )
-tree.Branch("reco_result_pulser_v", reco_result_pulser_v, "reco_result_pulser_v[3]/D")
+# this shows you how to store a double
+output_avg_snr = ctypes.c_double()
+tree.Branch("avg_snr", output_avg_snr, "avg_snr/D")
+
+# this shows you how to store an array
+output_reco_result_pulser_v = array( "d", [0]*3 )
+tree.Branch("reco_result_pulser_v", output_reco_result_pulser_v, "reco_result_pulser_v[3]/D")
 
 
 for e in range(0, 5, 1):
@@ -56,14 +63,16 @@ for e in range(0, 5, 1):
 
     useful_event = d.get_useful_event(e)
 
-    wave_bundle = d.get_waveforms(useful_event)
-    reco_results = reco.do_standard_reco(wave_bundle)
+    this_wave_bundle = d.get_waveforms(useful_event)
+    this_reco_results = reco.do_standard_reco(this_wave_bundle)
+    this_avg_snr = snr.get_avg_snr(this_wave_bundle)
 
     # stash the output results
-    event_number.value = e
-    reco_result_pulser_v[0] = reco_results["pulser_v"]["corr"]
-    reco_result_pulser_v[1] = reco_results["pulser_v"]["theta"]
-    reco_result_pulser_v[2] = reco_results["pulser_v"]["phi"]
+    output_event_number.value = useful_event.eventNumber
+    output_reco_result_pulser_v[0] = this_reco_results["pulser_v"]["corr"]
+    output_reco_result_pulser_v[1] = this_reco_results["pulser_v"]["theta"]
+    output_reco_result_pulser_v[2] = this_reco_results["pulser_v"]["phi"]
+    output_avg_snr.value = this_avg_snr
 
     tree.Fill()
 

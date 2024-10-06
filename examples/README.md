@@ -12,7 +12,7 @@ It should generate a panel of 16 waveforms and a skymap.
 ## Process Full Run
 
 The script that demonstrates how you might use the framework in mass processing
-is in `process_run.py`.
+is in `process_run.py`. You can run it like:
 
 ```
 python process_run.py \
