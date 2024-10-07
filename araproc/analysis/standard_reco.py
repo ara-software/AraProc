@@ -265,8 +265,8 @@ class StandardReco:
 
         # make a 300 m map in H
         distant_map_h = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v,
-            corr_functions_v,
+            self.pairs_h,
+            corr_functions_h,
             0
         )
         ROOT.SetOwnership(distant_map_h, True)
