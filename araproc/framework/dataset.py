@@ -497,7 +497,7 @@ class AnalysisDataset:
         self.__phase_spline = dd.load_arasim_phase_response_as_spline()
 
         # and the properties of the CW filter, and the bandpass filters
-        self.__cw_filters = cwf.get_filters(self.station_id)
+        self.__cw_filters = cwf.get_filters(self.station_id, self.config)
         self.__setup_bandpass_filters()
 
     def __setup_bandpass_filters(self):

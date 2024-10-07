@@ -6,7 +6,7 @@ import copy
 import importlib.resources as pkg_resources
 from . import data
 
-def get_filters(station_id):
+def get_filters(station_id, analysis_config):
 
     """
     Load the yaml file containing the filter settings for this station.
@@ -15,6 +15,8 @@ def get_filters(station_id):
     ----------
     station : int
         The station for which we want to load filter configurations.
+    config : int
+        The analysis config we want to load
 
     Returns
     -------
@@ -35,13 +37,13 @@ def get_filters(station_id):
     cw_filters = {}
 
     try:
-        this_station_filter_configs = file_content[f"station{station_id}"]
+        this_station_config = file_content[f"station{station_id}"][f"config{analysis_config}"]
     except:
-        logging.error(f"Could not find station {station_id} in the cw filter config file")
+        logging.error(f"Could not find station {station_id}, config {analysis_config} in the cw config file")
         raise
     
-    if this_station_filter_configs is not None:
-        for filter_name, config_settings in this_station_filter_configs.items():
+    if this_station_config["filters"] is not None:
+        for filter_name, config_settings in this_station_config["filters"].items():
             the_filter = ROOT.FFTtools.SineSubtract(3,
                                                    config_settings["min_power_ratio"],
                                                    False)

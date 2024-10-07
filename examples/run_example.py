@@ -21,8 +21,6 @@ d = dataset.AnalysisDataset(
 iter_start = 0
 iter_stop = 20700
 
-print(d.config)
-
 ################################################################
 ################################################################
 # uncomment this one to see some simulated events
