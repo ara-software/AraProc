@@ -29,7 +29,7 @@ def get_filters(station_id):
         raise KeyError(f"Station {station_id} is not supported")
 
     file = pkg_resources.open_text(data, 
-                                   "filter_configs.yaml")
+                                   "analysis_configs.yaml")
     file_content = yaml.safe_load(file)
 
     cw_filters = {}

@@ -48,8 +48,14 @@ class DataWrapper:
         station id from 1->5, 100 (only A1-A5 supported for now)
     num_events: int
         number of data events in the data ROOT file
+    raw_event_ptr : RawAtriStationEvent
+        a RawAtriStationEvent ptr from AraRoot
+    qual_cuts : AraQualCuts
+        An AraRoot AraQualCuts object
     calibrator: AraEventCalibrator
         the AraEventCalibrator that carries the appropriate pedestals for this run
+    config : int
+        The analysis config for this run, looked up from AraQualCuts
     """
 
     def __init__(self,
@@ -67,6 +73,7 @@ class DataWrapper:
         self.num_events = None
         self.calibrator = None
         self.raw_event_ptr = None
+        self.config = None
 
         if station_id not in [1, 2, 3, 4, 5]:
             raise Exception(f"Station id {station_id} is not supported")
@@ -79,6 +86,7 @@ class DataWrapper:
         self.__open_tfile_load_ttree()
         self.__establish_run_number() # set the run number
         self.num_events = self.event_tree.GetEntries()
+        self.__assign_config()
         self.__load_pedestal() # load the pedestals
 
     def __open_tfile_load_ttree(self):
@@ -155,6 +163,10 @@ class DataWrapper:
         except:
             logging.critical("Gettig the station id from the eventTree failed")
             raise
+
+    def __assign_config(self):
+        self.qual_cuts = ROOT.AraQualCuts.Instance()
+        self.config = self.qual_cuts.getLivetimeConfiguration(self.run_number, self.station_id)
 
     def __load_pedestal(self):
         try:
@@ -247,9 +259,11 @@ class SimWrapper:
         self.root_tfile = None
         self.event_tree = None
         self.sim_tree = None
+        self.sim_settings_tree = None
         self.run_number = -10 # this doesn't make sense for AraSim
         self.station_id = None
         self.num_events = None
+        self.config = None
         
         # AraSim specific stuff
         self.useful_event_ptr = None
@@ -264,6 +278,7 @@ class SimWrapper:
             self.path_to_data_file = path_to_data_file
         
         self.__open_tfile_load_ttree()
+        self.__assign_config()
         self.num_events = self.event_tree.GetEntries()
 
     def __open_tfile_load_ttree(self):
@@ -280,9 +295,10 @@ class SimWrapper:
         try:
             self.event_tree = self.root_tfile.Get("eventTree")
             self.sim_tree = self.root_tfile.Get("AraTree2")
-            logging.debug("Successfully got eventTree and AraTree2")
+            self.sim_settings_tree = self.root_tfile.Get("AraTree")
+            logging.debug("Successfully got eventTree, AraTree, AraTree2")
         except:
-            logging.critical("Loading the eventTree or AraTree2 failed")
+            logging.critical("Loading the eventTree, AraTree, or AraTree2 failed")
             self.root_tfile.Close() # close the file
             raise
 
@@ -297,15 +313,21 @@ class SimWrapper:
         self.useful_event_ptr = ROOT.UsefulAtriStationEvent()
         self.report_ptr = ROOT.Report()
         self.event_ptr = ROOT.Event()
+        self.settings_ptr = ROOT.Settings()
         try:
             self.event_tree.SetBranchAddress("UsefulAtriStationEvent",ROOT.AddressOf(self.useful_event_ptr))
             self.sim_tree.SetBranchAddress("report", ROOT.AddressOf(self.report_ptr))
             self.sim_tree.SetBranchAddress("event", ROOT.AddressOf(self.event_ptr))
-            logging.debug("Successfully assigned UsefulAtriStationEvent, report, and event branch")
+            self.sim_settings_tree.SetBranchAddress("settings", ROOT.AddressOf(self.settings_ptr))
+            logging.debug("Successfully assigned UsefulAtriStationEvent, report, event, and settings branch")
         except:
-            logging.critical("Assigning the useful_event_ptr, report_ptr, or event_ptr failed")
+            logging.critical("Assigning the useful_event_ptr, report_ptr, settings_ptr, or event_ptr failed")
             self.root_tfile.Close() # close the file
             raise
+
+    def __assign_config(self):
+        self.config = int(self.settings_ptr.DETECTOR_STATION_LIVETIME_CONFIG)
+
 
     def __check_event_idx_sanity(self, event_idx):
         if event_idx is None:
@@ -372,6 +394,7 @@ class SimWrapper:
         """
 
         self.__check_event_idx_sanity(event_idx)
+        print(self.sim_tree.GetEntries())
     
         try:
             self.sim_tree.GetEntry(event_idx)
@@ -468,6 +491,7 @@ class AnalysisDataset:
         self.run_number = self.__dataset_wrapper.run_number
         self.station_id = self.__dataset_wrapper.station_id
         self.num_events = self.__dataset_wrapper.num_events
+        self.config = self.__dataset_wrapper.config
 
         # establish the properties of the dedisperser
         self.__phase_spline = dd.load_arasim_phase_response_as_spline()
