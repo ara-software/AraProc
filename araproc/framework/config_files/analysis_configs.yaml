@@ -30,11 +30,11 @@ station3:
 
 station4:
   config1:
-    excluded_channels : []
+    excluded_channels : [3, 7, 11, 15] # always exclude string 4
     filters:
       filt1 : { min_freq : 0.400, max_freq : 0.420, min_power_ratio : 0.02 }
   config2:
-    excluded_channels : []
+    excluded_channels : [3, 7, 11, 15] # always exclude string 4
     filters:
       filt1 : { min_freq : 0.400, max_freq : 0.420, min_power_ratio : 0.02 }
 
