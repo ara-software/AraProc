@@ -21,9 +21,6 @@ d = dataset.AnalysisDataset(
 iter_start = 0
 iter_stop = 20700
 
-print(f"Config is {d.config}")
-excluded_channels = d.excluded_channels
-
 ################################################################
 ################################################################
 # uncomment this one to see some simulated events
@@ -53,10 +50,12 @@ excluded_channels = d.excluded_channels
 # iter_start = 20690
 # iter_stop = 20700
 
+print(f"Config is {d.config}")
+print(f"Excluded channels are {d.excluded_channels}")
 
 # instantiate the standard reconstruction methods
 reco = sr.StandardReco(d.station_id, 
-                       excluded_channels=excluded_channels)
+                       excluded_channels=d.excluded_channels)
 
 for e in range(iter_start, iter_stop, 1):
 
