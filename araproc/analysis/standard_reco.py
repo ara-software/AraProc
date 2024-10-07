@@ -15,11 +15,7 @@ class StandardReco:
     For this reason, it needs to know some details about each station.
     So, each station has an entry in a dictionary which specifies 
         - the number of channels (this should always be 16),
-        - a list of channels which should be exclued from the reconstruction
         - the distance of the cal pulser for that station
-    These values are likely config dependent, so we expect this function to change.
-    At some point, it may make sense to offload some of these into config files.
-    But let's grow as we go.
 
     This function sets up the properties (num channels, channel exclusions, etc.).
     Based on this information, it also calcultes the appropriate waveform pairs.
@@ -33,7 +29,7 @@ class StandardReco:
     ----------
     num_channels : int
         The number of channels in the station to be reeconstructed (should always be 16)
-    exclued_channels : array(int)
+    excluded_channels : array(int)
         The list of channels you want *exclued* from the interferometry
     station_id : int
         The id of the station you want to reco (only station 1-5 supported)
@@ -53,11 +49,18 @@ class StandardReco:
 
     def __init__(self,
                  station_id : int,
+                 excluded_channels = np.array([]) # by default no excluded channels
                  ):
+        
         if station_id not in [1, 2, 3, 4, 5]:
             raise KeyError(f"Station {station_id} is not supported")
         self.station_id = station_id
-        
+    
+        if not isinstance(excluded_channels, np.ndarray):
+            raise KeyError(f"Excluded channel list needs to be a 1D numpy array")
+        if excluded_channels.ndim != 1:
+            raise AttributeError(f"Excluded channels has the wrong number of dimensions -- should be 1D only")
+
         num_channels_library = {
             1 : 16,
             2 : 16,
@@ -66,16 +69,7 @@ class StandardReco:
             5 : 16
         }
 
-        excluded_channels_library = {
-            1 : np.array([], dtype=int),
-            2 : np.array([15], dtype=int),
-            3 : np.array([], dtype=int),
-            4 : np.array([3, 7, 11, 15], dtype=int), # string 4 is dead on A4
-            5 : np.array([], dtype=int),
-        }
-        excluded_channels = excluded_channels_library[self.station_id]
         excluded_channels_vec = ROOT.std.vector("int")(excluded_channels)
-
 
         # each station has a slightly different distance for the cal pulser reco,
         # so look that up
@@ -88,7 +82,6 @@ class StandardReco:
         }
 
         self.num_channels = num_channels_library[station_id]
-        self.excluded_channels = excluded_channels_library[station_id]
         self.station_id = station_id
 
         self.rtc_wrapper = interf.RayTraceCorrelatorWrapper(self.station_id)

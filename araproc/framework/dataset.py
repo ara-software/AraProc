@@ -5,10 +5,14 @@ import logging
 import numpy as np
 import os
 import ROOT
+import yaml
 
 from araproc.framework import waveform_utilities as wu
 from araproc.analysis import dedisperse as dd
 from araproc.analysis import cw_filter as cwf
+
+import importlib.resources as pkg_resources
+from . import config_files
 
 def file_is_safe(file_path):
     
@@ -21,6 +25,56 @@ def file_is_safe(file_path):
     
     return True
 
+def get_filters(station_id, analysis_config):
+
+    """
+    Load the yaml file containing the filter settings for this station.
+
+    Parameters
+    ----------
+    station : int
+        The station for which we want to load filter configurations.
+    config : int
+        The analysis config we want to load
+
+    Returns
+    -------
+    cw_filters : dictionary
+        A dictionary of filters.
+        The keys are filter names (e.g. "filt1").
+        The values are the FFTtools.sineSubtract filter objects, configured
+        to do the filtering.
+    """
+
+    if station_id not in [1, 2, 3, 4, 5]:
+        raise KeyError(f"Station {station_id} is not supported")
+
+    file = pkg_resources.open_text(config_files, 
+                                   "analysis_configs.yaml")
+    file_content = yaml.safe_load(file)
+
+    cw_filters = {}
+
+    try:
+        this_station_config = file_content[f"station{station_id}"][f"config{analysis_config}"]
+    except:
+        logging.error(f"Could not find station {station_id}, config {analysis_config} in the cw config file")
+        raise
+    
+    if this_station_config["filters"] is not None:
+        for filter_name, config_settings in this_station_config["filters"].items():
+            the_filter = ROOT.FFTtools.SineSubtract(3,
+                                                   config_settings["min_power_ratio"],
+                                                   False)
+            the_filter.setVerbose(False)
+            the_filter.setFreqLimits(config_settings["min_freq"], 
+                                    config_settings["max_freq"])
+            ROOT.SetOwnership(the_filter, True) # give python full ownership
+            cw_filters[filter_name] = the_filter
+
+    file.close()
+
+    return cw_filters
 
 class DataWrapper:
 
@@ -445,7 +499,8 @@ class AnalysisDataset:
         This allows this meta class to access either a SimWrapper or the DataWrapper
         behind the scenes, and the user doesn't have to worry about which is 
         which, except for getting the "is_simulation" flag right.
-
+    excluded_channels : array of ints
+        A list of the RF channels you want excluded from the analysis
     """
 
     def __init__(self, 
@@ -467,6 +522,7 @@ class AnalysisDataset:
         self.rf_channel_indices = None
         self.interp_tstep = None
         self.__dataset_wrapper = None
+        self.excluded_channels = None
 
         self.num_rf_channels = 16 # hard coded, but a variable
         self.rf_channel_indices = np.arange(0, self.num_rf_channels).tolist() # make indices
@@ -474,6 +530,7 @@ class AnalysisDataset:
         if (interp_tstep < 0) or not np.isfinite(interp_tstep):
             raise ValueError(f"Something is wrong with the requested interpolation time step: {interp_tstep}")
         self.interp_tstep = interp_tstep
+
         
         if not self.is_simulation:
             self.__dataset_wrapper = DataWrapper(path_to_data_file,
@@ -493,12 +550,30 @@ class AnalysisDataset:
         self.num_events = self.__dataset_wrapper.num_events
         self.config = self.__dataset_wrapper.config
 
+        self.__get_excluded_channels() # after we set the station ID and config
+
         # establish the properties of the dedisperser
         self.__phase_spline = dd.load_arasim_phase_response_as_spline()
 
         # and the properties of the CW filter, and the bandpass filters
-        self.__cw_filters = cwf.get_filters(self.station_id, self.config)
+        self.__cw_filters = get_filters(self.station_id, self.config)
         self.__setup_bandpass_filters()
+
+    def __get_excluded_channels(self):
+            
+        file = pkg_resources.open_text(config_files, 
+                                       "analysis_configs.yaml")
+        file_content = yaml.safe_load(file)
+        
+        try:
+            this_station_config = file_content[f"station{self.station_id}"][f"config{self.config}"]
+        except:
+            logging.error(f"Could not find station {self.station_id}, config {self.config} in the cw config file")
+            raise
+
+        self.excluded_channels = np.asarray(this_station_config["excluded_channels"])
+
+        file.close()
 
     def __setup_bandpass_filters(self):
             

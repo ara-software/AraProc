@@ -3,60 +3,6 @@ import ROOT
 import yaml
 import copy
 
-import importlib.resources as pkg_resources
-from . import data
-
-def get_filters(station_id, analysis_config):
-
-    """
-    Load the yaml file containing the filter settings for this station.
-
-    Parameters
-    ----------
-    station : int
-        The station for which we want to load filter configurations.
-    config : int
-        The analysis config we want to load
-
-    Returns
-    -------
-    cw_filters : dictionary
-        A dictionary of filters.
-        The keys are filter names (e.g. "filt1").
-        The values are the FFTtools.sineSubtract filter objects, configured
-        to do the filtering.
-    """
-
-    if station_id not in [1, 2, 3, 4, 5]:
-        raise KeyError(f"Station {station_id} is not supported")
-
-    file = pkg_resources.open_text(data, 
-                                   "analysis_configs.yaml")
-    file_content = yaml.safe_load(file)
-
-    cw_filters = {}
-
-    try:
-        this_station_config = file_content[f"station{station_id}"][f"config{analysis_config}"]
-    except:
-        logging.error(f"Could not find station {station_id}, config {analysis_config} in the cw config file")
-        raise
-    
-    if this_station_config["filters"] is not None:
-        for filter_name, config_settings in this_station_config["filters"].items():
-            the_filter = ROOT.FFTtools.SineSubtract(3,
-                                                   config_settings["min_power_ratio"],
-                                                   False)
-            the_filter.setVerbose(False)
-            the_filter.setFreqLimits(config_settings["min_freq"], 
-                                    config_settings["max_freq"])
-            ROOT.SetOwnership(the_filter, True) # give python full ownership
-            cw_filters[filter_name] = the_filter
-
-    file.close()
-
-    return cw_filters
-
 def apply_filters_one_channel(cw_filters, waveform_in):
     """
     Apply CW filters to a single waveform.
@@ -70,7 +16,6 @@ def apply_filters_one_channel(cw_filters, waveform_in):
         A dictionary of sine subtract filters to be applied.
         Key is a string, and is the name of the filter from the config file.
         Value is the sine subtract filter to applied.
-        This is normally the output of `cw_filter.get_filters`.
     waveform_in : ROOT.TGraph
         A single waveform to be filtered.
     
@@ -103,7 +48,6 @@ def apply_filters(cw_filters, waveform_bundle):
         A dictionary of sine subtract filters to be applied.
         Key is a string, and is the name of the filter from the config file.
         Value is the sine subtract filter to applied.
-        This is normally the output of `cw_filter.get_filters`.
     waveform_bundle : dictionary
         A dictionary of waveforms to be processed.
         Key is channel id.

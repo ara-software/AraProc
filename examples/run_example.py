@@ -21,6 +21,9 @@ d = dataset.AnalysisDataset(
 iter_start = 0
 iter_stop = 20700
 
+print(f"Config is {d.config}")
+excluded_channels = d.excluded_channels
+
 ################################################################
 ################################################################
 # uncomment this one to see some simulated events
@@ -52,50 +55,49 @@ iter_stop = 20700
 
 
 # instantiate the standard reconstruction methods
-# reco = sr.StandardReco(d.station_id)
+reco = sr.StandardReco(d.station_id, 
+                       excluded_channels=excluded_channels)
 
-# for e in range(iter_start, iter_stop, 1):
+for e in range(iter_start, iter_stop, 1):
 
-#     useful_event = d.get_useful_event(e)
+    useful_event = d.get_useful_event(e)
     
-#     if d.is_simulation:
-#         # if and only the dataset is simulation, we can ask for access
-#         # to some of the MC truth information 
-#         sim_info = d.get_event_sim_info(e)
-#         print(f"This event has weight {sim_info['weight']:.1e}, Energy {sim_info['enu']:.1e}")
+    if d.is_simulation:
+        # if and only the dataset is simulation, we can ask for access
+        # to some of the MC truth information 
+        sim_info = d.get_event_sim_info(e)
+        print(f"This event has weight {sim_info['weight']:.1e}, Energy {sim_info['enu']:.1e}")
 
-    # process_event = False
-    # if d.is_simulation:
-    #     # for simulated events, I'm willing to plot everything
-    #     process_event = True
-    # else:
-    #     # but in the other case, I'd like to showcase either the CW contaminated event for A2
-    #     # or just cal pulsers for A5
-    #     station2_case = (d.station_id==2) and (useful_event.eventNumber == 213179)
-    #     station5_case = (d.station_id==5) and (useful_event.isCalpulserEvent())
-    #     process_event = station2_case or station5_case
+    process_event = False
+    if d.is_simulation:
+        # for simulated events, I'm willing to plot everything
+        process_event = True
+    else:
+        # but in the other case, I'd like to showcase either the CW contaminated event for A2
+        # or just cal pulsers for A5
+        station2_case = (d.station_id==2) and (useful_event.eventNumber == 213179)
+        station5_case = (d.station_id==5) and (useful_event.isCalpulserEvent())
+        process_event = station2_case or station5_case
 
-    # if process_event:
+    if process_event:
       
-    #     # by default, you get all the bells and whistles
-    #     # (interpolated, dedispersed, cw filtered, and bandpassed)
-    #     wave_bundle = d.get_waveforms(useful_event)
+        # by default, you get all the bells and whistles
+        # (interpolated, dedispersed, cw filtered, and bandpassed)
+        wave_bundle = d.get_waveforms(useful_event)
 
-    #     print(f"Config is {d.config}")
-
-    #     # print the average snr across channels 
-    #     print(snr.get_avg_snr(wave_bundle))      
+        # print the average snr across channels 
+        print(snr.get_avg_snr(wave_bundle))      
  
-    #     # run our standard suite of reconstructions
-    #     reco_results = reco.do_standard_reco(wave_bundle)
+        # run our standard suite of reconstructions
+        reco_results = reco.do_standard_reco(wave_bundle)
 
-    #     # plot the waveforms
-    #     dv.plot_waveform_bundle(wave_bundle, 
-    #                 time_or_freq="time",
-    #                 ouput_file_path=f"./station_{d.station_id}_run_{d.run_number}_event_{e}_waves.png",
-    #                 )
+        # plot the waveforms
+        dv.plot_waveform_bundle(wave_bundle, 
+                    time_or_freq="time",
+                    ouput_file_path=f"./station_{d.station_id}_run_{d.run_number}_event_{e}_waves.png",
+                    )
         
-    #     # and also plot one of the skymaps (in this case, the vpol map the distance of the pulser)
-    #     dv.plot_skymap(reco_results["pulser_v"]["map"],
-    #                    ouput_file_path=f"./station_{d.station_id}_run_{d.run_number}_event_{e}_map.png",
-    #                    )
+        # and also plot one of the skymaps (in this case, the vpol map the distance of the pulser)
+        dv.plot_skymap(reco_results["pulser_v"]["map"],
+                       ouput_file_path=f"./station_{d.station_id}_run_{d.run_number}_event_{e}_map.png",
+                       )
