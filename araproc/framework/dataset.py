@@ -323,6 +323,7 @@ class SimWrapper:
         self.useful_event_ptr = None
         self.report_ptr = None
         self.event_ptr = None
+        self.settings_ptr = None
 
         if station_id not in [1, 2, 3, 4, 5]:
             raise Exception(f"Station id {station_id} is not supported")
@@ -380,8 +381,15 @@ class SimWrapper:
             raise
 
     def __assign_config(self):
+        # The only way I seem to be able to reliable get at this variable is to pull it via "Scan".
+        # For whatever reason, self.sim_settings_tree.GetEntry(0) makes it mad.
+        # In order to suppress the print to the screen called by "Scan", 
+        # we temporariliy redirect that ouput to /dev/null.
+        # Sorry to be so convoluted...
+        ROOT.gSystem.RedirectOutput("/dev/null");
+        self.sim_settings_tree.Scan("DETECTOR_STATION_LIVETIME_CONFIG")
         self.config = int(self.settings_ptr.DETECTOR_STATION_LIVETIME_CONFIG)
-
+        ROOT.gSystem.RedirectOutput(0,0);
 
     def __check_event_idx_sanity(self, event_idx):
         if event_idx is None:
