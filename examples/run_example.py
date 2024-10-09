@@ -13,6 +13,7 @@ logging.getLogger().setLevel(logging.INFO)
 ################################################################
 ################################################################
 
+"""
 d = dataset.AnalysisDataset(
     station_id=5,
     path_to_data_file="/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/event005626.root",
@@ -20,6 +21,7 @@ d = dataset.AnalysisDataset(
 )
 iter_start = 0
 iter_stop = 20700
+"""
 
 ################################################################
 ################################################################
@@ -27,13 +29,14 @@ iter_stop = 20700
 ################################################################
 ################################################################
 
-# d = dataset.AnalysisDataset(
-#     station_id = 4,
-#     path_to_data_file="/data/ana/ARA/ARA04/sim_signal_and_noise_updated_121523/AraOut.setup_A4_C2.txt.run20.root",
-#     is_simulation=True
-# )
-# iter_start = 0
-# iter_stop = d.num_events
+d = dataset.AnalysisDataset(
+     station_id = 4,
+     #path_to_data_file="/data/ana/ARA/ARA04/sim_signal_and_noise_updated_121523/AraOut.setup_A4_C2.txt.run20.root",
+     path_to_data_file="/data/user/alansalgo/simulationsFiveStations/ARA04/simulations/batch_run_A4_signal/data_analysis/AraOut.setup_A4_C1.txt.run0.root",
+     is_simulation=True
+ )
+iter_start = 0
+iter_stop = d.num_events
 
 ################################################################
 ################################################################
