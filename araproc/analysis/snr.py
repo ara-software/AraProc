@@ -97,7 +97,7 @@ def get_snr(waveform):
 
     return snr
 
-def get_avg_snr(wave_bundle, chans=None):
+def get_avg_snr(wave_bundle, excluded_channels=[]):
 
     """
     Calculates channel-wise averaged SNR.
@@ -115,11 +115,13 @@ def get_avg_snr(wave_bundle, chans=None):
         The average SNR.
     """
 
-    if(chans is None):
-      chans = list(wave_bundle.keys())
+    chans = list(wave_bundle.keys())
 
     avg_snr = []
     for chan in chans:
+      if(chan in excluded_channels):
+        continue
+
       waveform = wave_bundle[chan]
       snr = get_snr(waveform)
       avg_snr.append(snr)
