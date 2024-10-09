@@ -212,14 +212,13 @@ class StandardReco:
                                                                     self.pairs_h,
                                                                     waveform_map
                                                                     )
+        
         # check the cal pulser in V
         pulser_map_v = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
             self.pairs_v,
             corr_functions_v,
             0
         )
-        ROOT.SetOwnership(pulser_map_v, True)
-
         corr_pulser_v, phi_pulser_v, theta_pulser_v = mu.get_corr_map_peak(pulser_map_v)
         reco_results["pulser_v"] = {"corr" : corr_pulser_v, 
                                     "theta" : theta_pulser_v,
@@ -227,20 +226,18 @@ class StandardReco:
                                     "map" : pulser_map_v
                                     }
 
-        # check the cal pulser in H
-        pulser_map_h = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
-            self.pairs_h,
-            corr_functions_h,
-            0
-        )
-        ROOT.SetOwnership(pulser_map_h, True)
-
-        corr_pulser_h, phi_pulser_h, theta_pulser_h = mu.get_corr_map_peak(pulser_map_h)
-        reco_results["pulser_h"] = {"corr" : corr_pulser_h, 
-                                    "theta" : theta_pulser_h,
-                                    "phi" : phi_pulser_h,
-                                    "map" : pulser_map_h
-                                    }
+        # # check the cal pulser in H
+        # pulser_map_h = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
+        #     self.pairs_h,
+        #     corr_functions_h,
+        #     0
+        # )
+        # corr_pulser_h, phi_pulser_h, theta_pulser_h = mu.get_corr_map_peak(pulser_map_h)
+        # reco_results["pulser_h"] = {"corr" : corr_pulser_h, 
+        #                             "theta" : theta_pulser_h,
+        #                             "phi" : phi_pulser_h,
+        #                             "map" : pulser_map_h
+        #                             }
 
         # make a 300 m map in V
         distant_map_v = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
@@ -248,7 +245,6 @@ class StandardReco:
             corr_functions_v,
             0
         )
-        ROOT.SetOwnership(distant_map_v, True)
         corr_distant_v, phi_distant_v, theta_distant_v = mu.get_corr_map_peak(distant_map_v)
         reco_results["distant_v"] = {"corr" : corr_distant_v, 
                                     "theta" : theta_distant_v,
@@ -262,7 +258,6 @@ class StandardReco:
             corr_functions_h,
             0
         )
-        ROOT.SetOwnership(distant_map_h, True)
         corr_distant_h, phi_distant_h, theta_distant_h = mu.get_corr_map_peak(distant_map_h)
         reco_results["distant_h"] = {"corr" : corr_distant_h, 
                                     "theta" : theta_distant_h,
@@ -270,17 +265,5 @@ class StandardReco:
                                     "map" : distant_map_h
                                     }
 
-        # It's really important to pass memory ownership of the correlation
-        # function map back to python only AFTER we are completely done using them.
-        # Otherwise this memory leaks, for reasons I don't totally understand.
-        ROOT.SetOwnership(corr_functions_v, True)
-        ROOT.SetOwnership(corr_functions_h, True)
-        for c in corr_functions_v:
-            ROOT.SetOwnership(c, True)
-        for c in corr_functions_h:
-            ROOT.SetOwnership(c, True)
-
-        del corr_functions_v
-        del corr_functions_h
         del waveform_map
         return reco_results
