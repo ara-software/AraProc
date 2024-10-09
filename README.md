@@ -47,14 +47,21 @@ The latter actually turns on your venv.
 
 ### Dependencies
 
-AraProc dependsd heavily on the entire ARA software stack, including AraRoot.
-This means that any dependency of AraRoot is a dependency of AraProc.
-See [the AraRoot documentation](https://github.com/ara-software/AraRoot).
+AraProc dependsd heavily on the entire ARA software stack, including AraRoot and AraSim.
+This means that any dependency of AraRoot and AraSim is a dependency of AraProc.
+See [the AraRoot](https://github.com/ara-software/AraRoot) and [the AraSim](https://github.com/ara-software/AraSim) documenetation.
 As a result, you are strongly encouraged to either use the ARA cvmfs installation,
 or to you use the ARA cvmfs builder scripts in a local directory,
 in order to get AraProc installed.
 See above for more words on installation.
 
+### Environment Variables
+
+Because AraRoot has such strong dependencies on AraRoot and AraSim, the first thing the module does upon initialization
+is check that the correct library files are available. These are the lines found in `araproc.__init__.py`.
+By default it looks for AraRoot and AraSim in `$ARA_UTIL_INSTALL_DIR`, and for FFTTools in `$ARA_DEPS_INSTALL_DIR`.
+If you have installed AraRoot, AraSim, etc. into non-standard locations, then you will need to update those paths.
+**Please do not ignore error messages about being unable to find those libraries!!**
 
 ### Some Warnings
 
