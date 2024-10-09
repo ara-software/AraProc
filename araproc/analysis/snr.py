@@ -106,9 +106,8 @@ def get_avg_snr(wave_bundle, chans=None):
     ----------
     wave_bundle: dict of TGraphs
         Dictionary of waveform TGraphs to be averaged.
-    chans: list
-        List of dictionary keys to average over. If None,
-        averages over all keys in dictionary.
+    excluded_channels: list
+        List of dictionary keys to exclude from average.
 
     Returns
     -------
