@@ -285,10 +285,10 @@ class StandardReco:
             The RF channel (0->16) about which you want information
         theta : float
             The theta value, in standard AraRoot RayTraceCorrelator interferometric coordinates, 
-            meaning theat [-90 -> 90, 0 = horizontal],  of the sky point you want looked up.
+            meaning theta [-90 -> 90, 0 = horizontal],  of the sky point you want looked up.
         phi : float
             The phi value, in standard AraRoot RayTraceCorrelator interferometric coordinates, 
-            meaning theat [-180 -> 180],  of the sky point you want looked up.
+            meaning phi [-180 -> 180],  of the sky point you want looked up.
         which_distance : str
             Because this is our standard reco set, you can choose between "nearby" (at the cal pulser distance),
             or "distant" (at 300 m).
