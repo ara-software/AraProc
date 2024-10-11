@@ -39,6 +39,6 @@ except: # noqa: E722
 if success_flag_libFFT not in [0, 1]:
     raise ImportError("Failed to load libRootFftwWrapper.so")
 
-success_flag_FFTinclude = ROOT.gInterpreter.Declare(f'#include "s{os.environ.get("ARA_DEPS_INSTALL_DIR")}/include/FFTtools.h"')
+success_flag_FFTinclude = ROOT.gInterpreter.Declare(f'#include "{os.environ.get("ARA_DEPS_INSTALL_DIR")}/include/FFTtools.h"')
 if not success_flag_FFTinclude:
     raise ImportError("Including FFTtools.h failed. Stop all work!")
