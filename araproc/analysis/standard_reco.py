@@ -1,3 +1,4 @@
+import ctypes
 import numpy as np
 import os
 import ROOT
@@ -91,7 +92,6 @@ class StandardReco:
                                 "PUBLIC/groups/arasoft/raytrace_timing_tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{calpulser_r_library[station_id]}_angle_1.00_solution_0.root"
                                 )
-        print(f"The dir path is {dir_path}")
         ref_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
                                 "PUBLIC/groups/arasoft/raytrace_timing_tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{calpulser_r_library[station_id]}_angle_1.00_solution_1.root"
@@ -267,3 +267,66 @@ class StandardReco:
 
         del waveform_map
         return reco_results
+
+    def lookup_arrival_time(self, 
+                            channel : int, 
+                            theta : float,
+                            phi : float,
+                            which_distance : str = "distant",
+                            solution : int = 0
+                            ):
+        
+        """
+        A function to lookup the arrival times at a given antenna
+
+        Parameters
+        ----------
+        channel : int
+            The RF channel (0->16) about which you want information
+        theta : float
+            The theta value, in standard AraRoot RayTraceCorrelator interferometric coordinates, 
+            meaning theat [-90 -> 90, 0 = horizontal],  of the sky point you want looked up.
+        phi : float
+            The phi value, in standard AraRoot RayTraceCorrelator interferometric coordinates, 
+            meaning theat [-180 -> 180],  of the sky point you want looked up.
+        which_distance : str
+            Because this is our standard reco set, you can choose between "nearby" (at the cal pulser distance),
+            or "distant" (at 300 m).
+        solution : int
+            Which solution do you want. 0 = direct, 1 = reflected/refracted.
+        
+
+        Returns
+        -------
+        arrival_time : float
+            The arrival time at the antenna in nanoseconds, 
+            assuming t=0 is when the ray leaves the vertex point of (theta, phi, R).
+            This should be a positive number. A large negative number, e.g. -1000,
+            indicates that no solution was found for that point on the sky.
+        """
+
+        if (channel < 0) or (not np.isfinite(channel)) or (channel > self.num_channels):
+            raise ValueError(f"Channel number {channel} is not a valid request. Abort! ")
+    
+        if (abs(theta)>90) or (not np.isfinite(theta)):
+            raise ValueError(f"Theta value requested ({theta}) is not physical. Make sure your number is in degrees, from -90 to 90")
+        
+        if (abs(phi)>180) or (not np.isfinite(phi)):
+            raise ValueError(f"Phi value requested ({phi}) is not physical. Make sure your number is in degrees, from -180 to 180")
+        
+        if which_distance not in self.rtc_wrapper.correlators.keys():
+            raise ValueError(f"Distance value requested ({which_distance}) is not loaded.")
+        
+        if solution not in [0, 1]:
+            raise ValueError(f"Solution requested requested ({solution}) is not loaded.")
+
+        theta_bin = ctypes.c_int()
+        phi_bin = ctypes.c_int()
+        self.rtc_wrapper.correlators[which_distance].ConvertAngleToBins(theta, phi,
+                                                                        theta_bin, phi_bin)
+        arrival_time = self.rtc_wrapper.correlators[which_distance].LookupArrivalTimes(channel,
+                                                                                       solution,
+                                                                                       theta_bin.value,
+                                                                                       phi_bin.value
+                                                                                       )
+        return arrival_time
