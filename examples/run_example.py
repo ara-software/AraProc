@@ -95,7 +95,7 @@ for e in range(iter_start, iter_stop, 1):
         arrival_time = reco.lookup_arrival_time(channel = 0, 
                                                 theta = reco_results["pulser_v"]["theta"], 
                                                 phi = reco_results["pulser_v"]["phi"],
-                                                which_distance="distant",
+                                                which_distance="nearby",
                                                 solution=0,
                                                 )
         print(f"Arrival time at ch 0 is {arrival_time:.1f} ns")
