@@ -23,7 +23,6 @@ def get_corr_map_peak(the_map  = None):
         if the_map is None:
             raise Exception("No TH2D map was passed")
     
-        # peakZ, peakTheta, peakPhi = None
         _peakZ = ctypes.c_int()
         _peakTheta = ctypes.c_int()
         _peakPhi = ctypes.c_int()
