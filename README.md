@@ -12,8 +12,8 @@ The easiest way to do this is to grab the ARA software stack from cvmfs.
 You can also build your own via the [cvmfs scripts](https://github.com/ara-software/cvmfs).
 
 You are also strongly encouraged to install it in "editable"
-mode so that you can make changes to the analysis classes,
-which you are very likely to do.
+mode so that you can easily make changes to the analysis classes,
+which you very likely want to do.
 
 The instructions below show you the steps to the recommended installation method.
 
