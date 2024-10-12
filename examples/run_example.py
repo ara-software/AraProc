@@ -85,10 +85,20 @@ for e in range(iter_start, iter_stop, 1):
         wave_bundle = d.get_waveforms(useful_event)
 
         # print the average snr across channels 
-        print(snr.get_avg_snr(wave_bundle))      
+        avg_snr = snr.get_avg_snr(wave_bundle, excluded_channels=d.excluded_channels)
+        print(f"The Average SNR is {avg_snr:.1f}")
  
         # run our standard suite of reconstructions
         reco_results = reco.do_standard_reco(wave_bundle)
+
+        # here's how we can lookup arrival times given a reconstructed direction
+        arrival_time = reco.lookup_arrival_time(channel = 0, 
+                                                theta = reco_results["pulser_v"]["theta"], 
+                                                phi = reco_results["pulser_v"]["phi"],
+                                                which_distance="nearby",
+                                                solution=0,
+                                                )
+        print(f"Arrival time at ch 0 is {arrival_time:.1f} ns")
 
         # plot the waveforms
         dv.plot_waveform_bundle(wave_bundle, 
