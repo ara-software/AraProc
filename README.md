@@ -9,7 +9,7 @@ To get started, see the example in the `examples` folder.
 You are **strongly encouraged** to install AraProc into a 
 python virtual environment built on an already existing ARA software stack.
 The easiest way to do this is to grab the ARA software stack from cvmfs.
-You can also build your own via the cvmfs scripts (https://github.com/ara-software/cvmfs).
+You can also build your own via the [cvmfs scripts](https://github.com/ara-software/cvmfs).
 
 You are also strongly encouraged to install it in "editable"
 mode so that you can make changes to the analysis classes,
@@ -57,7 +57,7 @@ See above for more words on installation.
 
 ### Environment Variables
 
-Because AraRoot has such strong dependencies on AraRoot and AraSim, the first thing the module does upon initialization
+Because AraProc has such strong dependencies on AraRoot and AraSim, the first thing the module does upon initialization
 is check that the correct library files are available. These are the lines found in `araproc.__init__.py`.
 By default it looks for AraRoot and AraSim in `$ARA_UTIL_INSTALL_DIR`, and for FFTTools in `$ARA_DEPS_INSTALL_DIR`.
 If you have installed AraRoot, AraSim, etc. into non-standard locations, then you will need to update those paths.
