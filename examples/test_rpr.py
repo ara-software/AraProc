@@ -38,34 +38,19 @@ run_number = d.run_number
 num_evts = d.num_events
 
 # Setup output arrays
-save_snr = np.full((16, num_evts), np.nan, dtype=float)
-save_rpr = np.full((16, num_evts), np.nan, dtype=float)  # New array to store rpr with same shape as snr
-
+save_rpr = np.full((16, num_evts), np.nan, dtype=float)
+save_av_rpr = np.full(( num_evts), np.nan, dtype=float)
 # Process first 5 events
-for e in tq(range(num_evts)):
+for e in tq(range(5)):
     print(f'Processing event {e}')
     useful_event = d.get_useful_event(e)
     this_wave_bundle = d.get_waveforms(useful_event)
-    #print(useful_event)
-    chans = None
-    chans = list(this_wave_bundle.keys())
-    for ch in chans:
-        # Store the snr value for this channel and event
-        save_snr[ch, e] = snr.get_snr(this_wave_bundle[ch])
+    rpr_arr ,average_rpr = rpr.get_avg_rpr(this_wave_bundle,individual_antenna = True)
+    save_rpr[:,e] = rpr_arr
+    save_av_rpr[e] = average_rpr
 
-        time, trace = wfu.tgraph_to_arrays(this_wave_bundle[ch])
-        # Call the RPRCalculator for each channel
-        rpr_calc = rpr.RPRCalculator()
-        rpr_calc.run_rpr_calculation(trace, time, pad_num = len(trace))
-        # Store the rpr value for this channel and event
-        save_rpr[ch, e] = np.nanmax(rpr_calc.rpr_arr)  # Example: save the max RPR value, modify as needed
-        print(save_rpr[ch, e])
-        del time,trace
 # Save results to HDF5 file
-print('plotting ')
-file_name = f'/data/ana/ARA/ARA0{args.station}/scratch/snr2_A{args.station}_run{run_number}.h5'
-print('defined file',file_name)
+file_name = f'/data/ana/ARA/ARA0{args.station}/scratch/rpr2_A{args.station}_run{run_number}.h5'
 with h5py.File(file_name, 'w') as hf:
-    hf.create_dataset('snr', data=save_snr, compression="gzip", compression_opts=9)
-    hf.create_dataset('rpr', data=save_rpr, compression="gzip", compression_opts=9)
-
+    hf.create_dataset('per_channel_rpr', data=save_rpr, compression="gzip", compression_opts=9)
+    hf.create_dataset('av_rpr', data=save_av_rpr, compression="gzip", compression_opts=9)
