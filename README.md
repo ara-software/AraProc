@@ -9,11 +9,11 @@ To get started, see the example in the `examples` folder.
 You are **strongly encouraged** to install AraProc into a 
 python virtual environment built on an already existing ARA software stack.
 The easiest way to do this is to grab the ARA software stack from cvmfs.
-You can also build your own via the cvmfs scripts (https://github.com/ara-software/cvmfs).
+You can also build your own via the [cvmfs scripts](https://github.com/ara-software/cvmfs).
 
 You are also strongly encouraged to install it in "editable"
-mode so that you can make changes to the analysis classes,
-which you are very likely to do.
+mode so that you can easily make changes to the analysis classes,
+which you very likely want to do.
 
 The instructions below show you the steps to the recommended installation method.
 
@@ -47,14 +47,21 @@ The latter actually turns on your venv.
 
 ### Dependencies
 
-AraProc dependsd heavily on the entire ARA software stack, including AraRoot.
-This means that any dependency of AraRoot is a dependency of AraProc.
-See [the AraRoot documentation](https://github.com/ara-software/AraRoot).
+AraProc dependsd heavily on the entire ARA software stack, including AraRoot and AraSim.
+This means that any dependency of AraRoot and AraSim is a dependency of AraProc.
+See [the AraRoot](https://github.com/ara-software/AraRoot) and [the AraSim](https://github.com/ara-software/AraSim) documenetation.
 As a result, you are strongly encouraged to either use the ARA cvmfs installation,
 or to you use the ARA cvmfs builder scripts in a local directory,
 in order to get AraProc installed.
 See above for more words on installation.
 
+### Environment Variables
+
+Because AraProc has such strong dependencies on AraRoot and AraSim, the first thing the module does upon initialization
+is check that the correct library files are available. These are the lines found in `araproc.__init__.py`.
+By default it looks for AraRoot and AraSim in `$ARA_UTIL_INSTALL_DIR`, and for FFTTools in `$ARA_DEPS_INSTALL_DIR`.
+If you have installed AraRoot, AraSim, etc. into non-standard locations, then you will need to update those paths.
+**Please do not ignore error messages about being unable to find those libraries!!**
 
 ### Some Warnings
 
