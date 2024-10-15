@@ -74,12 +74,17 @@ class StandardReco:
 
         # each station has a slightly different distance for the cal pulser reco,
         # so look that up
-        calpulser_r_library = {
+        self.calpulser_r_library = {
             1 : "48.02",
             2 : "42.86",
             3 : "41.08",
             4 : "52.60",
             5 : "49.23"
+        }
+
+        # for distant events, we use the same radius
+        self.distant_events_r_library = {
+            1 : "300",
         }
 
         self.num_channels = num_channels_library[station_id]
@@ -90,14 +95,14 @@ class StandardReco:
         # always add a "nearby" correlator for 41m away
         dir_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
                                 "PUBLIC/groups/arasoft/raytrace_timing_tables",
-                                f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{calpulser_r_library[station_id]}_angle_1.00_solution_0.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{self.calpulser_r_library[station_id]}_angle_1.00_solution_0.root"
                                 )
         ref_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
                                 "PUBLIC/groups/arasoft/raytrace_timing_tables",
-                                f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{calpulser_r_library[station_id]}_angle_1.00_solution_1.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{self.calpulser_r_library[station_id]}_angle_1.00_solution_1.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "nearby",
-                radius=float(calpulser_r_library[station_id]),
+                radius=float(self.calpulser_r_library[station_id]),
                 path_to_dir_file=dir_path,
                 path_to_ref_file=ref_path
                 )
@@ -112,7 +117,7 @@ class StandardReco:
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_300.00_angle_1.00_solution_1.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "distant",
-                radius=300,
+                radius=float(self.distant_events_r_library[1]),
                 path_to_dir_file=dir_path,
                 path_to_ref_file=ref_path
                 )
@@ -223,7 +228,8 @@ class StandardReco:
         reco_results["pulser_v"] = {"corr" : corr_pulser_v, 
                                     "theta" : theta_pulser_v,
                                     "phi" : phi_pulser_v,
-                                    "map" : pulser_map_v
+                                    "map" : pulser_map_v,
+                                    "radius" : self.calpulser_r_library[self.station_id]
                                     }
 
         # # check the cal pulser in H
@@ -236,7 +242,8 @@ class StandardReco:
         # reco_results["pulser_h"] = {"corr" : corr_pulser_h, 
         #                             "theta" : theta_pulser_h,
         #                             "phi" : phi_pulser_h,
-        #                             "map" : pulser_map_h
+        #                             "map" : pulser_map_h,
+        #                             "radius" : self.calpulser_r_library[self.station_id]
         #                             }
 
         # make a 300 m map in V
@@ -249,7 +256,8 @@ class StandardReco:
         reco_results["distant_v"] = {"corr" : corr_distant_v, 
                                     "theta" : theta_distant_v,
                                     "phi" : phi_distant_v,
-                                    "map" : distant_map_v
+                                    "map" : distant_map_v,
+                                    "radius" : self.distant_events_r_library[1]
                                     }
 
         # make a 300 m map in H
@@ -262,7 +270,8 @@ class StandardReco:
         reco_results["distant_h"] = {"corr" : corr_distant_h, 
                                     "theta" : theta_distant_h,
                                     "phi" : phi_distant_h,
-                                    "map" : distant_map_h
+                                    "map" : distant_map_h,
+                                    "radius" : self.distant_events_r_library[1]
                                     }
 
         del waveform_map
