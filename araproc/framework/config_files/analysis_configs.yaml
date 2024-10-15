@@ -2,11 +2,17 @@ station1:
   config1:
     excluded_channels : []
     filters:
-      filt1 : { min_freq : 0.400, max_freq : 0.420, min_power_ratio : 0.02 }
+      filt1 : { min_freq : 0.122, max_freq : 0.126, min_power_ratio : 0.02 }
+      filt2 : { min_freq : 0.223, max_freq : 0.227, min_power_ratio : 0.02 }
+      filt3 : { min_freq : 0.396, max_freq : 0.410, min_power_ratio : 0.02 }
+      filt4 : { min_freq : 0.570, max_freq : 0.580, min_power_ratio : 0.02 }
   config2:
     excluded_channels : []
     filters:
-      filt1 : { min_freq : 0.400, max_freq : 0.420, min_power_ratio : 0.02 }
+      filt1 : { min_freq : 0.122, max_freq : 0.126, min_power_ratio : 0.02 }
+      filt2 : { min_freq : 0.223, max_freq : 0.227, min_power_ratio : 0.02 }
+      filt3 : { min_freq : 0.396, max_freq : 0.410, min_power_ratio : 0.02 }
+      filt4 : { min_freq : 0.570, max_freq : 0.580, min_power_ratio : 0.02 }
 
 station2:
   config1:
