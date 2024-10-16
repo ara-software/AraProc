@@ -11,7 +11,7 @@ def get_vpp(waveform):
     Parameters
     ----------
     waveform: TGraph or np.ndarray
-        A TGraphi or np.ndarray of the waveform voltage.
+        A TGraph or np.ndarray of the waveform voltage.
 
     Returns
     -------
