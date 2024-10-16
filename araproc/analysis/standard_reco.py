@@ -230,7 +230,7 @@ class StandardReco:
                                     "theta" : theta_pulser_v,
                                     "phi" : phi_pulser_v,
                                     "map" : pulser_map_v,
-                                    "radius" : self.calpulser_r_library[self.station_id]
+                                    "radius" : self.rtc_wrapper.correlators["nearby"].GetRadius()
                                     }
 
         # # check the cal pulser in H
@@ -244,7 +244,7 @@ class StandardReco:
         #                             "theta" : theta_pulser_h,
         #                             "phi" : phi_pulser_h,
         #                             "map" : pulser_map_h,
-        #                             "radius" : self.calpulser_r_library[self.station_id]
+        #                             "radius" : self.rtc_wrapper.correlators["nearby"].GetRadius()
         #                             }
 
         # make a 300 m map in V (Direct rays)
@@ -271,7 +271,7 @@ class StandardReco:
             "theta": theta_distant_v_dir,
             "phi": phi_distant_v_dir,
             "map": distant_map_v_dir,
-            "radius": self.distant_events_r_library[1]
+            "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
         }
 
         # Store the refracted/reflected rays results
@@ -280,7 +280,7 @@ class StandardReco:
             "theta": theta_distant_v_ref,
             "phi": phi_distant_v_ref,
             "map": distant_map_v_ref,
-            "radius": self.distant_events_r_library[1]
+            "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
         }
 
         # make a 300 m map in H (Direct rays)
@@ -307,7 +307,7 @@ class StandardReco:
             "theta": theta_distant_h_dir,
             "phi": phi_distant_h_dir,
             "map": distant_map_v_dir,
-            "radius": self.distant_events_r_library[1]
+            "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
         }
 
         # Store the refracted/reflected rays results in a separate dictionary
@@ -316,7 +316,7 @@ class StandardReco:
             "theta": theta_distant_h_ref,
             "phi": phi_distant_h_ref,
             "map": distant_map_v_ref,
-            "radius": self.distant_events_r_library[1]
+            "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
         }
 
         del waveform_map
@@ -384,3 +384,4 @@ class StandardReco:
                                                                                        phi_bin.value
                                                                                        )
         return arrival_time
+        
