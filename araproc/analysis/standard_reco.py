@@ -239,32 +239,74 @@ class StandardReco:
         #                             "map" : pulser_map_h
         #                             }
 
-        # make a 300 m map in V
-        distant_map_v = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
+        # make a 300 m map in V (Direct rays)
+        distant_map_v_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
             self.pairs_v,
             corr_functions_v,
             0
         )
-        corr_distant_v, phi_distant_v, theta_distant_v = mu.get_corr_map_peak(distant_map_v)
-        reco_results["distant_v"] = {"corr" : corr_distant_v, 
-                                    "theta" : theta_distant_v,
-                                    "phi" : phi_distant_v,
-                                    "map" : distant_map_v
-                                    }
 
-        # make a 300 m map in H
-        distant_map_h = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
+        # make a 300 m map in V (Refracted/Reflected rays)
+        distant_map_v_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
+            self.pairs_v,
+            corr_functions_v,
+            1
+        )
+
+        # Get the correlation, phi, and theta for both maps
+        corr_distant_v_dir, phi_distant_v_dir, theta_distant_v_dir = mu.get_corr_map_peak(distant_map_v_dir)
+        corr_distant_v_ref, phi_distant_v_ref, theta_distant_v_ref = mu.get_corr_map_peak(distant_map_v_ref)
+
+        # Store the direct rays results
+        reco_results["distant_v_dir"] = {
+            "corr": corr_distant_v_dir, 
+            "theta": theta_distant_v_dir,
+            "phi": phi_distant_v_dir,
+            "map": distant_map_v_dir
+        }
+
+        # Store the refracted/reflected rays results
+        reco_results["distant_v_ref"] = {
+            "corr": corr_distant_v_ref, 
+            "theta": theta_distant_v_ref,
+            "phi": phi_distant_v_ref,
+            "map": distant_map_v_ref
+        }
+
+        # make a 300 m map in H (Direct rays)
+        distant_map_h_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
             self.pairs_h,
             corr_functions_h,
             0
         )
-        corr_distant_h, phi_distant_h, theta_distant_h = mu.get_corr_map_peak(distant_map_h)
-        reco_results["distant_h"] = {"corr" : corr_distant_h, 
-                                    "theta" : theta_distant_h,
-                                    "phi" : phi_distant_h,
-                                    "map" : distant_map_h
-                                    }
 
+        # make a 300 m map in H (Refracted/Reflected rays)
+        distant_map_h_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
+            self.pairs_h,
+            corr_functions_h,
+            1
+        )
+
+        # Get the correlation, phi, and theta for both maps
+        corr_distant_h_dir, phi_distant_h_dir, theta_distant_h_dir = mu.get_corr_map_peak(distant_map_h_dir)
+        corr_distant_h_ref, phi_distant_h_ref, theta_distant_h_ref = mu.get_corr_map_peak(distant_map_h_ref)
+
+        # Store the direct rays results
+        reco_results["distant_h_dir"] = {
+            "corr": corr_distant_h_dir, 
+            "theta": theta_distant_h_dir,
+            "phi": phi_distant_h_dir,
+            "map": distant_map_h_dir
+        }
+
+        # Store the refracted/reflected rays results in a separate dictionary
+        reco_results["distant_h_ref"] = {
+            "corr": corr_distant_h_ref, 
+            "theta": theta_distant_h_ref,
+            "phi": phi_distant_h_ref,
+            "map": distant_map_h_ref
+        }
+        
         del waveform_map
         return reco_results
 
