@@ -22,7 +22,14 @@ def get_vpp(waveform):
     if(isinstance(waveform, ROOT.TGraph)):
       _, trace = wfu.tgraph_to_arrays(waveform)
     elif(isinstance(waveform, np.ndarray)):
-      trace = waveform
+      trace = np.copy(waveform)
+      
+      # don't be bothered by some unused dimensions
+      trace = np.squeeze(trace)
+
+      if(trace.ndim != 1):
+        raise Exception("Trace is not 1d in snr.get_vpp. Abort")
+      
     else:
       raise Exception("Unsupported data type in snr.get_vpp. Abort")
 
@@ -54,7 +61,13 @@ def get_min_segmented_rms(waveform, nsegs=8):
     if(isinstance(waveform, ROOT.TGraph)):
       _, trace = wfu.tgraph_to_arrays(waveform)
     elif(isinstance(waveform, np.ndarray)):
-      trace = waveform
+      trace = np.copy(waveform)
+      
+      # don't be bothered by some unused dimensions
+      trace = np.squeeze(trace)
+
+      if(trace.ndim != 1):
+        raise Exception("Trace is not 1d in snr.get_min_segmented_rms. Abort")
     else:
       raise Exception("Unsupported data type in snr.get_min_segmented_rms. Abort")
 
