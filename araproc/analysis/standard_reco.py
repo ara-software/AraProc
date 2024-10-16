@@ -230,7 +230,7 @@ class StandardReco:
                                     "theta" : theta_pulser_v,
                                     "phi" : phi_pulser_v,
                                     "map" : pulser_map_v,
-                                    "radius" : self.calpulser_r_library[self.station_id]
+                                    "radius" : self.rtc_wrapper.correlators["nearby"].GetRadius()
                                     }
 
         # # check the cal pulser in H
@@ -244,36 +244,80 @@ class StandardReco:
         #                             "theta" : theta_pulser_h,
         #                             "phi" : phi_pulser_h,
         #                             "map" : pulser_map_h,
-        #                             "radius" : self.calpulser_r_library[self.station_id]
+        #                             "radius" : self.rtc_wrapper.correlators["nearby"].GetRadius()
         #                             }
 
-        # make a 300 m map in V
-        distant_map_v = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
+        # make a 300 m map in V (Direct rays)
+        distant_map_v_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
             self.pairs_v,
             corr_functions_v,
             0
         )
-        corr_distant_v, phi_distant_v, theta_distant_v = mu.get_corr_map_peak(distant_map_v)
-        reco_results["distant_v"] = {"corr" : corr_distant_v, 
-                                    "theta" : theta_distant_v,
-                                    "phi" : phi_distant_v,
-                                    "map" : distant_map_v,
-                                    "radius" : self.distant_events_r_library[1]
-                                    }
 
-        # make a 300 m map in H
-        distant_map_h = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
+        # make a 300 m map in V (Refracted/Reflected rays)
+        distant_map_v_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
+            self.pairs_v,
+            corr_functions_v,
+            1
+        )
+
+        # Get the correlation, phi, and theta for both maps
+        corr_distant_v_dir, phi_distant_v_dir, theta_distant_v_dir = mu.get_corr_map_peak(distant_map_v_dir)
+        corr_distant_v_ref, phi_distant_v_ref, theta_distant_v_ref = mu.get_corr_map_peak(distant_map_v_ref)
+
+        # Store the direct rays results
+        reco_results["distant_v_dir"] = {
+            "corr": corr_distant_v_dir, 
+            "theta": theta_distant_v_dir,
+            "phi": phi_distant_v_dir,
+            "map": distant_map_v_dir,
+            "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
+        }
+
+        # Store the refracted/reflected rays results
+        reco_results["distant_v_ref"] = {
+            "corr": corr_distant_v_ref, 
+            "theta": theta_distant_v_ref,
+            "phi": phi_distant_v_ref,
+            "map": distant_map_v_ref,
+            "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
+        }
+
+        # make a 300 m map in H (Direct rays)
+        distant_map_h_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
             self.pairs_h,
             corr_functions_h,
             0
         )
-        corr_distant_h, phi_distant_h, theta_distant_h = mu.get_corr_map_peak(distant_map_h)
-        reco_results["distant_h"] = {"corr" : corr_distant_h, 
-                                    "theta" : theta_distant_h,
-                                    "phi" : phi_distant_h,
-                                    "map" : distant_map_h,
-                                    "radius" : self.distant_events_r_library[1]
-                                    }
+
+        # make a 300 m map in H (Refracted/Reflected rays)
+        distant_map_h_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
+            self.pairs_h,
+            corr_functions_h,
+            1
+        )
+
+        # Get the correlation, phi, and theta for both maps
+        corr_distant_h_dir, phi_distant_h_dir, theta_distant_h_dir = mu.get_corr_map_peak(distant_map_h_dir)
+        corr_distant_h_ref, phi_distant_h_ref, theta_distant_h_ref = mu.get_corr_map_peak(distant_map_h_ref)
+
+        # Store the direct rays results
+        reco_results["distant_h_dir"] = {
+            "corr": corr_distant_h_dir, 
+            "theta": theta_distant_h_dir,
+            "phi": phi_distant_h_dir,
+            "map": distant_map_v_dir,
+            "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
+        }
+
+        # Store the refracted/reflected rays results in a separate dictionary
+        reco_results["distant_h_ref"] = {
+            "corr": corr_distant_h_ref, 
+            "theta": theta_distant_h_ref,
+            "phi": phi_distant_h_ref,
+            "map": distant_map_v_ref,
+            "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
+        }
 
         del waveform_map
         return reco_results
@@ -341,108 +385,186 @@ class StandardReco:
                                                                                        )
         return arrival_time
 
-    def get_surface_correlation_ratio(self, corr_map, z_thresh=-10):
+    def get_surface_corr_max(self, corr_map, z_thresh=-10):
         """
-        Calculates the ratio of the maximum surface correlation value within a specific
-        theta range to the overall peak correlation value. The theta range is determined
-        based on the average antenna z-coordinate and a threshold.
+        Calculates the maximum surface correlation value within a specified theta range.
+        The theta range is determined based on the average antenna z-coordinate and a threshold.
 
         Parameters
         ----------
         corr_map : dict
-            A dictionary containing:
+            Dictionary containing:
             - 'map': ROOT.TH2D histogram with correlation values mapped by theta and phi.
-            - 'corr': The overall peak correlation value.
-            - 'radius': The correlation radius for the station. Assumed to be in meters.
+            - 'corr': Overall peak correlation value.
+            - 'radius': Correlation radius for the station (in meters).
         z_thresh : float, optional
-            The depth threshold value to define the lower bound of the theta range. z_thresh=-10 means "10 m below surface"
-            Ensure that the unit of `z_thresh` is consistent with the unit of `radius` in `corr_map`.
+            Depth threshold for defining the theta range lower bound. Default is -10 m.
+
+        Returns
+        -------
+        max_surf_corr : float
+            Maximum surface correlation within the theta range.
+        max_theta : float
+            Theta angle corresponding to max surface correlation.
+        max_phi : float
+            Phi angle corresponding to max surface correlation.
+        """
+        # Extract the radius and validate
+        radius = corr_map.get("radius", None)
+        if radius is None:
+            raise ValueError("Radius not found in corr_map.")
+        radius = float(radius)
+
+        # Get antenna z-coordinates and calculate average
+        geom_tool = ROOT.AraGeomTool.Instance()
+        z_coords = [geom_tool.getStationInfo(self.station_id).getAntennaInfo(ant).antLocation[2] 
+                    for ant in range(self.num_channels)]
+        avg_z = sum(z_coords) / len(z_coords)
+
+        # Check if surface is visible at the given radius
+        if radius < (abs(avg_z) + z_thresh):
+            raise RuntimeError("Surface not visible: radius is smaller than average antenna z-coordinate.")
+
+        # Define theta range
+        theta_surface = math.degrees(math.asin(abs(avg_z) / radius))
+        theta_thresh = math.degrees(math.asin((abs(avg_z) + z_thresh) / radius))
+        theta_min, theta_max = min(theta_surface, theta_thresh), max(theta_surface, theta_thresh)
+
+        # Access correlation map and filter values within the theta range
+        hist = corr_map.get("map", None)
+        if hist is None:
+            raise ValueError("The 'map' key was not found in corr_map.")
+        
+        surf_corr_values = []
+        corr_bins = []
+
+        # Loop through the bins and store values within theta range
+        for x_bin in range(1, hist.GetNbinsX() + 1):
+            for y_bin in range(1, hist.GetNbinsY() + 1):
+                theta = hist.GetYaxis().GetBinCenter(y_bin)
+                phi = hist.GetXaxis().GetBinCenter(x_bin)
+                corr = hist.GetBinContent(x_bin, y_bin)
+                if theta_min <= theta <= theta_max:
+                    surf_corr_values.append(corr)
+                    corr_bins.append((x_bin, y_bin))
+
+        # Identify maximum surface correlation
+        if not surf_corr_values:
+            raise RuntimeError("No correlation values found in the specified theta range.")
+        
+        max_surf_corr = np.nanmax(surf_corr_values)
+        max_idx = np.nanargmax(surf_corr_values)
+        max_bin = corr_bins[max_idx]
+        
+        max_theta = hist.GetYaxis().GetBinCenter(max_bin[1])
+        max_phi = hist.GetXaxis().GetBinCenter(max_bin[0])
+
+        return max_surf_corr, max_theta, max_phi
+
+    def get_surface_corr_max_multiple(self, *maps, z_thresh=-10):
+        """
+        Applies get_surface_corr_max to multiple maps and identifies the map with
+        the highest surface correlation value.
+
+        Parameters
+        ----------
+        *maps : dict
+            Variable number of dictionaries, each containing:
+            - 'map': ROOT.TH2D histogram with correlation values.
+            - 'corr': Overall peak correlation value.
+            - 'radius': Correlation radius for the station.
+        z_thresh : float, optional
+            Depth threshold to define theta range lower bound. Default is -10 m.
+
+        Returns
+        -------
+        results : list of dicts
+            List with results for each map:
+            - 'max_corr': Maximum surface correlation.
+            - 'theta': Theta angle of max surface correlation.
+            - 'phi': Phi angle of max surface correlation.
+        max_result : dict
+            Dictionary with the max surface correlation result across all maps.
+        """
+        results = []
+        for idx, corr_map in enumerate(maps):
+            try:
+                max_corr, theta, phi = self.get_surface_corr_max(corr_map, z_thresh=z_thresh)
+                results.append({'max_corr': max_corr, 'theta': theta, 'phi': phi, 'map index': idx})
+            except (ValueError, RuntimeError) as e:
+                print(f"Error processing map at index {idx}: {e}")
+                results.append(None)
+
+        valid_results = [res for res in results if res is not None]
+        if valid_results:
+            max_result = max(valid_results, key=lambda x: x['max_corr'])
+        else:
+            raise RuntimeError("No valid results to determine max surface correlation.")
+        
+        return results, max_result
+
+    def find_map_with_max_corr(self, *maps):
+        """
+        Finds the map with the highest overall 'corr' value.
+
+        Parameters
+        ----------
+        *maps : dict
+            Variable number of dictionaries, each containing:
+            - 'corr': Peak correlation value.
+            - 'theta': Theta angle for peak correlation.
+            - 'phi': Phi angle for peak correlation.
+
+        Returns
+        -------
+        max_corr_result : dict
+            Dictionary with max 'corr' value and corresponding 'theta', 'phi'.
+        """
+        max_corr_result = {'max_corr': -float('inf'), 'theta': None, 'phi': None, 'map_index': None}
+        
+        for idx, corr_map in enumerate(maps):
+            try:
+                corr = corr_map['corr']
+                if corr > max_corr_result['max_corr']:
+                    max_corr_result.update({'max_corr': corr, 'theta': corr_map['theta'], 
+                                            'phi': corr_map['phi'], 'map_index': idx})
+            except KeyError as e:
+                print(f"Key error in map at index {idx}: {e}")
+            except Exception as e:
+                print(f"Error processing map at index {idx}: {e}")
+        
+        if max_corr_result['max_corr'] == -float('inf'):
+            raise RuntimeError("No valid correlation values found.")
+        
+        return max_corr_result
+
+
+    def calculate_surface_corr_ratio(self, *maps, z_thresh=-10):
+        """
+        Calculates surface correlation ratio by comparing max surface correlation with max overall correlation.
+
+        Parameters
+        ----------
+        *maps : dict
+            Variable number of dictionaries, each containing:
+            - 'map': ROOT.TH2D histogram with correlation values.
+            - 'corr': Overall peak correlation value.
+            - 'radius': Correlation radius for the station (assumed to be in meters).
+        z_thresh : float, optional
+            Depth threshold to define theta range lower bound. Default is -10 m.
 
         Returns
         -------
         surf_corr_ratio : float
-            The ratio of the maximum surface correlation value within the theta range 
-            to the overall peak correlation.
-        max_surf_theta : float
-            The theta angle corresponding to the maximum surface correlation value.
-        max_surf_phi : float
-            The phi angle corresponding to the maximum surface correlation value.
+            Ratio of max surface correlation to max overall correlation.
+        max_surf_corr_result : dict
+            Result for map with max surface correlation.
+        max_corr_result : dict
+            Result for map with max overall correlation.
         """
+        _, max_surf_corr_result = self.get_surface_corr_max_multiple(*maps, z_thresh=z_thresh)
+        max_corr_result = self.find_map_with_max_corr(*maps)
         
-        # Extract the radius from corr_map
-        corr_radius = float(corr_map.get("radius", None))
-        if corr_radius is None:
-            raise ValueError("Radius not found in corr_map.")
-
-        # Initialize AraGeomTool instance to retrieve antenna information
-        geomTool = ROOT.AraGeomTool.Instance()
-
-        # Collect z-coordinates of all antennas to calculate the average z-coordinate
-        z = []
-        for ant in range(self.num_channels):
-            # Retrieve each antenna's location for the given station
-            ant_location = geomTool.getStationInfo(self.station_id).getAntennaInfo(ant).antLocation
-            z.append(ant_location[2])  # Append only the z-coordinate
-
-        # Calculate the average z-coordinate of the antennas
-        avg_z = sum(z) / len(z)
-
-        # Check if the radius is large enough to visualize the surface
-        if corr_radius < (abs(avg_z) + z_thresh):
-            raise RuntimeError("Surface not visible: radius is smaller than average z coordinate of the antennas.")
-
-        # Calculate the angles at the surface and z threshold relative to the horizontal
-        theta_at_surface = math.degrees(math.asin(abs(avg_z) / corr_radius))
-        theta_at_z_thresh = math.degrees(math.asin((abs(avg_z) + z_thresh) / corr_radius))
-
-        # Access the ROOT.TH2D histogram from 'map' in corr_map
-        map = corr_map.get("map", None)
-        if map is None:
-            raise ValueError("The 'map' key was not found in corr_map.")
-
-        # Initialize lists to store correlation values within the specified theta range
-        surf_corr = []
-        tot_corr_idx = []
-
-        # Define the theta range based on theta_at_surface and theta_at_z_thresh
-        theta_min = min(theta_at_surface, theta_at_z_thresh)
-        theta_max = max(theta_at_surface, theta_at_z_thresh)
-
-        # Iterate over each bin in the map to filter by theta range
-        nbins_x = map.GetNbinsX()
-        nbins_y = map.GetNbinsY()
-        for binx in range(1, nbins_x + 1):
-            for biny in range(1, nbins_y + 1):
-                # Get theta and phi for the current bin and retrieve its correlation value
-                theta = map.GetYaxis().GetBinCenter(biny)
-                phi = map.GetXaxis().GetBinCenter(binx)
-                corr_value = map.GetBinContent(binx, biny)
-
-                # Store correlation values and bin indices if within the theta range
-                if theta_min <= theta <= theta_max:
-                    surf_corr.append(corr_value)
-                    tot_corr_idx.append((binx, biny))
-
-        # Ensure that there are correlation values within the theta range
-        if not surf_corr:
-            raise RuntimeError("No correlation values found in the specified theta range!")
-
-        # Calculate the maximum correlation within the specified theta range
-        max_surf_corr = np.nanmax(surf_corr)
-        max_surf_corr_index = np.nanargmax(surf_corr)
-
-        # Identify bin location of the maximum correlation value
-        max_surf_bin = tot_corr_idx[max_surf_corr_index]
-        max_surf_bin_x, max_surf_bin_y = max_surf_bin
-        max_surf_theta = map.GetYaxis().GetBinCenter(max_surf_bin_y)
-        max_surf_phi = map.GetXaxis().GetBinCenter(max_surf_bin_x)
-
-        # Access the overall peak correlation value from 'corr' in corr_map
-        corr_value = corr_map.get("corr", None)
-        if corr_value is None:
-            raise ValueError("The 'corr' key was not found in corr_map.")
-
-        # Calculate the ratio of the max surface correlation to the peak correlation
-        surf_corr_ratio = max_surf_corr / corr_value
-
-        return surf_corr_ratio, max_surf_theta, max_surf_phi
+        surf_corr_ratio = max_surf_corr_result['max_corr'] / max_corr_result['max_corr'] if max_corr_result['max_corr'] != 0 else float('inf')
+        
+        return surf_corr_ratio, max_surf_corr_result, max_corr_result
