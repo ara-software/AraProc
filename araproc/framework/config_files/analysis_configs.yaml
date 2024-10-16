@@ -1,4 +1,4 @@
-station1:
+station100:
   config1:
     excluded_channels : []
     filters:

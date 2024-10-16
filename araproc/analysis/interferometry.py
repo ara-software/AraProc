@@ -2,6 +2,7 @@ import numpy as np
 import os
 import ROOT
 
+from araproc.analysis import constants as const
 
 class RayTraceCorrelatorWrapper:
 
@@ -28,7 +29,7 @@ class RayTraceCorrelatorWrapper:
                  station_id : int,
                  num_channels : int =  16 # by default 16
                  ):
-        if station_id not in [1, 2, 3, 4, 5]:
+        if station_id not in const.valid_station_ids:
             raise KeyError(f"Station {station_id} is not supported")
         if not isinstance(num_channels, int):
             raise ValueError(f"{num_channels} needs to be an int")
