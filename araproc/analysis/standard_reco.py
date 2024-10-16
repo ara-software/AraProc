@@ -4,6 +4,7 @@ import os
 import ROOT
 
 from araproc.analysis import interferometry as interf
+from araproc.framework import constants as const
 from araproc.framework import map_utilities as mu
 
 
@@ -53,7 +54,7 @@ class StandardReco:
                  excluded_channels = np.array([]) # by default no excluded channels
                  ):
         
-        if station_id not in [1, 2, 3, 4, 5]:
+        if station_id not in const.valid_station_ids:
             raise KeyError(f"Station {station_id} is not supported")
         self.station_id = station_id
     
@@ -63,11 +64,11 @@ class StandardReco:
             raise AttributeError(f"Excluded channels has the wrong number of dimensions -- should be 1D only")
 
         num_channels_library = {
-            1 : 16,
-            2 : 16,
-            3 : 16,
-            4 : 16,
-            5 : 16
+            100 : 16,
+            2   : 16,
+            3   : 16,
+            4   : 16,
+            5   : 16
         }
 
         excluded_channels_vec = ROOT.std.vector("int")(excluded_channels)
@@ -75,11 +76,11 @@ class StandardReco:
         # each station has a slightly different distance for the cal pulser reco,
         # so look that up
         calpulser_r_library = {
-            1 : "48.02",
-            2 : "42.86",
-            3 : "41.08",
-            4 : "52.60",
-            5 : "49.23"
+            100 : "48.02",
+            2   : "42.86",
+            3   : "41.08",
+            4   : "52.60",
+            5   : "49.23"
         }
 
         self.num_channels = num_channels_library[station_id]

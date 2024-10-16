@@ -8,7 +8,7 @@ def tgraph_to_arrays(the_graph):
 
 def arrays_to_tgraph(xvals, yvals):
     if len(xvals) != len(yvals):
-        raise Exception("Lenfth of x and y arrays is mismatched. Abort.")
+        raise Exception("Length of x and y arrays is mismatched. Abort.")
     return ROOT.TGraph(len(xvals), xvals, yvals)
 
 def get_freqs(times):
