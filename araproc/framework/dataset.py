@@ -8,9 +8,9 @@ import ROOT
 import yaml
 
 from araproc.framework import waveform_utilities as wu
+from araproc.framework import constants as const
 from araproc.analysis import dedisperse as dd
 from araproc.analysis import cw_filter as cwf
-from araproc.analysis import constants as const
 
 import importlib.resources as pkg_resources
 from . import config_files

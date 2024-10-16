@@ -2,7 +2,7 @@ import numpy as np
 import os
 import ROOT
 
-from araproc.analysis import constants as const
+from araproc.framework import constants as const
 
 class RayTraceCorrelatorWrapper:
 

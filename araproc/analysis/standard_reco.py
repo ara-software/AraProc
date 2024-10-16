@@ -4,8 +4,8 @@ import os
 import ROOT
 
 from araproc.analysis import interferometry as interf
+from araproc.framework import constants as const
 from araproc.framework import map_utilities as mu
-from araproc.analysis import constants as const
 
 
 class StandardReco:
