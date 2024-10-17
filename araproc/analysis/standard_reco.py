@@ -599,7 +599,7 @@ class StandardReco:
         
         return surf_corr_ratio, max_surf_corr_result, max_corr_result
 
-    def min_frac_corr_depth(self, corr_map, fraction=0.6, z_thresh=-10):
+    def min_frac_corr_depth(self, corr_map, fraction=0.6, z_thresh=0):
         """
         Finds the shallowest depth where correlation meets a specified fraction of the maximum correlation,
         using 'theta' to calculate depth and adjusting by the average z-coordinate of antennas.
@@ -620,11 +620,13 @@ class StandardReco:
         Returns
         -------
         min_depth : float
-            Shallowest depth where correlation meets the specified fraction of max, adjusted by avg z, and below z_thresh.
+            Shallowest depth (measured from ice surface) where correlation meets the specified fraction of max and below z_thresh.
         """
         # Get maximum correlation and threshold
         max_corr = float(corr_map.get("corr"))
         threshold_corr = fraction * max_corr
+        print("Max corr in map: ", max_corr)
+        print("Threshold corr: ", threshold_corr)
 
         # Access correlation map and radius
         hist = corr_map.get("map")
@@ -648,12 +650,62 @@ class StandardReco:
                     # Calculate depth from theta and adjust by avg_z
                     theta = hist.GetYaxis().GetBinCenter(y_bin)
                     depth = radius * math.sin(math.radians(theta)) + avg_z
+                    
 
                     # Ensure min_depth does not exceed z_thresh
                     if depth > min_depth and depth <= z_thresh:
                         min_depth = depth
+                        print(f"Updated min_depth to {min_depth} Theta: {theta}, Corr: {corr_value}, Depth: {depth}")
 
         if min_depth == -float('inf'):
             raise RuntimeError("No depth meets the fractional correlation threshold within the z_thresh.")
         
         return min_depth
+
+    def min_frac_corr_depth_multiple(self, *maps, fraction=0.6, z_thresh=0):
+        """
+        Finds the shallowest depth across multiple correlation maps where correlation meets
+        a specified fraction of the maximum correlation. Uses the min_frac_corr_depth function for each map,
+        then returns the minimum depth found and the index of the corresponding map.
+
+        Parameters
+        ----------
+        *maps : dict
+            A variable number of correlation maps, each containing:
+            - 'map': ROOT.TH2D histogram with correlation values by theta and phi.
+            - 'radius': Correlation radius in meters.
+        fraction : float
+            Fraction of the max correlation to set the threshold. Default is 0.6 (60%).
+        z_thresh : float
+            Maximum allowable depth (relative to the surface). Default is 0 meters.
+
+        Returns
+        -------
+        min_depth : float
+            Shallowest depth (measured from ice surface) across all maps where correlation meets the specified fraction of max.
+        min_depth_index : int
+            Index of the map that contains the shallowest depth.
+        """
+        min_depth = -float('inf')  # Initialize to find the shallowest depth (least negative)
+        min_depth_index = -1  # Track the index of the map with the minimum depth
+
+        # Iterate over each map and find the shallowest depth using min_frac_corr_depth
+        for idx, corr_map in enumerate(maps):
+            try:
+                # Use the existing function to find the minimum depth for this map
+                depth = self.min_frac_corr_depth(corr_map, fraction=fraction, z_thresh=z_thresh)
+                print(f"Map {idx}: depth = {depth}")
+
+                # Update min_depth if the current depth is shallower (closer to the surface)
+                if depth > min_depth:
+                    min_depth = depth
+                    min_depth_index = idx
+                    print(f"Updated min_depth to {min_depth} for map index {min_depth_index}")
+
+            except RuntimeError as e:
+                print(f"Map {idx} did not meet the threshold: {e}")
+
+        if min_depth == -float('inf'):
+            raise RuntimeError("No maps meet the fractional correlation threshold within the z_thresh.")
+
+        return min_depth, min_depth_index
