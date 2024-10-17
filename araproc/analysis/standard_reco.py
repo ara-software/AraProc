@@ -599,3 +599,61 @@ class StandardReco:
         
         return surf_corr_ratio, max_surf_corr_result, max_corr_result
 
+    def min_frac_corr_depth(self, corr_map, fraction=0.6, z_thresh=-10):
+        """
+        Finds the shallowest depth where correlation meets a specified fraction of the maximum correlation,
+        using 'theta' to calculate depth and adjusting by the average z-coordinate of antennas.
+        Ensures the result remains below the specified depth threshold (z_thresh).
+
+        Parameters
+        ----------
+        corr_map : dict
+            Contains:
+            - 'map': ROOT.TH2D histogram with correlation values by theta and phi.
+            - 'radius': Correlation radius in meters.
+        fraction : float
+            Fraction of the max correlation to set the threshold.
+            Default is 0.6 (or 60%).
+        z_thresh : float
+            Maximum allowable depth (relative to the surface). Default is -10 meters.
+
+        Returns
+        -------
+        min_depth : float
+            Shallowest depth where correlation meets the specified fraction of max, adjusted by avg z, and below z_thresh.
+        """
+        # Get maximum correlation and threshold
+        max_corr = float(corr_map.get("corr"))
+        threshold_corr = fraction * max_corr
+
+        # Access correlation map and radius
+        hist = corr_map.get("map")
+        radius = corr_map.get("radius")
+        if hist is None or radius is None:
+            raise ValueError("Map or radius not found in corr_map.")
+        radius = float(radius)
+
+        # Calculate average antenna z-coordinate
+        geom_tool = ROOT.AraGeomTool.Instance()
+        avg_z = sum(geom_tool.getStationInfo(self.station_id).getAntennaInfo(ant).antLocation[2] 
+                    for ant in range(self.num_channels)) / self.num_channels
+
+        min_depth = -float('inf')  # Initialize to find the shallowest depth (least negative)
+
+        # Check correlation values against threshold and calculate depth
+        for x_bin in range(1, hist.GetNbinsX() + 1):
+            for y_bin in range(1, hist.GetNbinsY() + 1):
+                corr_value = hist.GetBinContent(x_bin, y_bin)
+                if corr_value >= threshold_corr:
+                    # Calculate depth from theta and adjust by avg_z
+                    theta = hist.GetYaxis().GetBinCenter(y_bin)
+                    depth = radius * math.sin(math.radians(theta)) + avg_z
+
+                    # Ensure min_depth does not exceed z_thresh
+                    if depth > min_depth and depth <= z_thresh:
+                        min_depth = depth
+
+        if min_depth == -float('inf'):
+            raise RuntimeError("No depth meets the fractional correlation threshold within the z_thresh.")
+        
+        return min_depth
