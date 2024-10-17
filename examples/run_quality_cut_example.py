@@ -1,0 +1,57 @@
+import argparse
+from array import array
+import numpy as np
+import h5py
+import araproc 
+from tqdm import tqdm as tq
+from araproc.framework import dataset
+from araproc.analysis import standard_reco as sr
+import araproc.analysis.daq_quality_cut as qual_cut
+# Argument parser
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--input_file", type=str, required=True, help="full path to the input file")
+parser.add_argument("--ped_file", type=str, default=None, required=False, help="path to pedestal file")
+parser.add_argument("--is_simulation", type=int, default=0, required=True, help="is simulation; 0 = not simulation (default), 1 = is simulation")
+parser.add_argument("--station", type=int, required=True, help="station id")
+
+args = parser.parse_args()
+args.is_simulation = bool(args.is_simulation)
+
+# Raise errors for incompatible configurations
+if args.is_simulation and (args.ped_file is not None):
+    raise KeyError("You cannot mix a simulation with a pedestal file")
+if (not args.is_simulation) and (args.ped_file is None):
+    raise KeyError("If you are analyzing data, you must provide a pedestal file")
+
+# Setup input
+d = dataset.AnalysisDataset(
+    station_id=args.station,
+    path_to_data_file=args.input_file,
+    path_to_pedestal_file=args.ped_file,
+    is_simulation=args.is_simulation
+)
+
+# Read run number and total events
+run_number = d.run_number
+num_evts = d.num_events
+
+# Setup output arrays
+save_daq_cuts = np.full((num_evts), np.nan, dtype=float)
+save_read_window_errors = np.copy(save_daq_cuts)
+
+#### investigate events with quality issue ######
+
+daq_err,read_win_error = qual_cut.get_all_errors(args.input_file)
+# Process first 5 events
+for e in tq(range(0, 9)):
+    print(f"Processing event {e}")
+    save_daq_cuts[e] = np.nansum(daq_err[e,:])  # If this sum value is >0 for an event then it's a bad event 
+    save_read_window_errors[e] = np.nansum(read_win_error[e,:]) # If this sum value is >0 for an event then it's a bad event
+    print(np.nansum(daq_err[e,:]),np.nansum(read_win_error[e,:]))
+
+# Save results to HDF5 file
+file_name = f'daq_err_A{args.station}_run{run_number}.h5'
+with h5py.File(file_name, 'w') as hf:
+    hf.create_dataset('daq_errors', data=save_daq_cuts, compression="gzip", compression_opts=9)
+    hf.create_dataset('read_window_error', data=save_read_window_errors, compression="gzip", compression_opts=9)
