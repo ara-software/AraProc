@@ -4,9 +4,8 @@ from araproc.framework import waveform_utilities as wfu
 from araproc.analysis import snr
 
 def get_rpr(waveform):
-
     """
-    Computes the RPR (Root Power Ratio) value, similar to SNR, for the given waveform.
+    Computes the RPR (Root Power ratio) value, similar to SNR, for the given waveform.
 
     Parameters
     ----------
@@ -17,9 +16,8 @@ def get_rpr(waveform):
     -------
     rpr_val: float
         The RPR value for the waveform, calculated as the ratio of the maximum voltage 
-        (after smoothing) to the standard deviation of the waveform parts with the least RMS.
+        (after smoothing) to noise RMS of the waveform.
     """
-
     # Extract time and voltage arrays from the waveform
     channel_time, channel_wf = wfu.tgraph_to_arrays(waveform)
     wf_len = len(channel_wf)
@@ -34,16 +32,11 @@ def get_rpr(waveform):
     channel_wf = np.sqrt(uniform_filter1d(channel_wf, size=sum_win_idx, mode='constant'))
 
     # Find the maximum value of the smoothed waveform
-    max_bin = np.nanargmax(channel_wf)
+    max_bin = np.argmax(channel_wf)
     max_val = channel_wf[max_bin]
 
-    # Calculate noise sigma: standard deviation of the four parts with the least RMS
-    part_size = len(channel_wf) // 8
-    waveform_parts = [channel_wf[i*part_size:(i+1)*part_size] for i in range(8)]
-    rms_values = [np.sqrt(np.mean(part**2)) for part in waveform_parts]
-    least_rms_parts = [waveform_parts[i] for i in np.argsort(rms_values)[:4]]
-    combined_least_rms_parts = np.concatenate(least_rms_parts)
-    noise_sigma = np.std(combined_least_rms_parts)
+    # Get noise rms from snr module
+    noise_sigma = snr.get_min_segmented_rms(channel_wf)
 
     # Calculate and return the RPR value
     rpr_val = max_val / noise_sigma
@@ -51,7 +44,6 @@ def get_rpr(waveform):
     return rpr_val
 
 def get_avg_rpr(wave_bundle, chans=None, excluded_channels=[]):
-
     """
     Calculates the average RPR across selected channels from a given set of waveforms.
 
@@ -69,7 +61,6 @@ def get_avg_rpr(wave_bundle, chans=None, excluded_channels=[]):
     avg_rpr: float
         The average RPR value across the selected channels.
     """
-
     chans = list(wave_bundle.keys()) if chans is None else chans
     avg_rpr = []
 
