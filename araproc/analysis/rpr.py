@@ -4,6 +4,7 @@ from araproc.framework import waveform_utilities as wfu
 from araproc.analysis import snr
 
 def get_rpr(waveform):
+
     """
     Computes the RPR (Root Power ratio) value, similar to SNR, for the given waveform.
 
@@ -18,6 +19,7 @@ def get_rpr(waveform):
         The RPR value for the waveform, calculated as the ratio of the maximum voltage 
         (after smoothing) to noise RMS of the waveform.
     """
+
     # Extract time and voltage arrays from the waveform
     channel_time, channel_wf = wfu.tgraph_to_arrays(waveform)
     wf_len = len(channel_wf)
@@ -38,6 +40,21 @@ def get_rpr(waveform):
     # Get noise rms from snr module
     noise_sigma = snr.get_min_segmented_rms(channel_wf)
 
+    # Calculate and return the RPR value
+    rpr_val = max_val / noise_sigma
+
+    # Calculate the smoothing window size based on sampling rate
+    dt =  wfu.get_dt_and_sampling_rate(channel_time)[0]
+    sum_win = 25  # Smoothing window in ns
+    sum_win_idx = int(np.round(sum_win / dt))  # Convert window size to sample points
+    channel_wf = np.sqrt(uniform_filter1d(channel_wf, size=sum_win_idx, mode='constant'))
+
+    # Find the maximum value of the smoothed waveform
+    max_bin = np.argmax(channel_wf)
+    max_val = channel_wf[max_bin]
+
+    # Read noise rms from snr module
+    noise_sigma = snr.get_min_segmented_rms(channel_wf)
     # Calculate and return the RPR value
     rpr_val = max_val / noise_sigma
 
