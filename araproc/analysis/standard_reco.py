@@ -417,11 +417,8 @@ class StandardReco:
             raise ValueError("Radius not found in corr_map.")
         radius = float(radius)
 
-        # Get antenna z-coordinates and calculate average
-        geom_tool = ROOT.AraGeomTool.Instance()
-        z_coords = [geom_tool.getStationInfo(self.station_id).getAntennaInfo(ant).antLocation[2] 
-                    for ant in range(self.num_channels)]
-        avg_z = sum(z_coords) / len(z_coords)
+        # Calculate average antenna z coordinates
+        _, _, avg_z = mu.calculate_avg_antenna_xyz(self.station_id, self.num_channels)
 
         # Check if surface is visible at the given radius
         if radius < (abs(avg_z) + z_thresh):
@@ -634,9 +631,7 @@ class StandardReco:
         radius = float(radius)
 
         # Calculate average antenna z-coordinate
-        geom_tool = ROOT.AraGeomTool.Instance()
-        avg_z = sum(geom_tool.getStationInfo(self.station_id).getAntennaInfo(ant).antLocation[2] 
-                    for ant in range(self.num_channels)) / self.num_channels
+        _, _, avg_z = mu.calculate_avg_antenna_xyz(self.station_id, self.num_channels)
 
         min_depth = -float('inf')  # Initialize to find the shallowest depth (least negative)
 
