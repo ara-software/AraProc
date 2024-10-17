@@ -8,6 +8,7 @@ import ROOT
 import yaml
 
 from araproc.framework import waveform_utilities as wu
+from araproc.framework import constants as const
 from araproc.analysis import dedisperse as dd
 from araproc.analysis import cw_filter as cwf
 
@@ -46,7 +47,7 @@ def get_filters(station_id, analysis_config):
         to do the filtering.
     """
 
-    if station_id not in [1, 2, 3, 4, 5]:
+    if station_id not in const.valid_station_ids:
         raise KeyError(f"Station {station_id} is not supported")
 
     file = pkg_resources.open_text(config_files, 
@@ -129,7 +130,7 @@ class DataWrapper:
         self.raw_event_ptr = None
         self.config = None
 
-        if station_id not in [1, 2, 3, 4, 5]:
+        if station_id not in const.valid_station_ids:
             raise Exception(f"Station id {station_id} is not supported")
         self.station_id = station_id
 
@@ -325,7 +326,7 @@ class SimWrapper:
         self.event_ptr = None
         self.settings_ptr = None
 
-        if station_id not in [1, 2, 3, 4, 5]:
+        if station_id not in const.valid_station_ids:
             raise Exception(f"Station id {station_id} is not supported")
         self.station_id = station_id
 
