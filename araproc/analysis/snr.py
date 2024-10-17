@@ -1,3 +1,4 @@
+import ROOT
 import numpy as np
 
 from araproc.framework import waveform_utilities as wfu
@@ -9,8 +10,8 @@ def get_vpp(waveform):
 
     Parameters
     ----------
-    waveform: TGraph
-        A TGraph of the waveform.
+    waveform: TGraph or np.ndarray
+        A TGraph or np.ndarray of the waveform voltage.
 
     Returns
     -------
@@ -18,7 +19,19 @@ def get_vpp(waveform):
         Peak-to-peak voltage in same units as trace.
     """ 
 
-    _, trace = wfu.tgraph_to_arrays(waveform)
+    if(isinstance(waveform, ROOT.TGraph)):
+      _, trace = wfu.tgraph_to_arrays(waveform)
+    elif(isinstance(waveform, np.ndarray)):
+      trace = np.copy(waveform)
+      
+      # don't be bothered by some unused dimensions
+      trace = np.squeeze(trace)
+
+      if(trace.ndim != 1):
+        raise Exception("Trace is not 1d in snr.get_vpp. Abort")
+      
+    else:
+      raise Exception("Unsupported data type in snr.get_vpp. Abort")
 
     vMax = trace.max()
     vMin = trace.min()
@@ -34,8 +47,8 @@ def get_min_segmented_rms(waveform, nsegs=8):
 
     Parameters
     ----------
-    waveform: TGraph
-        A TGraph of the waveform.
+    waveform: TGraph or np.ndarray
+        A TGraph or np.ndarray of the waveform voltage.
     nsegs: int
         Number of segments to break waveform into.
 
@@ -45,7 +58,18 @@ def get_min_segmented_rms(waveform, nsegs=8):
         The minimum RMS among all segments in same units as trace.
     """
 
-    _, trace = wfu.tgraph_to_arrays(waveform)
+    if(isinstance(waveform, ROOT.TGraph)):
+      _, trace = wfu.tgraph_to_arrays(waveform)
+    elif(isinstance(waveform, np.ndarray)):
+      trace = np.copy(waveform)
+      
+      # don't be bothered by some unused dimensions
+      trace = np.squeeze(trace)
+
+      if(trace.ndim != 1):
+        raise Exception("Trace is not 1d in snr.get_min_segmented_rms. Abort")
+    else:
+      raise Exception("Unsupported data type in snr.get_min_segmented_rms. Abort")
 
     rms = 1e100
     traceLen = len(trace)
@@ -79,8 +103,8 @@ def get_snr(waveform):
 
     Parameters
     ----------
-    waveform: TGraph
-        A TGraph of the waveform.
+    waveform: TGraph or np.ndarray
+        A TGraph or np.ndarray of the waveform voltage.
 
     Returns
     -------
@@ -104,8 +128,8 @@ def get_avg_snr(wave_bundle, excluded_channels=[]):
 
     Parameters
     ----------
-    wave_bundle: dict of TGraphs
-        Dictionary of waveform TGraphs to be averaged.
+    wave_bundle: dict of TGraphs or np.ndarrays
+        Dictionary of waveform TGraphs or np.ndarrays to be averaged.
     excluded_channels: list
         List of dictionary keys to exclude from average.
 
