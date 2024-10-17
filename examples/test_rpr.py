@@ -38,19 +38,16 @@ run_number = d.run_number
 num_evts = d.num_events
 
 # Setup output arrays
-save_rpr = np.full((16, num_evts), np.nan, dtype=float)
 save_av_rpr = np.full(( num_evts), np.nan, dtype=float)
 # Process first 5 events
 for e in tq(range(5)):
     print(f'Processing event {e}')
     useful_event = d.get_useful_event(e)
     this_wave_bundle = d.get_waveforms(useful_event)
-    rpr_arr ,average_rpr = rpr.get_avg_rpr(this_wave_bundle,individual_antenna = True)
-    save_rpr[:,e] = rpr_arr
+    average_rpr = rpr.get_avg_rpr(this_wave_bundle)
     save_av_rpr[e] = average_rpr
-
+    print( average_rpr)
 # Save results to HDF5 file
 file_name = f'/data/ana/ARA/ARA0{args.station}/scratch/rpr2_A{args.station}_run{run_number}.h5'
 with h5py.File(file_name, 'w') as hf:
-    hf.create_dataset('per_channel_rpr', data=save_rpr, compression="gzip", compression_opts=9)
     hf.create_dataset('av_rpr', data=save_av_rpr, compression="gzip", compression_opts=9)

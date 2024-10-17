@@ -1,206 +1,81 @@
 import numpy as np
 from scipy.ndimage import uniform_filter1d
 from araproc.framework import waveform_utilities as wfu
+from araproc.analysis import snr
 
-
-def get_max_info(channel_wf, channel_time, use_debug=False):
+def get_rpr(waveform):
     """
-    Identifies the maximum voltage and its corresponding time.
+    Computes the RPR (Root Power Ratio) value, similar to SNR, for the given waveform.
 
-    Parameters
-    ----------
-    channel_wf: numpy array
-        Array of voltage values (squared waveform data).
-    channel_time: numpy array
-        Array of time values corresponding to the waveform data.
-    use_debug: bool, optional
-        If True, prints debug information.
-
-    Returns
-    -------
-    max_bin: int
-        Index of the maximum voltage in the waveform.
-    max_val: float
-        Maximum voltage value in the waveform.
-    max_time: float
-        Time corresponding to the maximum voltage value.
-    """
-    max_bin = np.nanargmax(channel_wf)
-    max_val = channel_wf[max_bin]
-    max_time = channel_time[max_bin]
-
-    if use_debug:
-        print(f"Max value: {max_val}, Max time: {max_time}")
-
-    return max_bin, max_val, max_time
-
-def get_sqrt_volt_sum_wf(channel_wf, dt):
-    """
-    Smooth the squared voltage waveform using a rolling mean filter.
-
-    Parameters
-    ----------
-    channel_wf: numpy array
-        Array of squared voltage values.
-    dt: float
-        Step size from time array.
-
-    Returns
-    -------
-    smoothed_waveform: numpy array
-        Smoothed version of the input waveform.
-    """
-    sum_win = 25
-    sum_win_idx = int(np.round(sum_win / dt))
-
-    return np.sqrt(uniform_filter1d(channel_wf, size=sum_win_idx, mode='constant'))
-
-def get_mean_sigma_in_no_max(channel_wf, max_bin, wf_len, use_debug=False):
-    """
-    Computes the mean and standard deviation of the waveform, excluding the region
-    around the maximum voltage.
-
-    Parameters
-    ----------
-    channel_wf: numpy array
-        Smoothed voltage values of the waveform.
-    max_bin: int
-        Index of the maximum voltage in the waveform.
-    wf_len: int
-        Total number of samples in the waveform.
-    use_debug: bool, optional
-        If True, prints debug information.
-
-    Returns
-    -------
-    noise_mean: float
-        Mean voltage excluding the peak window.
-    noise_sigma: float
-        Standard deviation excluding the peak window.
-    """
-    bin_8 = wf_len // 8
-    pad_no_max = channel_wf.copy()
-    front_idx = max(0, int(max_bin - bin_8))
-
-    pad_no_max[front_idx:max_bin + bin_8 + 1] = np.nan
-    noise_mean = np.nanmean(pad_no_max)
-    noise_sigma = np.nanstd(pad_no_max)
-
-    if use_debug:
-        print(f"Mean: {noise_mean}, Sigma: {noise_sigma}")
-
-    return noise_mean, noise_sigma
-
-def get_ch_sliding_v2_snr_uw(channel_wf, channel_time, wf_len, use_debug=False):
-    """
-    Computes the RPR value, which is similar to SNR, for the given waveform.
-
-    Parameters
-    ----------
-    channel_wf: numpy array
-        Voltage values (squared waveform data).
-    channel_time: numpy array
-        Time values corresponding to the waveform.
-    wf_len: int
-        Total number of samples in the waveform.
-    use_debug: bool, optional
-        If True, prints debug information.
-
-    Returns
-    -------
-    rpr_val: float
-        The RPR value (signal-to-noise-like ratio) for the waveform.
-    """
-    dt =  wfu.get_dt_and_sampling_rate(channel_time)[0] 
-    channel_wf = get_sqrt_volt_sum_wf(channel_wf, dt)
-    max_bin, max_val, max_time = get_max_info(channel_wf, channel_time, use_debug)
-    noise_mean, noise_sigma = get_mean_sigma_in_no_max(channel_wf, max_bin, wf_len, use_debug)
-    rpr_val = (max_val - noise_mean) / noise_sigma
-
-    if noise_sigma <= 0:
-        print(f'Negative std detected, which may be unphysical')
-        rpr_val = -9999
-
-    if use_debug:
-        print(f"RPR: {rpr_val}, Max Val: {max_val}, Mean: {noise_mean}, Sigma: {noise_sigma}")
-
-    return rpr_val
-
-def run_rpr_calculation(waveform, use_debug=False):
-    """
-    Computes the RPR value for a given waveform by preparing the data and invoking the RPR calculation.
-
-    Parameters
-    ----------
     Parameters
     ----------
     waveform: TGraph
-        A TGraph of the waveform.
-    snr: float, optional
-        Placeholder for potential SNR calculation (currently unused).
-    use_debug: bool, optional
-        If True, prints debug information.
+        A TGraph of the waveform containing time and voltage values.
 
     Returns
     -------
     rpr_val: float
-        The calculated RPR value for the waveform.
+        The RPR value for the waveform, calculated as the ratio of the maximum voltage 
+        (after smoothing) to the standard deviation of the waveform parts with the least RMS.
     """
-    channel_time, channel_wf = wfu.tgraph_to_arrays(waveform) 
+    # Extract time and voltage arrays from the waveform
+    channel_time, channel_wf = wfu.tgraph_to_arrays(waveform)
     wf_len = len(channel_wf)
+    
+    # Square the waveform data for further processing
     channel_wf = channel_wf ** 2
-    channel_wf[np.isnan(channel_wf)] = 0
-    rpr_val = get_ch_sliding_v2_snr_uw(channel_wf, channel_time, wf_len, use_debug)
+
+    # Calculate the smoothing window size based on sampling rate
+    dt =  wfu.get_dt_and_sampling_rate(channel_time)[0]
+    sum_win = 25  # Smoothing window in ns
+    sum_win_idx = int(np.round(sum_win / dt))  # Convert window size to sample points
+    channel_wf = np.sqrt(uniform_filter1d(channel_wf, size=sum_win_idx, mode='constant'))
+
+    # Find the maximum value of the smoothed waveform
+    max_bin = np.nanargmax(channel_wf)
+    max_val = channel_wf[max_bin]
+
+    # Calculate noise sigma: standard deviation of the four parts with the least RMS
+    part_size = len(channel_wf) // 8
+    waveform_parts = [channel_wf[i*part_size:(i+1)*part_size] for i in range(8)]
+    rms_values = [np.sqrt(np.mean(part**2)) for part in waveform_parts]
+    least_rms_parts = [waveform_parts[i] for i in np.argsort(rms_values)[:4]]
+    combined_least_rms_parts = np.concatenate(least_rms_parts)
+    noise_sigma = np.std(combined_least_rms_parts)
+
+    # Calculate and return the RPR value
+    rpr_val = max_val / noise_sigma
+
     return rpr_val
 
-def get_avg_rpr(wave_bundle, chans=None, individual_antenna=False, use_debug=False):
+def get_avg_rpr(wave_bundle, chans=None, excluded_channels=[]):
     """
-    Calculates channel-wise averaged RPR for a given set of waveforms.
+    Calculates the average RPR across selected channels from a given set of waveforms.
 
     Parameters
     ----------
     wave_bundle: dict of tuples
         Dictionary containing tuples of (voltage array, time array) for each channel.
     chans: list, optional
-        List of channels to average over. If None, averages over all channels in wave_bundle.
-    individual_antenna: bool, optional
-        If True, returns the RPR value for each channel individually along with the average.
-    use_debug: bool, optional
-        If True, prints debug information.
+        List of channels to calculate the average RPR for. If None, averages over all channels in wave_bundle.
+    excluded_channels: list, optional
+        List of channels to exclude from the calculation.
 
     Returns
     -------
-    rpr_collect: list of floats, optional
-        List of RPR values for each individual channel (if individual_antenna is True).
     avg_rpr: float
-        The average RPR across the selected channels.
+        The average RPR value across the selected channels.
     """
-    if chans is None:
-        chans = list(wave_bundle.keys())
-
+    chans = list(wave_bundle.keys()) if chans is None else chans
     avg_rpr = []
-    if individual_antenna:
-        rpr_collect = []
 
     for chan in chans:
+        if chan in excluded_channels:
+            continue
         waveform = wave_bundle[chan]  # Unpack voltage and time arrays from the wave_bundle
-        rpr = run_rpr_calculation(waveform, use_debug=use_debug)  # Calculate RPR for the channel
+        rpr = get_rpr(waveform)  # Calculate RPR for the channel
         avg_rpr.append(rpr)
-        
-        if individual_antenna:
-            rpr_collect.append(rpr)
-    
-    avg_rpr = np.mean(avg_rpr)
-    
-    if use_debug:
-        print('Average RPR: ', avg_rpr)
 
-    if individual_antenna:
-        return rpr_collect, avg_rpr
-    else:
-        return avg_rpr
-
-
-
-
+    # Return the average RPR value across all selected channels
+    return np.mean(avg_rpr)
 
