@@ -625,8 +625,6 @@ class StandardReco:
         # Get maximum correlation and threshold
         max_corr = float(corr_map.get("corr"))
         threshold_corr = fraction * max_corr
-        print("Max corr in map: ", max_corr)
-        print("Threshold corr: ", threshold_corr)
 
         # Access correlation map and radius
         hist = corr_map.get("map")
@@ -655,7 +653,6 @@ class StandardReco:
                     # Ensure min_depth does not exceed z_thresh
                     if depth > min_depth and depth <= z_thresh:
                         min_depth = depth
-                        print(f"Updated min_depth to {min_depth} Theta: {theta}, Corr: {corr_value}, Depth: {depth}")
 
         if min_depth == -float('inf'):
             raise RuntimeError("No depth meets the fractional correlation threshold within the z_thresh.")
@@ -694,13 +691,11 @@ class StandardReco:
             try:
                 # Use the existing function to find the minimum depth for this map
                 depth = self.min_frac_corr_depth(corr_map, fraction=fraction, z_thresh=z_thresh)
-                print(f"Map {idx}: depth = {depth}")
 
                 # Update min_depth if the current depth is shallower (closer to the surface)
                 if depth > min_depth:
                     min_depth = depth
                     min_depth_index = idx
-                    print(f"Updated min_depth to {min_depth} for map index {min_depth_index}")
 
             except RuntimeError as e:
                 print(f"Map {idx} did not meet the threshold: {e}")
