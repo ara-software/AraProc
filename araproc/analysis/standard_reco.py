@@ -417,11 +417,8 @@ class StandardReco:
             raise ValueError("Radius not found in corr_map.")
         radius = float(radius)
 
-        # Get antenna z-coordinates and calculate average
-        geom_tool = ROOT.AraGeomTool.Instance()
-        z_coords = [geom_tool.getStationInfo(self.station_id).getAntennaInfo(ant).antLocation[2] 
-                    for ant in range(self.num_channels)]
-        avg_z = sum(z_coords) / len(z_coords)
+        # Calculate average antenna z coordinates
+        _, _, avg_z = mu.calculate_avg_antenna_xyz(self.station_id, self.num_channels)
 
         # Check if surface is visible at the given radius
         if radius < (abs(avg_z) + z_thresh):
@@ -599,3 +596,106 @@ class StandardReco:
         
         return surf_corr_ratio, max_surf_corr_result, max_corr_result
 
+    def min_frac_corr_depth(self, corr_map, fraction=0.6, z_thresh=0):
+        """
+        Finds the shallowest depth where correlation meets a specified fraction of the maximum correlation,
+        using 'theta' to calculate depth and adjusting by the average z-coordinate of antennas.
+        Ensures the result remains below the specified depth threshold (z_thresh).
+
+        Parameters
+        ----------
+        corr_map : dict
+            Contains:
+            - 'map': ROOT.TH2D histogram with correlation values by theta and phi.
+            - 'radius': Correlation radius in meters.
+        fraction : float
+            Fraction of the max correlation to set the threshold.
+            Default is 0.6 (or 60%).
+        z_thresh : float
+            Maximum allowable depth (relative to the surface). Default is -10 meters.
+
+        Returns
+        -------
+        min_depth : float
+            Shallowest depth (measured from ice surface) where correlation meets the specified fraction of max and below z_thresh.
+        """
+        # Get maximum correlation and threshold
+        max_corr = float(corr_map.get("corr"))
+        threshold_corr = fraction * max_corr
+
+        # Access correlation map and radius
+        hist = corr_map.get("map")
+        radius = corr_map.get("radius")
+        if hist is None or radius is None:
+            raise ValueError("Map or radius not found in corr_map.")
+        radius = float(radius)
+
+        # Calculate average antenna z-coordinate
+        _, _, avg_z = mu.calculate_avg_antenna_xyz(self.station_id, self.num_channels)
+
+        min_depth = -float('inf')  # Initialize to find the shallowest depth (least negative)
+
+        # Check correlation values against threshold and calculate depth
+        for x_bin in range(1, hist.GetNbinsX() + 1):
+            for y_bin in range(1, hist.GetNbinsY() + 1):
+                corr_value = hist.GetBinContent(x_bin, y_bin)
+                if corr_value >= threshold_corr:
+                    # Calculate depth from theta and adjust by avg_z
+                    theta = hist.GetYaxis().GetBinCenter(y_bin)
+                    depth = radius * math.sin(math.radians(theta)) + avg_z
+                    
+
+                    # Ensure min_depth does not exceed z_thresh
+                    if depth > min_depth and depth <= z_thresh:
+                        min_depth = depth
+
+        if min_depth == -float('inf'):
+            raise RuntimeError("No depth meets the fractional correlation threshold within the z_thresh.")
+        
+        return min_depth
+
+    def min_frac_corr_depth_multiple(self, *maps, fraction=0.6, z_thresh=0):
+        """
+        Finds the shallowest depth across multiple correlation maps where correlation meets
+        a specified fraction of the maximum correlation. Uses the min_frac_corr_depth function for each map,
+        then returns the minimum depth found and the index of the corresponding map.
+
+        Parameters
+        ----------
+        *maps : dict
+            A variable number of correlation maps, each containing:
+            - 'map': ROOT.TH2D histogram with correlation values by theta and phi.
+            - 'radius': Correlation radius in meters.
+        fraction : float
+            Fraction of the max correlation to set the threshold. Default is 0.6 (60%).
+        z_thresh : float
+            Maximum allowable depth (relative to the surface). Default is 0 meters.
+
+        Returns
+        -------
+        min_depth : float
+            Shallowest depth (measured from ice surface) across all maps where correlation meets the specified fraction of max.
+        min_depth_index : int
+            Index of the map that contains the shallowest depth.
+        """
+        min_depth = -float('inf')  # Initialize to find the shallowest depth (least negative)
+        min_depth_index = -1  # Track the index of the map with the minimum depth
+
+        # Iterate over each map and find the shallowest depth using min_frac_corr_depth
+        for idx, corr_map in enumerate(maps):
+            try:
+                # Use the existing function to find the minimum depth for this map
+                depth = self.min_frac_corr_depth(corr_map, fraction=fraction, z_thresh=z_thresh)
+
+                # Update min_depth if the current depth is shallower (closer to the surface)
+                if depth > min_depth:
+                    min_depth = depth
+                    min_depth_index = idx
+
+            except RuntimeError as e:
+                print(f"Map {idx} did not meet the threshold: {e}")
+
+        if min_depth == -float('inf'):
+            raise RuntimeError("No maps meet the fractional correlation threshold within the z_thresh.")
+
+        return min_depth, min_depth_index
