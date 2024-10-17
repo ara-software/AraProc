@@ -452,8 +452,13 @@ class StandardReco:
         if not surf_corr_values:
             raise RuntimeError("No correlation values found in the specified theta range.")
         
-        max_surf_corr = np.nanmax(surf_corr_values)
-        max_idx = np.nanargmax(surf_corr_values)
+        # Check for NaNs
+        if np.isnan(surf_corr_values).any():
+            raise ValueError("surf_corr_values contains NaN values.")
+
+        # Calculate maximum and index
+        max_surf_corr = np.max(surf_corr_values)
+        max_idx = np.argmax(surf_corr_values)
         max_bin = corr_bins[max_idx]
         
         max_theta = hist.GetYaxis().GetBinCenter(max_bin[1])
@@ -485,6 +490,14 @@ class StandardReco:
             - 'phi': Phi angle of max surface correlation.
         max_result : dict
             Dictionary with the max surface correlation result across all maps.
+
+        Usage example
+        -------
+
+        results, max_surf_result = standard_reco.get_surface_corr_max_multiple(
+            reco_results["distant_v_dir"], reco_results["distant_v_ref"], z_thresh=-10
+        )
+
         """
         results = []
         for idx, corr_map in enumerate(maps):
@@ -519,6 +532,14 @@ class StandardReco:
         -------
         max_corr_result : dict
             Dictionary with max 'corr' value and corresponding 'theta', 'phi'.
+
+        Usage example:
+        -------
+
+        max_corr_info = standard_reco.find_map_with_max_corr(
+            reco_results["distant_v_dir"], reco_results["distant_v_ref"]
+        )
+
         """
         max_corr_result = {'max_corr': -float('inf'), 'theta': None, 'phi': None, 'map_index': None}
         
@@ -561,6 +582,13 @@ class StandardReco:
             Result for map with max surface correlation.
         max_corr_result : dict
             Result for map with max overall correlation.
+
+        Usage example
+        -------
+        surf_corr_ratio, max_surf_corr_result, max_corr_result = standard_reco.calculate_surface_corr_ratio(
+            reco_results["distant_v_dir"], reco_results["distant_v_ref"], z_thresh=-10
+        )
+        
         """
         _, max_surf_corr_result = self.get_surface_corr_max_multiple(*maps, z_thresh=z_thresh)
         max_corr_result = self.find_map_with_max_corr(*maps)
