@@ -1,9 +1,9 @@
 import numpy as np
+from scipy.interpolate import Akima1DInterpolator
 
 from araproc.analysis import standard_reco as sr
 from araproc.framework.dataset import AnalysisDataset
 from araproc.framework import waveform_utilities as wu
-from scipy.interpolate import Akima1DInterpolator
 
 def _get_abspeak(xs, ys):
     """
