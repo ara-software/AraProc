@@ -121,5 +121,6 @@ def plot_skymap(the_map = None,
     ROOT.gPad.SetRightMargin(0.15) # make space for the z axis
     c.SaveAs(ouput_file_path)
     ROOT.gPad.SetRightMargin(0) # reset, so we don't affect settings globally
+    c.Close()
 
     del c
