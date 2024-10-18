@@ -32,7 +32,7 @@ def get_cvmfs_ped_file_name(station_id, run_number):
         raise Exception(f"Station id {station_id} is not supported")
 
     if not np.isfinite(run_number) or run_number < 0:
-        raise Exception(f"Station id {run_number} is not supported")
+        raise Exception(f"Run number {run_number} is not supported")
     
     cvmfs_top_dir = "/cvmfs/icecube.osgstorage.org/icecube/PUBLIC/groups/arasoft/pedestals"
     start = start = run_number - (run_number % 1000)
