@@ -12,8 +12,6 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--input_file", type=str, required=True,
     help="full path to the input file")
-parser.add_argument("--ped_file", type=str,default=None, required=False, 
-    help="path to pedestal file")
 parser.add_argument("--is_simulation", type=int, default=0, required=True,
 	help="is simulation; 0 = not simulation (default), 1 = is simulation")
 parser.add_argument("--station", type=int, required=True,
@@ -24,17 +22,10 @@ parser.add_argument("--output_file", type=str, required=True,
 args = parser.parse_args()
 args.is_simulation = bool(args.is_simulation)
 
-if args.is_simulation and (args.ped_file is not None):
-    raise KeyError("You cannot mix a simulation with a pedestal file")
-
-if (not args.is_simulation) and (args.ped_file is None):
-    raise KeyError("If you are analyzing data, you must provide a pedestal file")
-
 # set up input 
 d = dataset.AnalysisDataset(
     station_id = args.station,
     path_to_data_file = args.input_file,
-    path_to_pedestal_file = args.ped_file,
     is_simulation = args.is_simulation
 )
 reco = sr.StandardReco(d.station_id)

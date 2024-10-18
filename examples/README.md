@@ -17,7 +17,6 @@ is in `process_run.py`. You can run it like:
 ```
 python process_run.py \
     --input_file /data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/event005626.root \
-    --ped_file /data/ana/ARA/ARA05PA/ARA05_pedestals/ped_full_values_A5_run005626.dat \
     --is_simulation 0 \
     --station 5 \
     --output_file station_5_run_005626.root
