@@ -8,43 +8,27 @@ from araproc.framework import waveform_utilities as wfu
 
 
 
-def get_envelope(waveform, nsegs = 8):
+def get_envelope(waveform):
 
     """
-    Calculates the Hilbert envelope voltage and rms of a trace.
+    Calculates the Hilbert envelope a trace.
 
     Parameters
     ----------
     waveform: TGraph
         A TGraph of the waveform.
-    nsegs: int
-        Number of segments to break waveform into.
 
     Returns
     -------
-    hill_max: float
-        Hilbert envelope maximum voltage in same units as trace.
-    hill_rms: float
-        Hilbert envelope minimum rms among all segments in same units as trace..
+    hill: array
+        Hilbert envelope of the waveform.
     """ 
 
     _, trace = wfu.tgraph_to_arrays(waveform)
    
     hill = np.abs(hilbert(trace))
-    hill_max_idx = np.nanargmax(hill)
-    hill_max = hill[hill_max_idx]
-  
-    ''' 
-    segments = np.array_split(hill, nsegs)
-    rms_segments = [np.sqrt(np.nanmean(segment**2)) for segment in segments]
-    sorted_rms_segments = sorted(rms_segments)
-    hill_rms = np.mean(sorted_rms_segments[:3])    
-    '''
-
-    hill_rms = snr.get_min_segmented_rms(hill)
- 
-    return hill_max, hill_rms
-
+    
+    return hill
 
 
 
@@ -64,8 +48,11 @@ def get_hill_snr(waveform):
         The Hilbert envelope SNR of the waveform.
     """
 
-    hill_max, hill_rms = get_envelope(waveform)
-   
+    hill = get_envelope(waveform)
+    hill_max_idx = np.argmax(hill)
+    hill_max = hill[hill_max_idx]
+    hill_rms = snr.get_min_segmented_rms(hill)
+
     if(hill_rms == 0.0):
       return 0
 
@@ -94,7 +81,7 @@ def get_avg_hill_snr(wave_bundle, excluded_channels = []):
         The average Hilbert envelope SNR.
     """
 
-    chans = list(wave_bundle.keys())
+    chans = sorted(list(wave_bundle.keys()))
 
     avg_hill_snr = []
     for chan in chans:

@@ -3,6 +3,9 @@ import numpy as np
 import math
 import os
 import ROOT
+import itertools
+import scipy
+from scipy.signal import correlate as co
 
 from araproc.analysis import interferometry as interf
 from araproc.framework import constants as const
@@ -701,3 +704,135 @@ class StandardReco:
             raise RuntimeError("No maps meet the fractional correlation threshold within the z_thresh.")
 
         return min_depth, min_depth_index
+
+    def pairing(channels):
+
+        """
+        Makes channel pairs.
+    
+        Parameters
+        ----------
+        channels: list
+           List of given channels.
+
+        Returns
+        -------
+        pairs: list
+           List of all possible pair combinations of given channels.
+        """
+
+        pairs = list(itertools.combinations(channels, 2))
+
+        return pairs
+
+    def get_corr(y1, y2):
+
+        """
+        Calculates normalized correlation between two waveforms, y1 and y2.
+    
+        Parameters
+        ----------
+        y1: list
+           List of values of waveform 1.
+        y2: list
+           List of values of waveform 2.
+    
+        Returns
+        -------
+        corr: array
+           Array of values of cross correlation function.  
+        """
+
+        _, y1 = wfu.tgraph_to_arrays(y1)
+        _, y2 = wfu.tgraph_to_arrays(y2)
+
+        n = len(y1)
+        corr = co(y2, y1, mode = 'same')/np.sqrt(co(y1, y1, mode = 'same')[int(n/2)]*co(y2, y2, mode = 'same')[int(n/2)])
+
+        return corr
+
+    def get_corr_snr(first_ch, second_ch):
+
+        """
+        Calculates channel-pair correlation SNR
+    
+        Parameters
+        ----------
+        first_ch: array 
+           Array of a given channel waveform.
+        second_ch: array 
+           Array of another given channel waveform.
+     
+        Returns
+        -------
+        corr_snr: float
+           Channel pair correlation SNR.
+        """
+
+        corr = get_corr(first_ch, second_ch)
+        corr_snr = snr.get_snr(corr)
+
+        return corr_snr
+
+    def get_avg_corr_snr(wave_bundle, excluded_channels = []):
+
+        """
+        Makes useful dictionaries for channel-pair correlation SNR and their average.
+
+        Parameters
+        ----------
+        wave_bundle: dict of TGraphs
+            Dictionary of waveform TGraphs to be averaged.
+        excluded_channels: list
+            List of dictionary keys to exclude from average.
+
+        Returns
+        -------
+        avg_corr_snr : float
+            Average channel-pair correlation SNR.
+        avg_vpol_corr_snr : float
+            The VPol average channel-pair correlation SNR.
+        avg_hpol_corr_snr : float
+            The HPol average channel-pair correlation SNR.
+        """
+
+
+        chans = sorted(list(wave_bundle.keys()))
+
+        AllPol_dict, VPol_dict, HPol_dict = {}, {}, {}
+        corr_snr, VPol_corr_snr, HPol_corr_snr = {}, {}, {}
+
+        for chan in chans:
+            if chan in excluded_channels:
+                continue
+
+            AllPol_dict.update({chan: wave_bundle[chan]})  
+
+            if chan in const.vpol_channel_ids:
+                VPol_dict.update({chan: wave_bundle[chan]})
+            if chan in const.hpol_channel_ids:
+                HPol_dict.update({chan: wave_bundle[chan]})
+
+        avg_corr_snr, avg_vpol_corr_snr, avg_hpol_corr_snr = [], [], []
+
+        pairs = pairing(list(AllPol_dict.keys()))
+        pairs_V = pairing(list(VPol_dict.keys()))
+        pairs_H = pairing(list(HPol_dict.keys()))
+
+        for pair in pairs:
+            corr_snr = get_corr_snr(AllPol_dict[pair[0]], AllPol_dict[pair[1]])
+            avg_corr_snr.append(corr_snr)
+
+        for pair_V in pairs_V:
+            corr_snr = get_corr_snr(VPol_dict[pair_V[0]], VPol_dict[pair_V[1]])
+            avg_vpol_corr_snr.append(corr_snr)
+
+        for pair_H in pairs_H:
+            corr_snr = get_corr_snr(HPol_dict[pair_H[0]], HPol_dict[pair_H[1]])
+            avg_hpol_corr_snr.append(corr_snr)
+
+        avg_corr_snr = np.mean(avg_corr_snr)
+        avg_vpol_corr_snr = np.mean(avg_vpol_corr_snr)
+        avg_hpol_corr_snr = np.mean(avg_hpol_corr_snr)
+
+        return avg_corr_snr, avg_vpol_corr_snr, avg_hpol_corr_snr  
