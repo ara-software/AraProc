@@ -5,6 +5,7 @@ from scipy.signal import correlate
 from araproc.analysis import standard_reco as sr
 from araproc.framework.dataset import AnalysisDataset
 from araproc.framework import waveform_utilities as wu
+from araproc.framework import data_visualization as dv
 
 def _get_abspeak(xs, ys):
     """
@@ -46,7 +47,7 @@ def _get_channels_to_csw(excluded_channels, data, polarization):
 
 def _get_arrival_delays_reco(
     data, waveforms, channels_to_csw, excluded_channels, reference_ch, 
-    which_distance, polarization, solution
+    which_distance, polarization, solution, e
 ):
     """
     Extract the arrival time of the signals from the reconstruction then 
@@ -58,6 +59,10 @@ def _get_arrival_delays_reco(
     pol_int_to_str = {0: "v", 1: "h"}
     distance_to_key = {'distant': 'distant', 'nearby': 'pulser'}
     reco_key = f"{distance_to_key[which_distance]}_{pol_int_to_str[polarization]}"
+
+    # dv.plot_skymap(
+    #     reco_results[reco_key]["map"],
+    #     ouput_file_path=f"./station_{data.station_id}_run_{data.run_number}_event_{e}_map.png")
 
     # Get all the arrival delays
     arrival_times = {ch: None for ch in channels_to_csw }
@@ -281,7 +286,7 @@ def _roll_wf(wf, shift, times):
 
     return wf
 
-def get_csw_reco(
+def get_csw_reco(e,
     data : AnalysisDataset, 
     useful_event, 
     solution : int ,
@@ -305,7 +310,7 @@ def get_csw_reco(
     reference_ch = _get_channel_with_max_V(waveforms, channels_to_csw)
     arrival_delays = _get_arrival_delays_reco(
         data, waveforms, channels_to_csw, excluded_channels, reference_ch,
-        which_distance, polarization, solution)
+        which_distance, polarization, solution, e)
     
     # Shift each waveform by the arrival delay then interpolate each waveform 
     #   so it exists within an array that stretches from the earliest wf 
