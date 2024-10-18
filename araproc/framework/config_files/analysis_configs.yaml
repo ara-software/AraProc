@@ -134,11 +134,27 @@ station4:
   config1:
     excluded_channels : [3, 7, 11, 15] # always exclude string 4
     filters:
-      filt1 : { min_freq : 0.400, max_freq : 0.420, min_power_ratio : 0.02 }
+      filt1 : { min_freq : 0.212, max_freq : 0.225, min_power_ratio : 0.02 }
+      filt2 : { min_freq : 0.400, max_freq : 0.407, min_power_ratio : 0.02 }
+      filt3 : { min_freq : 0.650, max_freq : 0.659, min_power_ratio : 0.02 }
   config2:
     excluded_channels : [3, 7, 11, 15] # always exclude string 4
     filters:
-      filt1 : { min_freq : 0.400, max_freq : 0.420, min_power_ratio : 0.02 }
+      filt1 : { min_freq : 0.212, max_freq : 0.225, min_power_ratio : 0.02 }
+      filt2 : { min_freq : 0.400, max_freq : 0.407, min_power_ratio : 0.02 }
+      filt3 : { min_freq : 0.650, max_freq : 0.659, min_power_ratio : 0.02 }
+  config3:
+    excluded_channels : [3, 7, 11, 15] # always exclude string 4
+    filters:
+      filt1 : { min_freq : 0.212, max_freq : 0.225, min_power_ratio : 0.02 }
+      filt2 : { min_freq : 0.400, max_freq : 0.407, min_power_ratio : 0.02 }
+      filt3 : { min_freq : 0.650, max_freq : 0.659, min_power_ratio : 0.02 }
+  config4:
+    excluded_channels : [3, 7, 11, 15] # always exclude string 4
+    filters:
+      filt1 : { min_freq : 0.212, max_freq : 0.225, min_power_ratio : 0.02 }
+      filt2 : { min_freq : 0.400, max_freq : 0.407, min_power_ratio : 0.02 }
+      filt3 : { min_freq : 0.650, max_freq : 0.659, min_power_ratio : 0.02 }
 
 station5:
   config1:
