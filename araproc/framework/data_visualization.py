@@ -14,6 +14,7 @@ https://github.com/matplotlib/matplotlib/issues/20300.
 """
 import matplotlib # noqa : E402
 matplotlib.use("agg")
+__mplver = matplotlib.__version__ # this seems to fix a rare segfault (don't ask me...)
 
 def plot_waveform_bundle(
     waveform_dict = None,
