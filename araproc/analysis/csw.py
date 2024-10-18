@@ -382,7 +382,7 @@ def plot_rolled_wfs_overlayed(
     cmap = plt.get_cmap('gist_rainbow')
     for i, (channel, wfs) in enumerate(rolled_wfs.items()): 
         ax.plot(
-            times, wfs, label=channels_to_csw[channel], alpha=0.4,
+            times, wfs, label=channels_to_csw[i], alpha=0.4,
             color=cmap( i/len(rolled_wfs) )
         )
         ax.scatter(*_get_peak(times, wfs), color=cmap( i/len(rolled_wfs)))
@@ -430,12 +430,12 @@ def plot_rolled_wfs(
         vertical coordinate : int
         """
         return antenna_number // 8, antenna_number % 8
-    for channel, wfs in rolled_wfs.items(): 
+    for c, (channel, wfs) in enumerate(rolled_wfs.items()): 
         if antenna_number >= 16: 
             print("Too many antennas to plot")
             break
-        axs_horizontal, axs_vertical = get_axs_coordinates(channels_to_csw[channel])
-        axs[axs_vertical][axs_horizontal].plot(times, wfs, label=channels_to_csw[channel])
+        axs_horizontal, axs_vertical = get_axs_coordinates(channels_to_csw[c])
+        axs[axs_vertical][axs_horizontal].plot(times, wfs, label=channels_to_csw[c])
         axs[axs_vertical][axs_horizontal].legend(loc=2)
         antenna_number += 1
     if xlims != None: 
