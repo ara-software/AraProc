@@ -16,10 +16,9 @@ logging.getLogger().setLevel(logging.INFO)
 d = dataset.AnalysisDataset(
     station_id=5,
     path_to_data_file="/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/event005626.root",
-    path_to_pedestal_file="/data/ana/ARA/ARA05PA/ARA05_pedestals/ped_full_values_A5_run005626.dat"
 )
 iter_start = 0
-iter_stop = 20700
+iter_stop = 200
 
 ################################################################
 ################################################################
@@ -38,14 +37,13 @@ iter_stop = 20700
 ################################################################
 ################################################################
 # uncomment this dataset loader to see a nice CW contaminated A2 event
+# (eventNumber 213179, which is TTree index 20695 in the burn sample file)
 ################################################################
 ################################################################
 
-# (eventNumber 213179, which is TTree index 20695 in the burn sample file)
 # d = dataset.AnalysisDataset(
 #     station_id = 2,
 #     path_to_data_file="/data/exp/ARA/2013/filtered/burnSample1in10/ARA02/root/run1548/event1548.root",
-#     path_to_pedestal_file="/cvmfs/ara.opensciencegrid.org/trunk/RHEL_7_x86_64/ara_build/share/araCalib/ATRI/araAtriStation2Pedestals.txt"
 # )
 # iter_start = 20690
 # iter_stop = 20700

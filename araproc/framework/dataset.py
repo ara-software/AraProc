@@ -17,14 +17,33 @@ from . import config_files
 
 def file_is_safe(file_path):
     
+    is_safe = False
+
     if not isinstance(file_path, str):
-        raise TypeError("Path to file must be a string")
+        logging.error(f"Path to file must be a string. Is {type(file_path)}")
     if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File ({file_path}) not found")
+        logging.error(f"File ({file_path}) not found")
     if not os.path.isfile(file_path):
-        raise ValueError(f"{file_path} looks like a directory, not a file")
+        logging.error(f"{file_path} is not a file")
+    else:
+        is_safe = True
     
-    return True
+    return is_safe
+
+def get_cvmfs_ped_file_name(station_id, run_number):
+
+    if station_id not in const.valid_station_ids:
+        raise Exception(f"Station id {station_id} is not supported")
+
+    if not np.isfinite(run_number) or run_number < 0:
+        raise Exception(f"Run number {run_number} is not supported")
+    
+    cvmfs_top_dir = "/cvmfs/icecube.osgstorage.org/icecube/PUBLIC/groups/arasoft/pedestals"
+    start = start = run_number - (run_number % 1000)
+    stop = start + 999
+    file=f"station_{station_id}/{start:07d}-{stop:07d}/station_{station_id}_run_{run_number:07d}.gz"
+    return os.path.join(cvmfs_top_dir, file)
+
 
 def get_filters(station_id, analysis_config):
 
@@ -134,9 +153,10 @@ class DataWrapper:
             raise Exception(f"Station id {station_id} is not supported")
         self.station_id = station_id
 
-        if file_is_safe(path_to_data_file) and file_is_safe(path_to_pedestal_file):
+        if file_is_safe(path_to_data_file):
             self.path_to_data_file = path_to_data_file
-            self.path_to_pedestal_file = path_to_pedestal_file
+        else:
+            raise Exception(f"{path_to_data_file} has a problem!")
         
         self.__open_tfile_load_ttree()
         self.__establish_run_number() # set the run number
@@ -150,7 +170,10 @@ class DataWrapper:
         geo_tool.getStationInfo(self.station_id, self.raw_event_ptr.unixTime)
         
         self.__assign_config()
-        self.__load_pedestal() # load the pedestals
+
+        # now pedestals
+        self.path_to_pedestal_file = path_to_pedestal_file
+        self.__load_pedestal(path_to_pedestal_file) # load the pedestals
 
     def __open_tfile_load_ttree(self):
 
@@ -231,7 +254,29 @@ class DataWrapper:
         self.qual_cuts = ROOT.AraQualCuts.Instance()
         self.config = self.qual_cuts.getLivetimeConfiguration(self.run_number, self.station_id)
 
-    def __load_pedestal(self):
+    def __load_pedestal(self, path_to_pedestal_file = None):
+
+        # find the right pedestal
+        # if the user provided one, then choose that
+        # otherwise, try to find it in cvmfs
+        # and if that doesn't work, raie an error
+        if path_to_pedestal_file is not None:
+            if file_is_safe(path_to_pedestal_file):
+                logging.info(f"Will try to load custom ped file: {path_to_pedestal_file}")
+                self.path_to_pedestal_file = path_to_pedestal_file
+            else:
+                raise Exception(f"{path_to_pedestal_file} has a problem!")
+
+        else:
+            cvmfs_ped = get_cvmfs_ped_file_name(self.station_id, self.run_number)
+            if file_is_safe:
+                logging.info(f"Will try to load cvmfs ped file: {cvmfs_ped}")
+                self.path_to_pedestal_file = cvmfs_ped
+            else:
+                raise Exception(f"{cvmfs_ped} has a problem!")
+
+
+        # with the correct pedestal found, we can actually load it
         try:
             self.calibrator = ROOT.AraEventCalibrator.Instance()
             logging.debug("Instantiating the AraEventCalibrator was successful")
@@ -340,6 +385,8 @@ class SimWrapper:
 
         if file_is_safe(path_to_data_file):
             self.path_to_data_file = path_to_data_file
+        else:
+            raise Exception(f"{path_to_data_file} has a problem!")
         
         self.__open_tfile_load_ttree()
         self.__assign_config()
@@ -497,6 +544,11 @@ class AnalysisDataset:
        the full path to the data root file (event data)
     path_to_pedestal_file : str
         the full path to the pedestal file to be used to calibrate this data file
+        This argument is optional optional when building a dataset around real data.
+        The DataWrapper will try to find the pedesetal files in cvmfs if this argument is None.
+        If it's not None, the user-specified pedestals are used.
+        This argument is imcompatible with is_simulation = True (since AraSim output is already calibrated.)
+        An error will be thrown if those two things clash.
     run_number: int
         ARA run number for this dataset
         This will be inferred from the data itself
