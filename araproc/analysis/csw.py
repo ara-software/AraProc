@@ -574,31 +574,89 @@ def plot_rolled_wfs(
 
     return
 
+# # A1
+# run = "019353"
+# data = AnalysisDataset(
+#     station_id = 100,
+#     path_to_data_file=f"/data/exp/ARA/2020/L1/10pct/ARA01/1030/run{run}/event{run}.root",
+#     path_to_pedestal_file=f"/data/ana/ARA/ARA01/ped_full/ped_full_qualities_A1_R{int(run)}.dat",
+#     is_simulation = False
+# )
+# xlims = (290,235)
+# event = 7
+
+# # A2
+# run = "019290"
+# data = AnalysisDataset(
+#     station_id = 2,
+#     path_to_data_file=f"/data/exp/ARA/2021/unblinded/L1/ARA02/0302/run{run}/event{run}.root",
+#     path_to_pedestal_file=f"/data/ana/ARA/ARA02/ped_full/ped_full_values_A2_R{int(run)}.dat",
+#     is_simulation = False
+# )
+# xlims=(90,135)
+# event = 5
+
+# # A3
+# run = "018686"
+# data = AnalysisDataset(
+#     station_id = 3,
+#     path_to_data_file=f"/data/exp/ARA/2020/L1/10pct/ARA03/0828/run{run}/event{run}.root",
+#     path_to_pedestal_file=f"/data/ana/ARA/ARA03/ped_full/ped_full_values_A3_R{int(run)}.dat",
+#     is_simulation = False
+# )
+# xlims=(60,120)
+# event = 3
+
+# # A4
+# run = "004214"
+# data = AnalysisDataset(
+#     station_id = 4,
+#     path_to_data_file=f"/data/exp/ARA/2018/L1/10pct/ARA04/0530/run{run}/event{run}.root",
+#     path_to_pedestal_file=f"/data/ana/ARA/ARA04/ped_full_from_Martin/ped_full_values_A4_run{run}.dat",
+#     is_simulation = False
+# )
+# xlims=(-10,45)
+# event = 64
+
+# A5
+run = "005626"
 data = AnalysisDataset(
     station_id = 5,
-    path_to_data_file="/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/event005626.root",
-    path_to_pedestal_file="/data/ana/ARA/ARA05PA/ARA05_pedestals/ped_full_values_A5_run005626.dat",
+    path_to_data_file=f"/data/exp/ARA/2019/blinded/L1/ARA05/0701/run{run}/event{run}.root",
+    path_to_pedestal_file=f"/data/ana/ARA/ARA05PA/ARA05_pedestals/ped_full_values_A5_run{run}.dat",
     is_simulation = False
 )
+xlims=(125,160)
+event = 54
 
-useful_event = data.get_useful_event(54)
+useful_event = data.get_useful_event(event)
+
 csw_times, csw, rolled_wf_times, rolled_wfs = get_csw(
+    event,
     data, 
     useful_event,
     0,
     0, 
     which_distance="nearby",
-    return_rolled_wfs=True, excluded_channels=data.excluded_channels)
+    return_rolled_wfs=True, 
+    excluded_channels=data.excluded_channels
+    # excluded_channels=np.concatenate((data.excluded_channels,[2,3,4,5,6,7]))
+)
 
 print("\nCSW_SNR", round(get_csw_snr(csw),1))
 print()
-plot_csw(csw_times, csw, "./")
-plot_rolled_wfs(
-    rolled_wf_times, rolled_wfs, "./wfs_for_csw.png", data.excluded_channels, data, 0,
-    ylims=(-800, 1100))
+file_id = f"A{data.station_id}_r{run}_e{event}"
+# plot_csw(csw_times, csw, "./")
+# plot_rolled_wfs(
+#     rolled_wf_times, rolled_wfs, f"./wfs_for_csw_{file_id}.png", data.excluded_channels, data, 0,
+#     ylims=(-800, 1100))
 plot_rolled_wfs_overlayed(
-    rolled_wf_times, rolled_wfs, "./wfs_for_csw_overlayed_with_csw.png", data.excluded_channels, data, 0,
-    xlims=(125,160))
+    rolled_wf_times, rolled_wfs, f"./wfs_for_csw_{file_id}_overlayed_with_csw.png", 
+    data.excluded_channels, data, 0, xlims=xlims 
+    )
 plot_rolled_wfs_overlayed(
-    rolled_wf_times, rolled_wfs, "./wfs_for_csw_overlayed.png", data.excluded_channels, data, 0,
-    xlims=(125,160), plot_csw=False)
+    rolled_wf_times, rolled_wfs, f"./wfs_for_csw_{file_id}_overlayed.png", 
+    data.excluded_channels, data, 0,
+    # xlims=(125,160), 
+    # xlims=(290, 340),
+    plot_csw=False)
