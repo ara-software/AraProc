@@ -141,6 +141,14 @@ class DataWrapper:
         self.__open_tfile_load_ttree()
         self.__establish_run_number() # set the run number
         self.num_events = self.event_tree.GetEntries()
+
+        # force AraRoot to load the proper sqlite table
+        # we need to do this right away to make sure that for A3 > 2018
+        # we get the right channel mapping
+        self.event_tree.GetEntry(0)
+        geo_tool = ROOT.AraGeomTool.Instance()
+        geo_tool.getStationInfo(self.station_id, self.raw_event_ptr.unixTime)
+        
         self.__assign_config()
         self.__load_pedestal() # load the pedestals
 
