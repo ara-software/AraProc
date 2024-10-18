@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.interpolate import Akima1DInterpolator
+from scipy.signal import correlate
 
 from araproc.analysis import standard_reco as sr
 from araproc.framework.dataset import AnalysisDataset
@@ -43,7 +44,7 @@ def _get_channels_to_csw(excluded_channels, data, polarization):
 
     return channels_to_csw[:]
 
-def _get_arrival_delays(
+def _get_arrival_delays_reco(
     data, waveforms, channels_to_csw, excluded_channels, reference_ch, 
     which_distance, polarization, solution
 ):
@@ -80,6 +81,51 @@ def _get_arrival_delays(
     arrival_delays = {ch: None for ch in channels_to_csw }
     for ch_ID in arrival_delays.keys():
         arrival_delays[ch_ID] = arrival_times[ch_ID] - reference_arrival_time
+
+    return arrival_delays
+
+def _get_arrival_delays(waveforms, times, channels_to_csw, reference_ch):
+
+    import matplotlib.pyplot as plt
+
+    arrival_delays = {ch_ID: None for ch_ID in channels_to_csw}
+
+    volts_ref_nan_idx = np.isnan(waveforms[reference_ch])
+    volts_ref_nonan = np.copy( waveforms[reference_ch] )
+    volts_ref_nonan[volts_ref_nan_idx] = 0.0
+
+    for ch_ID in channels_to_csw: 
+
+        volts_nan_idx = np.isnan(waveforms[ch_ID])
+        volts_nonan = np.copy(waveforms[ch_ID])
+        volts_nonan[volts_nan_idx] = 0.0
+
+        xcorr = correlate(volts_nonan, volts_ref_nonan, method='direct')
+        xcorr_idxpeak, xcorr_vpeak = _get_peak(np.arange(len(xcorr)), xcorr)
+        arrival_delay_bin_shift = xcorr_idxpeak - len(xcorr)//2
+        arrival_delays_time = (
+            np.sign(arrival_delay_bin_shift) * 
+            ( times[abs(arrival_delay_bin_shift)] - times[0] ))
+        arrival_delays[ch_ID] = arrival_delay_bin_shift
+        print(ch_ID, np.round(_get_peak(times, volts_nonan)),
+              "compared to", np.round(_get_peak(times, volts_ref_nonan)), 
+              "time at peak corr", arrival_delays_time)
+        
+
+        # fig, axs = plt.subplots(nrows=2)
+
+        # axs[0].plot(times, volts_nonan, label=f"Channel {ch_ID}", alpha=0.7)
+        # axs[0].plot(times, volts_ref_nonan, label=f"Ref channel {ch_ID}", alpha=0.7)
+        # axs[0].legend()
+        # axs[0].set_xlabel("Time")
+        # axs[0].set_ylabel("Voltage")
+
+        # axs[1].plot(np.linspace(-max(times), max(times), len(xcorr)), xcorr)
+        # axs[1].set_xlabel("Time")
+        # axs[1].set_ylabel("Cross Correlation (ch x ref)")
+
+        # plt.tight_layout()
+        # plt.savefig(f"./xcorr_ch{ch_ID}vs{reference_ch}.png", dpi=300)
 
     return arrival_delays
 
@@ -235,7 +281,7 @@ def _roll_wf(wf, shift, times):
 
     return wf
 
-def get_csw(
+def get_csw_reco(
     data : AnalysisDataset, 
     useful_event, 
     solution : int ,
@@ -257,7 +303,7 @@ def get_csw(
     # Calculate the arrival delays in each channel relative to some 
     #   reference channel
     reference_ch = _get_channel_with_max_V(waveforms, channels_to_csw)
-    arrival_delays = _get_arrival_delays(
+    arrival_delays = _get_arrival_delays_reco(
         data, waveforms, channels_to_csw, excluded_channels, reference_ch,
         which_distance, polarization, solution)
     
@@ -276,6 +322,76 @@ def get_csw(
             -arrival_delays[ch_ID], big_times
         )
         # print(np.round(_get_peak(big_times, interpolated_wfs[ch_ID])))
+
+    # Roll the non-nan part of the waveforms around the preselected reference 
+    #   channel & build the CSW
+    roll_shifts = _get_shifts(interpolated_wfs, reference_ch)
+    rolled_wfs = {ch_ID: np.full(len(big_times), -123456.0) for ch_ID in channels_to_csw}
+    csw = np.zeros((1,len(big_times)))
+    for c, ch_ID in enumerate(channels_to_csw):
+        rolled_wfs[ch_ID] = _roll_wf(interpolated_wfs[ch_ID], roll_shifts[ch_ID], big_times)
+        # rolled_wfs[ch_ID] = interpolated_wfs[ch_ID] ## Uncomment to use unrolled wfs in csw
+        csw = np.nansum( np.dstack( (csw[0], rolled_wfs[ch_ID]) ), axis=2) 
+        # print("After rolling", ch_ID, np.round(_get_peak(big_times, rolled_wfs[ch_ID])))
+
+    # Un-nest the csw. csw.shape was (1,len(big_times)) but is now len(big_times)
+    csw = csw[0]
+
+    # Trim the CSW of leading and trailing nan values. Trim time array accordingly.
+    idx_non_pad_values = csw != 0.0
+    start_idx = np.where( 
+        idx_non_pad_values.any(), idx_non_pad_values.argmax(), -123456)
+    end_idx = np.where(
+        idx_non_pad_values.any(),
+        len(csw) - np.flip(idx_non_pad_values).argmax() - 1,
+        -123456
+    )
+    final_csw = csw[ start_idx : end_idx+1 ]
+    final_times = big_times[ start_idx : end_idx+1 ]
+
+    # Return requested data
+    if return_rolled_wfs: 
+        return final_times, final_csw, big_times, rolled_wfs
+    else:
+        return final_times, final_csw
+
+def get_csw(e,
+    data : AnalysisDataset, 
+    useful_event, 
+    solution : int ,
+    polarization : int,
+    excluded_channels = None,
+    which_distance : str = "distant",
+    return_rolled_wfs : bool = False
+):
+    """
+    From a given `useful_event`, return the coherently summed waveform (CSW)
+    """
+
+    # Pull waveforms from the dataset
+    waveforms = data.get_waveforms(useful_event=useful_event, which_traces='filtered')
+
+    # Make a list of channels to analyze
+    channels_to_csw = _get_channels_to_csw(excluded_channels, data, polarization)
+
+    # 
+    big_times = _get_catchall_time_array(
+        waveforms, channels_to_csw, {ch_ID:0 for ch_ID in channels_to_csw})
+    interpolated_wfs = {
+        ch_ID: np.full(len(big_times), -123456.0) for ch_ID in channels_to_csw}
+    for ch_ID in channels_to_csw:
+        # print("Interpolating", ch_ID, np.round(_get_peak(*wu.tgraph_to_arrays(waveforms[ch_ID]))), 
+        #       "shifted by", round(-arrival_delays[ch_ID]), end=" -> ")
+        interpolated_wfs[ch_ID] = _shift_wf(
+            *wu.tgraph_to_arrays(waveforms[ch_ID]), 0, big_times)
+        # print(np.round(_get_peak(big_times, interpolated_wfs[ch_ID])))
+
+    # Calculate the arrival delays in each channel relative to some 
+    #   reference channel
+    reference_ch = _get_channel_with_max_V(waveforms, channels_to_csw)
+    arrival_delays = _get_arrival_delays(interpolated_wfs, big_times, channels_to_csw, reference_ch)
+    for ch_ID in channels_to_csw:
+        interpolated_wfs[ch_ID] = np.roll(interpolated_wfs[ch_ID], -arrival_delays[ch_ID])
 
     # Roll the non-nan part of the waveforms around the preselected reference 
     #   channel & build the CSW
