@@ -43,21 +43,6 @@ def get_rpr(waveform):
     # Calculate and return the RPR value
     rpr_val = max_val / noise_sigma
 
-    # Calculate the smoothing window size based on sampling rate
-    dt =  wfu.get_dt_and_sampling_rate(channel_time)[0]
-    sum_win = 25  # Smoothing window in ns
-    sum_win_idx = int(np.round(sum_win / dt))  # Convert window size to sample points
-    channel_wf = np.sqrt(uniform_filter1d(channel_wf, size=sum_win_idx, mode='constant'))
-
-    # Find the maximum value of the smoothed waveform
-    max_bin = np.argmax(channel_wf)
-    max_val = channel_wf[max_bin]
-
-    # Read noise rms from snr module
-    noise_sigma = snr.get_min_segmented_rms(channel_wf)
-    # Calculate and return the RPR value
-    rpr_val = max_val / noise_sigma
-
     return rpr_val
 
 def get_avg_rpr(wave_bundle, chans=None, excluded_channels=[]):
