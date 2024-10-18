@@ -24,7 +24,7 @@ def file_is_safe(file_path):
     if not os.path.exists(file_path):
         logging.error(f"File ({file_path}) not found")
     if not os.path.isfile(file_path):
-        logging.error(f"{file_path} looks like a directory, not a file")
+        logging.error(f"{file_path} is not a file")
     else:
         is_safe = True
     
