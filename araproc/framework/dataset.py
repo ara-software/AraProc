@@ -17,14 +17,18 @@ from . import config_files
 
 def file_is_safe(file_path):
     
+    is_safe = False
+
     if not isinstance(file_path, str):
-        raise TypeError(f"Path to file must be a string. Is {type(file_path)}")
+        logging.error(f"Path to file must be a string. Is {type(file_path)}")
     if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File ({file_path}) not found")
+        logging.error(f"File ({file_path}) not found")
     if not os.path.isfile(file_path):
-        raise ValueError(f"{file_path} looks like a directory, not a file")
+        logging.error(f"{file_path} looks like a directory, not a file")
+    else:
+        is_safe = True
     
-    return True
+    return is_safe
 
 def get_cvmfs_ped_file_name(station_id, run_number):
 
@@ -151,6 +155,8 @@ class DataWrapper:
 
         if file_is_safe(path_to_data_file):
             self.path_to_data_file = path_to_data_file
+        else:
+            raise Exception(f"{path_to_data_file} has a problem!")
         
         self.__open_tfile_load_ttree()
         self.__establish_run_number() # set the run number
@@ -258,16 +264,17 @@ class DataWrapper:
             if file_is_safe(path_to_pedestal_file):
                 logging.info(f"Will try to load custom ped file: {path_to_pedestal_file}")
                 self.path_to_pedestal_file = path_to_pedestal_file
+            else:
+                raise Exception(f"{path_to_pedestal_file} has a problem!")
+
         else:
             cvmfs_ped = get_cvmfs_ped_file_name(self.station_id, self.run_number)
-            try:
-                is_safe = file_is_safe(cvmfs_ped)
-                if is_safe:
-                    logging.info(f"Will try to load cvmfs ped file: {cvmfs_ped}")
-                    self.path_to_pedestal_file = cvmfs_ped
-            except FileNotFoundError:
-                logging.error(f"Finding a cvmfs pedestal failed, but user did not supply a custom ped file. Abort!")
-                raise
+            if file_is_safe:
+                logging.info(f"Will try to load cvmfs ped file: {cvmfs_ped}")
+                self.path_to_pedestal_file = cvmfs_ped
+            else:
+                raise Exception(f"{cvmfs_ped} has a problem!")
+
 
         # with the correct pedestal found, we can actually load it
         try:
@@ -378,6 +385,8 @@ class SimWrapper:
 
         if file_is_safe(path_to_data_file):
             self.path_to_data_file = path_to_data_file
+        else:
+            raise Exception(f"{path_to_data_file} has a problem!")
         
         self.__open_tfile_load_ttree()
         self.__assign_config()
