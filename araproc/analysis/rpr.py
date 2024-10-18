@@ -61,6 +61,7 @@ def get_rpr(waveform):
     return rpr_val
 
 def get_avg_rpr(wave_bundle, chans=None, excluded_channels=[]):
+
     """
     Calculates the average RPR across selected channels from a given set of waveforms.
 
@@ -78,6 +79,7 @@ def get_avg_rpr(wave_bundle, chans=None, excluded_channels=[]):
     avg_rpr: float
         The average RPR value across the selected channels.
     """
+
     chans = list(wave_bundle.keys()) if chans is None else chans
     avg_rpr = []
 
