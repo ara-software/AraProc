@@ -79,7 +79,7 @@ def _get_arrival_delays(
     reference_arrival_time = arrival_times[reference_ch]
     arrival_delays = {ch: None for ch in channels_to_csw }
     for ch_ID in arrival_delays.keys():
-        arrival_delays[ch_ID] = reference_arrival_time - arrival_times[ch_ID]
+        arrival_delays[ch_ID] = arrival_times[ch_ID] - reference_arrival_time
 
     return arrival_delays
 
@@ -269,10 +269,13 @@ def get_csw(
     interpolated_wfs = {
         ch_ID: np.full(len(big_times), -123456.0) for ch_ID in channels_to_csw}
     for ch_ID in channels_to_csw:
+        # print("Interpolating", ch_ID, np.round(_get_peak(*wu.tgraph_to_arrays(waveforms[ch_ID]))), 
+        #       "shifted by", round(-arrival_delays[ch_ID]), end=" -> ")
         interpolated_wfs[ch_ID] = _shift_wf(
             *wu.tgraph_to_arrays(waveforms[ch_ID]), 
-            arrival_delays[ch_ID], big_times
+            -arrival_delays[ch_ID], big_times
         )
+        # print(np.round(_get_peak(big_times, interpolated_wfs[ch_ID])))
 
     # Roll the non-nan part of the waveforms around the preselected reference 
     #   channel & build the CSW
@@ -283,6 +286,7 @@ def get_csw(
         rolled_wfs[ch_ID] = _roll_wf(interpolated_wfs[ch_ID], roll_shifts[ch_ID], big_times)
         # rolled_wfs[ch_ID] = interpolated_wfs[ch_ID] ## Uncomment to use unrolled wfs in csw
         csw = np.nansum( np.dstack( (csw[0], rolled_wfs[ch_ID]) ), axis=2) 
+        # print("After rolling", ch_ID, np.round(_get_peak(big_times, rolled_wfs[ch_ID])))
 
     # Un-nest the csw. csw.shape was (1,len(big_times)) but is now len(big_times)
     csw = csw[0]
