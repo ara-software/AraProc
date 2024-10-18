@@ -535,6 +535,11 @@ class AnalysisDataset:
        the full path to the data root file (event data)
     path_to_pedestal_file : str
         the full path to the pedestal file to be used to calibrate this data file
+        This argument is optional optional when building a dataset around real data.
+        The DataWrapper will try to find the pedesetal files in cvmfs if this argument is None.
+        If it's not None, the user-specified pedestals are used.
+        This argument is imcompatible with is_simulation = True (since AraSim output is already calibrated.)
+        An error will be thrown if those two things clash.
     run_number: int
         ARA run number for this dataset
         This will be inferred from the data itself
