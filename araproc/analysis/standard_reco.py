@@ -72,13 +72,15 @@ class StandardReco:
             5   : 16
         }
 
-        excluded_channels_vec = ROOT.std.vector("int")(excluded_channels)
+        excluded_channels_vec = ROOT.std.vector("int")()
+        for i in excluded_channels:
+            excluded_channels_vec.push_back(int(i))
 
         # each station has a slightly different distance for the cal pulser reco,
         # so look that up
 
         self.calpulser_r_library = {
-            1 : "48.02",
+            100 : "48.02",
             2 : "42.86",
             3 : "41.08",
             4 : "52.60",
@@ -386,4 +388,316 @@ class StandardReco:
                                                                                        phi_bin.value
                                                                                        )
         return arrival_time
+
+    def get_surface_corr_max(self, corr_map, z_thresh=-10):
+        """
+        Calculates the maximum surface correlation value within a specified theta range.
+        The theta range is determined based on the average antenna z-coordinate and a threshold.
+
+        Parameters
+        ----------
+        corr_map : dict
+            Dictionary containing:
+            - 'map': ROOT.TH2D histogram with correlation values mapped by theta and phi.
+            - 'corr': Overall peak correlation value.
+            - 'radius': Correlation radius for the station (in meters).
+        z_thresh : float, optional
+            Depth threshold for defining the theta range lower bound. Default is -10 m.
+
+        Returns
+        -------
+        max_surf_corr : float
+            Maximum surface correlation within the theta range.
+        max_theta : float
+            Theta angle corresponding to max surface correlation.
+        max_phi : float
+            Phi angle corresponding to max surface correlation.
+        """
+        # Extract the radius and validate
+        radius = corr_map.get("radius", None)
+        if radius is None:
+            raise ValueError("Radius not found in corr_map.")
+        radius = float(radius)
+
+        # Calculate average antenna z coordinates
+        _, _, avg_z = mu.calculate_avg_antenna_xyz(self.station_id, self.num_channels)
+
+        # Check if surface is visible at the given radius
+        if radius < (abs(avg_z) + z_thresh):
+            raise RuntimeError("Surface not visible: radius is smaller than average antenna z-coordinate.")
+
+        # Define theta range
+        theta_surface = math.degrees(math.asin(abs(avg_z) / radius))
+        theta_thresh = math.degrees(math.asin((abs(avg_z) + z_thresh) / radius))
+        theta_min, theta_max = min(theta_surface, theta_thresh), max(theta_surface, theta_thresh)
+
+        # Access correlation map and filter values within the theta range
+        hist = corr_map.get("map", None)
+        if hist is None:
+            raise ValueError("The 'map' key was not found in corr_map.")
         
+        surf_corr_values = []
+        corr_bins = []
+
+        # Loop through the bins and store values within theta range
+        for x_bin in range(1, hist.GetNbinsX() + 1):
+            for y_bin in range(1, hist.GetNbinsY() + 1):
+                theta = hist.GetYaxis().GetBinCenter(y_bin)
+                phi = hist.GetXaxis().GetBinCenter(x_bin)
+                corr = hist.GetBinContent(x_bin, y_bin)
+                if theta_min <= theta <= theta_max:
+                    surf_corr_values.append(corr)
+                    corr_bins.append((x_bin, y_bin))
+
+        # Identify maximum surface correlation
+        if not surf_corr_values:
+            raise RuntimeError("No correlation values found in the specified theta range.")
+        
+        # Check for NaNs
+        if np.isnan(surf_corr_values).any():
+            raise ValueError("surf_corr_values contains NaN values.")
+
+        # Calculate maximum and index
+        max_surf_corr = np.max(surf_corr_values)
+        max_idx = np.argmax(surf_corr_values)
+        max_bin = corr_bins[max_idx]
+        
+        max_theta = hist.GetYaxis().GetBinCenter(max_bin[1])
+        max_phi = hist.GetXaxis().GetBinCenter(max_bin[0])
+
+        return max_surf_corr, max_theta, max_phi
+
+    def get_surface_corr_max_multiple(self, *maps, z_thresh=-10):
+        """
+        Applies get_surface_corr_max to multiple maps and identifies the map with
+        the highest surface correlation value.
+
+        Parameters
+        ----------
+        *maps : dict
+            Variable number of dictionaries, each containing:
+            - 'map': ROOT.TH2D histogram with correlation values.
+            - 'corr': Overall peak correlation value.
+            - 'radius': Correlation radius for the station.
+        z_thresh : float, optional
+            Depth threshold to define theta range lower bound. Default is -10 m.
+
+        Returns
+        -------
+        results : list of dicts
+            List with results for each map:
+            - 'max_corr': Maximum surface correlation.
+            - 'theta': Theta angle of max surface correlation.
+            - 'phi': Phi angle of max surface correlation.
+        max_result : dict
+            Dictionary with the max surface correlation result across all maps.
+
+        Usage example
+        -------
+
+        results, max_surf_result = standard_reco.get_surface_corr_max_multiple(
+            reco_results["distant_v_dir"], reco_results["distant_v_ref"], z_thresh=-10
+        )
+
+        """
+        results = []
+        for idx, corr_map in enumerate(maps):
+            try:
+                max_corr, theta, phi = self.get_surface_corr_max(corr_map, z_thresh=z_thresh)
+                results.append({'max_corr': max_corr, 'theta': theta, 'phi': phi, 'map index': idx})
+            except (ValueError, RuntimeError) as e:
+                print(f"Error processing map at index {idx}: {e}")
+                results.append(None)
+
+        valid_results = [res for res in results if res is not None]
+        if valid_results:
+            max_result = max(valid_results, key=lambda x: x['max_corr'])
+        else:
+            raise RuntimeError("No valid results to determine max surface correlation.")
+        
+        return results, max_result
+
+    def find_map_with_max_corr(self, *maps):
+        """
+        Finds the map with the highest overall 'corr' value.
+
+        Parameters
+        ----------
+        *maps : dict
+            Variable number of dictionaries, each containing:
+            - 'corr': Peak correlation value.
+            - 'theta': Theta angle for peak correlation.
+            - 'phi': Phi angle for peak correlation.
+
+        Returns
+        -------
+        max_corr_result : dict
+            Dictionary with max 'corr' value and corresponding 'theta', 'phi'.
+
+        Usage example:
+        -------
+
+        max_corr_info = standard_reco.find_map_with_max_corr(
+            reco_results["distant_v_dir"], reco_results["distant_v_ref"]
+        )
+
+        """
+        max_corr_result = {'max_corr': -float('inf'), 'theta': None, 'phi': None, 'map_index': None}
+        
+        for idx, corr_map in enumerate(maps):
+            try:
+                corr = corr_map['corr']
+                if corr > max_corr_result['max_corr']:
+                    max_corr_result.update({'max_corr': corr, 'theta': corr_map['theta'], 
+                                            'phi': corr_map['phi'], 'map_index': idx})
+            except KeyError as e:
+                print(f"Key error in map at index {idx}: {e}")
+            except Exception as e:
+                print(f"Error processing map at index {idx}: {e}")
+        
+        if max_corr_result['max_corr'] == -float('inf'):
+            raise RuntimeError("No valid correlation values found.")
+        
+        return max_corr_result
+
+
+    def calculate_surface_corr_ratio(self, *maps, z_thresh=-10):
+        """
+        Calculates surface correlation ratio by comparing max surface correlation with max overall correlation.
+
+        Parameters
+        ----------
+        *maps : dict
+            Variable number of dictionaries, each containing:
+            - 'map': ROOT.TH2D histogram with correlation values.
+            - 'corr': Overall peak correlation value.
+            - 'radius': Correlation radius for the station (assumed to be in meters).
+        z_thresh : float, optional
+            Depth threshold to define theta range lower bound. Default is -10 m.
+
+        Returns
+        -------
+        surf_corr_ratio : float
+            Ratio of max surface correlation to max overall correlation.
+        max_surf_corr_result : dict
+            Result for map with max surface correlation.
+        max_corr_result : dict
+            Result for map with max overall correlation.
+
+        Usage example
+        -------
+        surf_corr_ratio, max_surf_corr_result, max_corr_result = standard_reco.calculate_surface_corr_ratio(
+            reco_results["distant_v_dir"], reco_results["distant_v_ref"], z_thresh=-10
+        )
+        
+        """
+        _, max_surf_corr_result = self.get_surface_corr_max_multiple(*maps, z_thresh=z_thresh)
+        max_corr_result = self.find_map_with_max_corr(*maps)
+        
+        surf_corr_ratio = max_surf_corr_result['max_corr'] / max_corr_result['max_corr'] if max_corr_result['max_corr'] != 0 else float('inf')
+        
+        return surf_corr_ratio, max_surf_corr_result, max_corr_result
+
+    def min_frac_corr_depth(self, corr_map, fraction=0.6, z_thresh=0):
+        """
+        Finds the shallowest depth where correlation meets a specified fraction of the maximum correlation,
+        using 'theta' to calculate depth and adjusting by the average z-coordinate of antennas.
+        Ensures the result remains below the specified depth threshold (z_thresh).
+
+        Parameters
+        ----------
+        corr_map : dict
+            Contains:
+            - 'map': ROOT.TH2D histogram with correlation values by theta and phi.
+            - 'radius': Correlation radius in meters.
+        fraction : float
+            Fraction of the max correlation to set the threshold.
+            Default is 0.6 (or 60%).
+        z_thresh : float
+            Maximum allowable depth (relative to the surface). Default is -10 meters.
+
+        Returns
+        -------
+        min_depth : float
+            Shallowest depth (measured from ice surface) where correlation meets the specified fraction of max and below z_thresh.
+        """
+        # Get maximum correlation and threshold
+        max_corr = float(corr_map.get("corr"))
+        threshold_corr = fraction * max_corr
+
+        # Access correlation map and radius
+        hist = corr_map.get("map")
+        radius = corr_map.get("radius")
+        if hist is None or radius is None:
+            raise ValueError("Map or radius not found in corr_map.")
+        radius = float(radius)
+
+        # Calculate average antenna z-coordinate
+        _, _, avg_z = mu.calculate_avg_antenna_xyz(self.station_id, self.num_channels)
+
+        min_depth = -float('inf')  # Initialize to find the shallowest depth (least negative)
+
+        # Check correlation values against threshold and calculate depth
+        for x_bin in range(1, hist.GetNbinsX() + 1):
+            for y_bin in range(1, hist.GetNbinsY() + 1):
+                corr_value = hist.GetBinContent(x_bin, y_bin)
+                if corr_value >= threshold_corr:
+                    # Calculate depth from theta and adjust by avg_z
+                    theta = hist.GetYaxis().GetBinCenter(y_bin)
+                    depth = radius * math.sin(math.radians(theta)) + avg_z
+                    
+
+                    # Ensure min_depth does not exceed z_thresh
+                    if depth > min_depth and depth <= z_thresh:
+                        min_depth = depth
+
+        if min_depth == -float('inf'):
+            raise RuntimeError("No depth meets the fractional correlation threshold within the z_thresh.")
+        
+        return min_depth
+
+    def min_frac_corr_depth_multiple(self, *maps, fraction=0.6, z_thresh=0):
+        """
+        Finds the shallowest depth across multiple correlation maps where correlation meets
+        a specified fraction of the maximum correlation. Uses the min_frac_corr_depth function for each map,
+        then returns the minimum depth found and the index of the corresponding map.
+
+        Parameters
+        ----------
+        *maps : dict
+            A variable number of correlation maps, each containing:
+            - 'map': ROOT.TH2D histogram with correlation values by theta and phi.
+            - 'radius': Correlation radius in meters.
+        fraction : float
+            Fraction of the max correlation to set the threshold. Default is 0.6 (60%).
+        z_thresh : float
+            Maximum allowable depth (relative to the surface). Default is 0 meters.
+
+        Returns
+        -------
+        min_depth : float
+            Shallowest depth (measured from ice surface) across all maps where correlation meets the specified fraction of max.
+        min_depth_index : int
+            Index of the map that contains the shallowest depth.
+        """
+        min_depth = -float('inf')  # Initialize to find the shallowest depth (least negative)
+        min_depth_index = -1  # Track the index of the map with the minimum depth
+
+        # Iterate over each map and find the shallowest depth using min_frac_corr_depth
+        for idx, corr_map in enumerate(maps):
+            try:
+                # Use the existing function to find the minimum depth for this map
+                depth = self.min_frac_corr_depth(corr_map, fraction=fraction, z_thresh=z_thresh)
+
+                # Update min_depth if the current depth is shallower (closer to the surface)
+                if depth > min_depth:
+                    min_depth = depth
+                    min_depth_index = idx
+
+            except RuntimeError as e:
+                print(f"Map {idx} did not meet the threshold: {e}")
+
+        if min_depth == -float('inf'):
+            raise RuntimeError("No maps meet the fractional correlation threshold within the z_thresh.")
+
+        return min_depth, min_depth_index
