@@ -6,7 +6,7 @@ import araproc
 from tqdm import tqdm as tq
 from araproc.framework import dataset
 from araproc.analysis import standard_reco as sr
-import araproc.analysis.daq_quality_cut as qual_cut
+import araproc.analysis.daq_quality_cut as daq_qual_cut
 # Argument parser
 parser = argparse.ArgumentParser()
 
@@ -37,20 +37,21 @@ run_number = d.run_number
 num_evts = d.num_events
 
 # Setup output arrays
-save_daq_cuts = np.full((num_evts), np.nan, dtype=float)
+save_daq_cuts = np.full((num_evts), 0, dtype=float)
 save_read_window_errors = np.copy(save_daq_cuts)
 
 #### investigate events with quality issue ######
 
-daq_err,read_win_error = qual_cut.get_all_errors(args.input_file)
 # Process first 5 events
-for e in tq(range(0, 9)):
-    print(f"Processing event {e}")
-    save_daq_cuts[e] = np.nansum(daq_err[e,:])  # If this sum value is >0 for an event then it's a bad event 
-    save_read_window_errors[e] = np.nansum(read_win_error[e,:]) # If this sum value is >0 for an event then it's a bad event
-    print(np.nansum(daq_err[e,:]),np.nansum(read_win_error[e,:]))
-
+for e in range(5):
+    useful_event = d.get_useful_event(e)
+    evt_num = useful_event.eventNumber
+    daq_err,read_win_error = daq_qual_cut.check_daq_quality(useful_event, args.station, run_number)
+    save_daq_cuts[e] = daq_err  # If this sum value is >0 for an event then it's a bad event 
+    save_read_window_errors[e] = read_win_error # If this sum value is >0 for an event then it's a bad event
+    del useful_event,evt_num
 # Save results to HDF5 file
+print(save_read_window_errors,save_daq_cuts)
 file_name = f'daq_err_A{args.station}_run{run_number}.h5'
 with h5py.File(file_name, 'w') as hf:
     hf.create_dataset('daq_errors', data=save_daq_cuts, compression="gzip", compression_opts=9)
