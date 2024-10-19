@@ -87,7 +87,9 @@ for e in range(iter_start, iter_stop, 1):
         print(f"The Average SNR is {avg_snr:.1f}")
  
         # run our standard suite of reconstructions
-        reco_results = reco.do_standard_reco(wave_bundle)
+        reco_results = reco.do_standard_reco(wave_bundle, useful_event.eventNumber)
+
+        pair_idx = reco.get_pair_index(1, 2, reco.pairs_v)
 
         # here's how we can lookup arrival times given a reconstructed direction
         arrival_time = reco.lookup_arrival_time(channel = 0, 
