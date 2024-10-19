@@ -429,11 +429,9 @@ class StandardReco:
         # Vpols
         if(ch1//8 == 0):
           idx = get_pair_index(ch1, ch2, self.pairs_v)
-
           return self.__corr_functions_v[idx]
 
         idx = get_pair_index(ch1, ch2, self.pairs_h)
-    
         return self.__corr_functions_h[idx]
 
     def get_pair_index(self, ch1, ch2, pairs):
@@ -454,8 +452,6 @@ class StandardReco:
         idx : int
           Index corresponding to channel pair.
         """
-
-        
 
         for it in pairs:
           idx = it[0]
