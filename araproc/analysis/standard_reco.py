@@ -147,7 +147,43 @@ class StandardReco:
 
         self.__latest_event_num = -1
 
-    def do_standard_reco(self, waveform_bundle, event_number=-1):
+    def __calculate_cross_correlations(self, waveform_bundle, pairs):
+
+        """
+        Wrapper for cross-correlation calculation.
+
+        Parameters
+        ----------
+        waveform_bundle : dict
+            A dictionary of the 16 waveforms.
+            The key is the RF channel number.
+            The value is a TGraph.
+            There should be 16 entries, even if you don't intend to use all
+            16 traces in your interferometry.
+            The exclusions are handled further down under the excluded channels section.       
+        pairs : std::map<int, std::vector<int> >
+          Channel pairs to form cross-correlations from.
+ 
+        Returns
+        -------
+        cross_correlations : std::vector<TGraph>
+
+        """
+        
+        # set up the waveform map the way AraRoot wants it
+        # as a std::map<int, TGraph*>
+        waveform_map = ROOT.std.map("int", "TGraph*")()
+        ROOT.SetOwnership(waveform_map, True)
+        for chan_i in waveform_bundle.keys():
+            waveform_map[chan_i] = waveform_bundle[chan_i]
+                
+        cross_correlations = self.rtc_wrapper.correlators["distant"].GetCorrFunctions(pairs, wf_map)
+        
+        del waveform_map
+
+        return cross_correlations
+
+    def do_standard_reco(self, waveform_bundle, event_number):
         
         """
         A function to do a standard set of reconstructions.
@@ -211,24 +247,13 @@ class StandardReco:
 
         reco_results = {}
 
-        self.__latest_event_num = event_number
+        # update correlation functions if needed
+        if(self.__latest_event_num != event_number):
+          self.__latest_event_num = event_number
 
-        # set up the waveform map the way AraRoot wants it
-        # as a std::map<int, TGraph*>
-        waveform_map = ROOT.std.map("int", "TGraph*")()
-        ROOT.SetOwnership(waveform_map, True)
-        for chan_i in waveform_bundle.keys():
-            waveform_map[chan_i] = waveform_bundle[chan_i]
-                
-        # get the correlation functions
-        self.__corr_functions_v = self.rtc_wrapper.correlators["distant"].GetCorrFunctions(
-                                                                    self.pairs_v,
-                                                                    waveform_map
-                                                                    )
-        self.__corr_functions_h = self.rtc_wrapper.correlators["distant"].GetCorrFunctions(
-                                                                    self.pairs_h,
-                                                                    waveform_map
-                                                                    )
+          # get the correlation functions
+          self.__corr_functions_v = __calculate_cross_correlations(waveform_bundle, self.pairs_v)
+          self.__corr_functions_h = __calculate_cross_correlations(waveform_bundle, self.pairs_h) 
         
         # check the cal pulser in V
         pulser_map_v = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
@@ -330,7 +355,6 @@ class StandardReco:
             "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
         }
 
-        del waveform_map
         return reco_results
 
     def lookup_arrival_time(self, 
@@ -415,13 +439,13 @@ class StandardReco:
           Cross-correlation function for requested channel pair.
         """
 
-        if(self.__latest_event_num == -1):
-          raise Exception("No event loaded or event number not set. You must \
-                           run standard_reco.do_standard_reco(wave_bundle, event_num) \
-                           before calling this function. Abort.")
-
+        # update correlation functions if needed
         if(self.__latest_event_num != event_number):
-          raise Exception("Correlation number requested for event that is not loaded. Abort.")
+          self.__latest_event_num = event_number
+
+          # get the correlation functions
+          self.__corr_functions_v = __calculate_cross_correlations(waveform_bundle, self.pairs_v)
+          self.__corr_functions_h = __calculate_cross_correlations(waveform_bundle, self.pairs_h) 
 
         if(ch1//8 != ch2//8):
           raise Exception("Correlation functions only available for like-polarization channels. Abort.")
@@ -444,7 +468,7 @@ class StandardReco:
           Number of first channel in pair.
         ch2 : int
           Number of second channel in pair.
-        pairs : int
+        pairs : std::map<int, std::vector<int> >
           Channel pairs to get index from.
 
         Returns
