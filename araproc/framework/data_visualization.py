@@ -14,6 +14,7 @@ https://github.com/matplotlib/matplotlib/issues/20300.
 """
 import matplotlib # noqa : E402
 matplotlib.use("agg")
+__mplver = matplotlib.__version__ # this seems to fix a rare segfault (don't ask me...)
 
 def plot_waveform_bundle(
     waveform_dict = None,
@@ -121,5 +122,6 @@ def plot_skymap(the_map = None,
     ROOT.gPad.SetRightMargin(0.15) # make space for the z axis
     c.SaveAs(ouput_file_path)
     ROOT.gPad.SetRightMargin(0) # reset, so we don't affect settings globally
+    c.Close()
 
     del c
