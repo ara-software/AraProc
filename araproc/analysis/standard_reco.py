@@ -72,7 +72,9 @@ class StandardReco:
             5   : 16
         }
 
-        excluded_channels_vec = ROOT.std.vector("int")(excluded_channels)
+        excluded_channels_vec = ROOT.std.vector("int")()
+        for i in excluded_channels:
+            excluded_channels_vec.push_back(int(i))
 
         # each station has a slightly different distance for the cal pulser reco,
         # so look that up
