@@ -80,7 +80,8 @@ for e in range(iter_start, iter_stop, 1):
       
         # by default, you get all the bells and whistles
         # (interpolated, dedispersed, cw filtered, and bandpassed)
-        wave_bundle = d.get_waveforms(useful_event)
+        wavepacket = d.get_wavepacket(useful_event)
+        wave_bundle = wavepacket["waveforms"]
 
         # print the average snr across channels 
         avg_snr = snr.get_avg_snr(wave_bundle, excluded_channels=d.excluded_channels)

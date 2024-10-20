@@ -183,7 +183,7 @@ class StandardReco:
 
         return cross_correlations
 
-    def do_standard_reco(self, waveform_bundle, event_number):
+    def do_standard_reco(self, wavepacket, event_number):
         
         """
         A function to do a standard set of reconstructions.
@@ -211,13 +211,19 @@ class StandardReco:
 
         Parameters
         ----------
-        waveform_bundle : dict
-            A dictionary of the 16 waveforms.
-            The key is the RF channel number.
-            The value is a TGraph.
-            There should be 16 entries, even if you don't intend to use all
-            16 traces in your interferometry.
-            The exclusions are handled further down under the excluded channels section.
+        wavepacket : dict
+            A dict with three entries:
+              "event" : int  
+                Event number
+              "waveforms" : dict
+                A dictionary of the 16 waveforms.
+                The key is the RF channel number.
+                The value is a TGraph.
+                There should be 16 entries, even if you don't intend to use all
+                16 traces in your interferometry.
+                The exclusions are handled further down under the excluded channels section.
+              "type" : string
+                Waveform type requested by which_trace
         event_number : int
             The number of the event corresponding to the traces in wave_bundle. Required
             to access event-specific information like the correlation functions.       
@@ -246,6 +252,9 @@ class StandardReco:
         """
 
         reco_results = {}
+
+        event_number = wavepacket["event"]
+        waveform_bundle = wavepackt["waveforms"]
 
         # update correlation functions if needed
         if(self.__latest_event_num != event_number):
@@ -420,7 +429,7 @@ class StandardReco:
                                                                                        )
         return arrival_time
 
-    def __get_correlation_function(self, ch1, ch2, event_number):
+    def __get_correlation_function(self, ch1, ch2, wavepacket):
         """
         Returns the correlation function for the channel pair ch1-ch2.
 
@@ -430,14 +439,25 @@ class StandardReco:
           Number of first channel in correlation pair.
         ch2 : int
           Number of second channel in correlation pair.
-        event_number : int
-          Number of event whose correlation function is being requested.
+        wavepacket : dict
+            A dict with three entries:
+              "event" : int  
+                Event number
+              "waveforms" : dict
+                Dict mapping RF channel ID to waveforms.
+                Keys are channel id (an integer)
+                Values are TGraphs
+              "type" : string
+                Waveform type requested by which_trace
 
         Returns
         -------
         corr_func : TGraph
           Cross-correlation function for requested channel pair.
         """
+
+        event_number = wavepacket["event"]
+        waveform_bundle = wavepacket["waveforms"]
 
         # update correlation functions if needed
         if(self.__latest_event_num != event_number):
