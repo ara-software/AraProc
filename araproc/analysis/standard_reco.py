@@ -3,11 +3,12 @@ import numpy as np
 import math
 import os
 import ROOT
+import itertools
 
 from araproc.analysis import interferometry as interf
 from araproc.framework import constants as const
 from araproc.framework import map_utilities as mu
-
+from araproc.analysis import snr
 
 class StandardReco:
 
@@ -469,10 +470,10 @@ class StandardReco:
 
         # Vpols
         if(ch1//8 == 0):
-          idx = get_pair_index(ch1, ch2, self.pairs_v)
+          idx = self.get_pair_index(ch1, ch2, self.pairs_v)
           return self.__corr_functions_v[idx]
 
-        idx = get_pair_index(ch1, ch2, self.pairs_h)
+        idx = self.get_pair_index(ch1, ch2, self.pairs_h)
         return self.__corr_functions_h[idx]
 
     def get_pair_index(self, ch1, ch2, pairs):
@@ -819,3 +820,100 @@ class StandardReco:
             raise RuntimeError("No maps meet the fractional correlation threshold within the z_thresh.")
 
         return min_depth, min_depth_index
+
+    def get_corr_snr(self, ch1, ch2, wave_packet):
+
+        """
+        Calculates channel-pair correlation SNR
+    
+        Parameters
+        ----------
+        ch1: int
+            First channel number for correlation.
+        ch2: int
+            Second channel number for correlation.
+        wavepacket: dict
+            A dict with three entries:
+              "event": int  
+                Event number
+              "waveforms": dict
+                Dict mapping RF channel ID to waveforms.
+                Keys are channel id (an integer)
+                Values are TGraphs
+              "trace_type": string
+                Waveform type requested by which_trace.
+ 
+        Returns
+        -------
+        corr_snr: float
+           Channel pair correlation SNR.
+        """
+
+        corr_func = self.__get_correlation_function(ch1, ch2, wave_packet)
+        corr_func_max_idx = np.argmax(corr_func)
+        corr_func_max = corr_func[corr_func_max_idx]
+        corr_func_rms = snr.get_min_segmented_rms(corr_func)
+
+        if(corr_func_rms == 0.0):
+          return 0
+
+        corr_snr = corr_func_max/corr_func_rms
+        
+        return corr_snr
+
+    def get_avg_corr_snr(self, wave_packet, excluded_channels = []):
+
+        """
+        Computes channel-pair average correlation SNR for VPols and HPols.
+
+        Parameters
+        ----------
+        wavepacket: dict
+            A dict with three entries:
+              "event": int  
+                Event number
+              "waveforms": dict
+                Dict mapping RF channel ID to waveforms.
+                Keys are channel id (an integer)
+                Values are TGraphs
+              "trace_type": string
+                Waveform type requested by which_trace.
+        excluded_channels: list
+            List of dictionary keys to exclude from average.
+
+        Returns
+        -------
+        avg_vpol_corr_snr : float
+            The VPol average channel-pair correlation SNR.
+        avg_hpol_corr_snr : float
+            The HPol average channel-pair correlation SNR.
+        """
+
+        wave_bundle = wave_packet["waveforms"]
+        chans = sorted(list(wave_bundle.keys()))
+
+        good_vpol_chs, good_hpol_chs = [], []
+
+        for chan in chans:
+            if chan in excluded_channels:
+                continue
+
+            if chan in const.vpol_channel_ids:
+                good_vpol_chs.append(chan)
+            if chan in const.hpol_channel_ids:
+                good_hpol_chs.append(chan)
+
+        avg_vpol_corr_snr, avg_hpol_corr_snr = [], []
+        
+        for pair_V in list(itertools.combinations(good_vpol_chs, 2)):
+            corr_snr_V = self.get_corr_snr(pair_V[0], pair_V[1], wave_packet)
+            avg_vpol_corr_snr.append(corr_snr_V)
+
+        for pair_H in list(itertools.combinations(good_hpol_chs, 2)):
+            corr_snr_H = self.get_corr_snr(pair_H[0], pair_H[1], wave_packet)
+            avg_hpol_corr_snr.append(corr_snr_H)
+
+        avg_vpol_corr_snr = np.mean(avg_vpol_corr_snr)
+        avg_hpol_corr_snr = np.mean(avg_hpol_corr_snr)
+
+        return avg_vpol_corr_snr, avg_hpol_corr_snr  
