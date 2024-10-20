@@ -145,7 +145,45 @@ class StandardReco:
         ROOT.SetOwnership(the_pairs_h, True) # take posession
         self.pairs_h = the_pairs_h
 
-    def do_standard_reco(self, waveform_bundle):
+        self.__latest_event_num = -1
+
+    def __calculate_cross_correlations(self, waveform_bundle, pairs):
+
+        """
+        Wrapper for cross-correlation calculation.
+
+        Parameters
+        ----------
+        waveform_bundle : dict
+            A dictionary of the 16 waveforms.
+            The key is the RF channel number.
+            The value is a TGraph.
+            There should be 16 entries, even if you don't intend to use all
+            16 traces in your interferometry.
+            The exclusions are handled further down under the excluded channels section.       
+        pairs : std::map<int, std::vector<int> >
+          Channel pairs to form cross-correlations from.
+ 
+        Returns
+        -------
+        cross_correlations : std::vector<TGraph>
+
+        """
+        
+        # set up the waveform map the way AraRoot wants it
+        # as a std::map<int, TGraph*>
+        wf_map = ROOT.std.map("int", "TGraph*")()
+        ROOT.SetOwnership(wf_map, True)
+        for chan_i in waveform_bundle.keys():
+            wf_map[chan_i] = waveform_bundle[chan_i]
+                
+        cross_correlations = self.rtc_wrapper.correlators["distant"].GetCorrFunctions(pairs, wf_map)
+        
+        del wf_map
+
+        return cross_correlations
+
+    def do_standard_reco(self, wavepacket):
         
         """
         A function to do a standard set of reconstructions.
@@ -173,14 +211,20 @@ class StandardReco:
 
         Parameters
         ----------
-        waveform_bundle : dict
-            A dictionary of the 16 waveforms.
-            The key is the RF channel number.
-            The value is a TGraph.
-            There should be 16 entries, even if you don't intend to use all
-            16 traces in your interferometry.
-            The exclusions are handled further down under the excluded channels section.
-        
+        wavepacket : dict
+            A dict with three entries:
+              "event" : int  
+                Event number
+              "waveforms" : dict
+                A dictionary of the 16 waveforms.
+                The key is the RF channel number.
+                The value is a TGraph.
+                There should be 16 entries, even if you don't intend to use all
+                16 traces in your interferometry.
+                The exclusions are handled further down under the excluded channels section.
+              "trace_type" : string
+                Waveform type requested by which_trace
+ 
         Returns
         -------
         reco_results : dict
@@ -206,27 +250,21 @@ class StandardReco:
 
         reco_results = {}
 
-        # set up the waveform map the way AraRoot wants it
-        # as a std::map<int, TGraph*>
-        waveform_map = ROOT.std.map("int", "TGraph*")()
-        ROOT.SetOwnership(waveform_map, True)
-        for chan_i in waveform_bundle.keys():
-            waveform_map[chan_i] = waveform_bundle[chan_i]
-                
-        # get the correlation functions
-        corr_functions_v = self.rtc_wrapper.correlators["distant"].GetCorrFunctions(
-                                                                    self.pairs_v,
-                                                                    waveform_map
-                                                                    )
-        corr_functions_h = self.rtc_wrapper.correlators["distant"].GetCorrFunctions(
-                                                                    self.pairs_h,
-                                                                    waveform_map
-                                                                    )
+        event_number = wavepacket["event"]
+        waveform_bundle = wavepacket["waveforms"]
+
+        # update correlation functions if needed
+        if(self.__latest_event_num != event_number):
+          self.__latest_event_num = event_number
+
+          # get the correlation functions
+          self.__corr_functions_v = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v)
+          self.__corr_functions_h = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h) 
         
         # check the cal pulser in V
         pulser_map_v = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
             self.pairs_v,
-            corr_functions_v,
+            self.__corr_functions_v,
             0
         )
         corr_pulser_v, phi_pulser_v, theta_pulser_v = mu.get_corr_map_peak(pulser_map_v)
@@ -240,7 +278,7 @@ class StandardReco:
         # # check the cal pulser in H
         # pulser_map_h = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
         #     self.pairs_h,
-        #     corr_functions_h,
+        #     self.__corr_functions_h,
         #     0
         # )
         # corr_pulser_h, phi_pulser_h, theta_pulser_h = mu.get_corr_map_peak(pulser_map_h)
@@ -254,14 +292,14 @@ class StandardReco:
         # make a 300 m map in V (Direct rays)
         distant_map_v_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
             self.pairs_v,
-            corr_functions_v,
+            self.__corr_functions_v,
             0
         )
 
         # make a 300 m map in V (Refracted/Reflected rays)
         distant_map_v_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
             self.pairs_v,
-            corr_functions_v,
+            self.__corr_functions_v,
             1
         )
 
@@ -290,14 +328,14 @@ class StandardReco:
         # make a 300 m map in H (Direct rays)
         distant_map_h_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
             self.pairs_h,
-            corr_functions_h,
+            self.__corr_functions_h,
             0
         )
 
         # make a 300 m map in H (Refracted/Reflected rays)
         distant_map_h_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
             self.pairs_h,
-            corr_functions_h,
+            self.__corr_functions_h,
             1
         )
 
@@ -323,7 +361,6 @@ class StandardReco:
             "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
         }
 
-        del waveform_map
         return reco_results
 
     def lookup_arrival_time(self, 
@@ -388,6 +425,87 @@ class StandardReco:
                                                                                        phi_bin.value
                                                                                        )
         return arrival_time
+
+    def __get_correlation_function(self, ch1, ch2, wavepacket):
+        """
+        Returns the correlation function for the channel pair ch1-ch2.
+
+        Parameters
+        ----------
+        ch1 : int
+          Number of first channel in correlation pair.
+        ch2 : int
+          Number of second channel in correlation pair.
+        wavepacket : dict
+            A dict with three entries:
+              "event" : int  
+                Event number
+              "waveforms" : dict
+                Dict mapping RF channel ID to waveforms.
+                Keys are channel id (an integer)
+                Values are TGraphs
+              "trace_type" : string
+                Waveform type requested by which_trace
+
+        Returns
+        -------
+        corr_func : TGraph
+          Cross-correlation function for requested channel pair.
+        """
+
+        event_number = wavepacket["event"]
+        waveform_bundle = wavepacket["waveforms"]
+
+        # update correlation functions if needed
+        if(self.__latest_event_num != event_number):
+          self.__latest_event_num = event_number
+
+          # get the correlation functions
+          self.__corr_functions_v = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v)
+          self.__corr_functions_h = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h) 
+
+        if(ch1//8 != ch2//8):
+          raise Exception("Correlation functions only available for like-polarization channels. Abort.")
+
+        # Vpols
+        if(ch1//8 == 0):
+          idx = get_pair_index(ch1, ch2, self.pairs_v)
+          return self.__corr_functions_v[idx]
+
+        idx = get_pair_index(ch1, ch2, self.pairs_h)
+        return self.__corr_functions_h[idx]
+
+    def get_pair_index(self, ch1, ch2, pairs):
+        """
+        Gets index of channel pair.
+
+        Parameters
+        ----------
+        ch1 : int
+          Number of first channel in pair.
+        ch2 : int
+          Number of second channel in pair.
+        pairs : std::map<int, std::vector<int> >
+          Channel pairs to get index from.
+
+        Returns
+        -------
+        idx : int
+          Index corresponding to channel pair.
+        """
+
+        for it in pairs:
+          idx = it[0]
+          c1 = it[1][0]
+          c2 = it[1][1]
+
+          # check both ways in case pairs aren't sorted
+          if((ch1 == c1 and ch2 == c2) or (ch1 == c2 and ch2 == c1)):
+            return idx
+
+        raise Exception("Requested channel pair not found. Abort.")
+        
+        return -1 # useless but return anyway
 
     def get_surface_corr_max(self, corr_map, z_thresh=-10):
         """
