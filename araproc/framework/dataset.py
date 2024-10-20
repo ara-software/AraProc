@@ -681,8 +681,8 @@ class AnalysisDataset:
         sim_info = self.__dataset_wrapper.get_sim_information(event_idx)
         return sim_info
 
-    def get_waveforms(self,
-                      useful_event = None,
+    def get_wavepacket(self,
+                      useful_event,
                       which_traces = "filtered"
                       ):
                      
@@ -722,10 +722,16 @@ class AnalysisDataset:
 
         Returns
         -------
-        waveforms : 
-            A dictionary, mapping RF channel ID to waveforms.
-            Keys are channel id (an integer)
-            Values are TGraphs
+        wavepacket : dict
+            A dict with three entries:
+              "event" : int  
+                Event number
+              "waveforms" : dict
+                Dict mapping RF channel ID to waveforms.
+                Keys are channel id (an integer)
+                Values are TGraphs
+              "trace_type" : string
+                Waveform type requested by which_trace
         """
 
         if useful_event is None:
@@ -733,6 +739,10 @@ class AnalysisDataset:
 
         if which_traces not in ["calibrated", "interpolated", "dedispersed", "filtered"]:
             raise KeyError(f"Requested waveform treatment ({which_traces}) is not supported")
+
+        wavepacket = {}
+        wavepacket["event"] = useful_event.eventNumber
+        wavepacket["trace_type"] = which_traces
 
         # first, get the standard calibrated waves
         cal_waves = {}
@@ -747,7 +757,8 @@ class AnalysisDataset:
                 raise
         
         if which_traces == "calibrated":
-            return cal_waves
+            wavepacket["waveforms"] = cal_waves
+            return wavepacket
     
         # for anything else, we need interpolation
 
@@ -764,7 +775,8 @@ class AnalysisDataset:
         
         # if they wanted interpolated waves, just return those
         if which_traces == "interpolated":
-            return interp_waves
+            wavepacket["waveforms"] = interp_waves
+            return wavepacket
 
         # and if they want a dedispersed wave, do that too
         dedispersed_waves = {}
@@ -782,7 +794,8 @@ class AnalysisDataset:
                 raise
         
         if which_traces == "dedispersed":
-            return dedispersed_waves
+            wavepacket["waveforms"] = dedispersed_waves
+            return wavepacket
     
         # and if they want filtered waves
         filtered_waves = cwf.apply_filters(self.__cw_filters, dedispersed_waves)
@@ -826,4 +839,5 @@ class AnalysisDataset:
         #     filtered_waves[chan_key] = filt_graph
 
         if which_traces == "filtered":
-            return filtered_waves
+            wavepacket["waveforms"] = filtered_waves
+            return wavepacket
