@@ -90,7 +90,7 @@ def freq2time(times, spectrum):
     volts = np.fft.irfft(spectrum, axis=-1, n=n_samples_t_domain) * sampling_rate / 2 ** 0.5
     return times, volts
 
-def get_envelope(waveform):
+def get_hilbert_envelope(waveform):
 
     """
     Calculates the Hilbert envelope a trace.

@@ -8,7 +8,7 @@ from araproc.framework import waveform_utilities as wfu
 
 
 
-def get_hill_snr(waveform):
+def get_hilbert_snr(waveform):
 
     """
     Calculates Hilbert envelope SNR of a single voltage trace.
@@ -24,7 +24,7 @@ def get_hill_snr(waveform):
         The Hilbert envelope SNR of the waveform.
     """
 
-    hill = wfu.get_envelope(waveform)
+    hill = wfu.get_hilbert_envelope(waveform)
     hill_max_idx = np.argmax(hill)
     hill_max = hill[hill_max_idx]
     hill_rms = snr.get_min_segmented_rms(hill)
@@ -39,7 +39,7 @@ def get_hill_snr(waveform):
 
 
 
-def get_avg_hill_snr(wave_bundle, excluded_channels = []):
+def get_avg_hilbert_snr(wave_bundle, excluded_channels = []):
 
     """
     Calculates channel-wise averaged Hilbert envelope SNR.
@@ -64,7 +64,7 @@ def get_avg_hill_snr(wave_bundle, excluded_channels = []):
       if(chan in excluded_channels):
         continue
 
-      hill_snr = get_hill_snr(wave_bundle[chan])
+      hill_snr = get_hilbert_snr(wave_bundle[chan])
       avg_hill_snr.append(hill_snr)
 
     avg_hill_snr = np.mean(avg_hill_snr)

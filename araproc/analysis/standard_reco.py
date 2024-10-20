@@ -851,7 +851,14 @@ class StandardReco:
         """
 
         corr_func = self.__get_correlation_function(ch1, ch2, wave_packet)
-        corr_snr = hsnr.get_hill_snr(corr_func)
+        corr_func_max_idx = np.argmax(corr_func)
+        corr_func_max = corr_func[corr_func_max_idx]
+        corr_func_rms = snr.snr.get_min_segmented_rms(corr_func)
+
+        if(corr_func_rms == 0.0):
+          return 0
+
+        corr_snr = corr_func_max/corr_func_rms
         
         return corr_snr
 
