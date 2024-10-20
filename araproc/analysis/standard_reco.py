@@ -183,7 +183,7 @@ class StandardReco:
 
         return cross_correlations
 
-    def do_standard_reco(self, wavepacket, event_number):
+    def do_standard_reco(self, wavepacket):
         
         """
         A function to do a standard set of reconstructions.
@@ -224,9 +224,6 @@ class StandardReco:
                 The exclusions are handled further down under the excluded channels section.
               "type" : string
                 Waveform type requested by which_trace
-        event_number : int
-            The number of the event corresponding to the traces in wave_bundle. Required
-            to access event-specific information like the correlation functions.       
  
         Returns
         -------
