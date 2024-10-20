@@ -1,3 +1,4 @@
+from scipy.signal import hilbert
 import numpy as np
 import ROOT
 
@@ -88,3 +89,34 @@ def freq2time(times, spectrum):
 
     volts = np.fft.irfft(spectrum, axis=-1, n=n_samples_t_domain) * sampling_rate / 2 ** 0.5
     return times, volts
+
+def get_envelope(waveform):
+
+    """
+    Calculates the Hilbert envelope a trace.
+
+    Parameters
+    ----------
+    waveform: TGraph or ndarray
+        A TGraph of the waveform.
+
+    Returns
+    -------
+    hill: array
+        Hilbert envelope of the waveform.
+    """
+    
+    if(isinstance(waveform, ROOT.TGraph)):
+        _, trace = tgraph_to_arrays(waveform)
+    elif(isinstance(waveform, np.ndarray)):
+        trace = np.copy(waveform)
+        
+        trace = np.squeeze(trace)
+        if(trace.ndim != 1):
+            raise Exception("Trace is not 1d in waveform_utilities.get_envelope. Abort")
+    else:
+        raise Exception("Unsupported data type in waveform_utilities.get_envelope. Abort") 
+
+    hill = np.abs(hilbert(trace))
+
+    return hill

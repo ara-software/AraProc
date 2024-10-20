@@ -8,30 +8,6 @@ from araproc.framework import waveform_utilities as wfu
 
 
 
-def get_envelope(waveform):
-
-    """
-    Calculates the Hilbert envelope a trace.
-
-    Parameters
-    ----------
-    waveform: TGraph
-        A TGraph of the waveform.
-
-    Returns
-    -------
-    hill: array
-        Hilbert envelope of the waveform.
-    """ 
-
-    _, trace = wfu.tgraph_to_arrays(waveform)
-   
-    hill = np.abs(hilbert(trace))
-    
-    return hill
-
-
-
 def get_hill_snr(waveform):
 
     """
@@ -44,11 +20,11 @@ def get_hill_snr(waveform):
 
     Returns
     -------
-    hill_snr : float
+    hill_snr: float
         The Hilbert envelope SNR of the waveform.
     """
 
-    hill = get_envelope(waveform)
+    hill = wfu.get_envelope(waveform)
     hill_max_idx = np.argmax(hill)
     hill_max = hill[hill_max_idx]
     hill_rms = snr.get_min_segmented_rms(hill)
@@ -77,11 +53,11 @@ def get_avg_hill_snr(wave_bundle, excluded_channels = []):
 
     Returns
     -------
-    avg_hill_snr : float
+    avg_hill_snr: float
         The average Hilbert envelope SNR.
     """
 
-    chans = sorted(list(wave_bundle.keys()))
+    chans = list(wave_bundle.keys())
 
     avg_hill_snr = []
     for chan in chans:

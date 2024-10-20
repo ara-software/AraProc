@@ -49,9 +49,6 @@ def get_power_ratio(wave_bundle, excluded_channels = []):
 
     chans = sorted(list(wave_bundle.keys()))
 
-    if len(chans) != len(const.rf_channels_ids):
-       warnings.warn("Number of RF channels is less than 16!", UserWarning)
-
     power = defaultdict(list)
     for chan in chans:
        if chan in excluded_channels:
@@ -65,6 +62,7 @@ def get_power_ratio(wave_bundle, excluded_channels = []):
     for strNo in power:   
        power_avg.append(np.mean(power[strNo]))
 
+    power_avg = np.asarray(power_avg)
     power_avg_sort = -np.sort(-power_avg)
     power_ratio = power_avg_sort[0]/power_avg_sort[1]
     
