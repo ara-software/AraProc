@@ -9,7 +9,6 @@ from araproc.analysis import interferometry as interf
 from araproc.framework import constants as const
 from araproc.framework import map_utilities as mu
 from araproc.analysis import snr
-from araproc.analysis import hilbert as hsnr
 
 class StandardReco:
 
@@ -853,7 +852,7 @@ class StandardReco:
         corr_func = self.__get_correlation_function(ch1, ch2, wave_packet)
         corr_func_max_idx = np.argmax(corr_func)
         corr_func_max = corr_func[corr_func_max_idx]
-        corr_func_rms = snr.snr.get_min_segmented_rms(corr_func)
+        corr_func_rms = snr.get_min_segmented_rms(corr_func)
 
         if(corr_func_rms == 0.0):
           return 0
