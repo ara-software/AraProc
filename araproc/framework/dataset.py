@@ -730,7 +730,7 @@ class AnalysisDataset:
                 Dict mapping RF channel ID to waveforms.
                 Keys are channel id (an integer)
                 Values are TGraphs
-              "type" : string
+              "trace_type" : string
                 Waveform type requested by which_trace
         """
 
@@ -742,7 +742,7 @@ class AnalysisDataset:
 
         wavepacket = {}
         wavepacket["event"] = useful_event.eventNumber
-        wavepacket{"type"] = which_traces
+        wavepacket["trace_type"] = which_traces
 
         # first, get the standard calibrated waves
         cal_waves = {}

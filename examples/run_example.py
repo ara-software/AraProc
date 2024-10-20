@@ -88,7 +88,7 @@ for e in range(iter_start, iter_stop, 1):
         print(f"The Average SNR is {avg_snr:.1f}")
  
         # run our standard suite of reconstructions
-        reco_results = reco.do_standard_reco(wave_bundle, useful_event.eventNumber)
+        reco_results = reco.do_standard_reco(wavepacket)
 
         pair_idx = reco.get_pair_index(1, 2, reco.pairs_v)
 

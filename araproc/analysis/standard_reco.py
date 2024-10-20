@@ -172,14 +172,14 @@ class StandardReco:
         
         # set up the waveform map the way AraRoot wants it
         # as a std::map<int, TGraph*>
-        waveform_map = ROOT.std.map("int", "TGraph*")()
-        ROOT.SetOwnership(waveform_map, True)
+        wf_map = ROOT.std.map("int", "TGraph*")()
+        ROOT.SetOwnership(wf_map, True)
         for chan_i in waveform_bundle.keys():
-            waveform_map[chan_i] = waveform_bundle[chan_i]
+            wf_map[chan_i] = waveform_bundle[chan_i]
                 
         cross_correlations = self.rtc_wrapper.correlators["distant"].GetCorrFunctions(pairs, wf_map)
         
-        del waveform_map
+        del wf_map
 
         return cross_correlations
 
@@ -222,7 +222,7 @@ class StandardReco:
                 There should be 16 entries, even if you don't intend to use all
                 16 traces in your interferometry.
                 The exclusions are handled further down under the excluded channels section.
-              "type" : string
+              "trace_type" : string
                 Waveform type requested by which_trace
  
         Returns
@@ -251,15 +251,15 @@ class StandardReco:
         reco_results = {}
 
         event_number = wavepacket["event"]
-        waveform_bundle = wavepackt["waveforms"]
+        waveform_bundle = wavepacket["waveforms"]
 
         # update correlation functions if needed
         if(self.__latest_event_num != event_number):
           self.__latest_event_num = event_number
 
           # get the correlation functions
-          self.__corr_functions_v = __calculate_cross_correlations(waveform_bundle, self.pairs_v)
-          self.__corr_functions_h = __calculate_cross_correlations(waveform_bundle, self.pairs_h) 
+          self.__corr_functions_v = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v)
+          self.__corr_functions_h = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h) 
         
         # check the cal pulser in V
         pulser_map_v = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
@@ -444,7 +444,7 @@ class StandardReco:
                 Dict mapping RF channel ID to waveforms.
                 Keys are channel id (an integer)
                 Values are TGraphs
-              "type" : string
+              "trace_type" : string
                 Waveform type requested by which_trace
 
         Returns
@@ -461,8 +461,8 @@ class StandardReco:
           self.__latest_event_num = event_number
 
           # get the correlation functions
-          self.__corr_functions_v = __calculate_cross_correlations(waveform_bundle, self.pairs_v)
-          self.__corr_functions_h = __calculate_cross_correlations(waveform_bundle, self.pairs_h) 
+          self.__corr_functions_v = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v)
+          self.__corr_functions_h = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h) 
 
         if(ch1//8 != ch2//8):
           raise Exception("Correlation functions only available for like-polarization channels. Abort.")
