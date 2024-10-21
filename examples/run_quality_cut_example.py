@@ -37,8 +37,7 @@ run_number = d.run_number
 num_evts = d.num_events
 
 # Setup output arrays
-save_daq_cuts = np.full((num_evts), 0, dtype=float)
-save_read_window_errors = np.copy(save_daq_cuts)
+save_final_cuts = np.full((num_evts), 0, dtype=float)
 
 #### investigate events with quality issue ######
 
@@ -46,13 +45,11 @@ save_read_window_errors = np.copy(save_daq_cuts)
 for e in range(5):
     useful_event = d.get_useful_event(e)
     evt_num = useful_event.eventNumber
-    daq_err,read_win_error = daq_qual_cut.check_daq_quality(useful_event, args.station, run_number)
-    save_daq_cuts[e] = daq_err  # If this sum value is >0 for an event then it's a bad event 
-    save_read_window_errors[e] = read_win_error # If this sum value is >0 for an event then it's a bad event
+    combined_errors = daq_qual_cut.check_daq_quality(useful_event, args.station, run_number)
+    save_final_cuts[e] = combined_errors  # If this sum value is >0 for an event then it's a bad event 
     del useful_event,evt_num
+    print(combined_errors)
 # Save results to HDF5 file
-print(save_read_window_errors,save_daq_cuts)
 file_name = f'daq_err_A{args.station}_run{run_number}.h5'
 with h5py.File(file_name, 'w') as hf:
-    hf.create_dataset('daq_errors', data=save_daq_cuts, compression="gzip", compression_opts=9)
-    hf.create_dataset('read_window_error', data=save_read_window_errors, compression="gzip", compression_opts=9)
+    hf.create_dataset('final_errors', data=save_final_cuts, compression="gzip", compression_opts=9)

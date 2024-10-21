@@ -1,9 +1,9 @@
 import numpy as np
 import logging
-
-# Set up logging configuration
-logging.basicConfig(level=logging.INFO, format='%(message)s')
-logger = logging.getLogger(__name__)
+import yaml
+from araproc.framework import constants
+import importlib.resources as pkg_resources
+import araproc.framework.config_files as config_files
 
 def process_event_info(useful_event, station_id):
 
@@ -40,21 +40,28 @@ def process_event_info(useful_event, station_id):
     # Extract event-level information
     read_win = useful_event.numReadoutBlocks  # Number of readout blocks
 
-    trig_type = 0 if useful_event.isRFTrigger() else (1 if useful_event.isCalpulserEvent() else (2 if useful_event.isSoftwareTrigger() else -1))
+    if useful_event.isRFTrigger():
+       trig_type = 0
+    elif useful_event.isCalpulserEvent():
+       trig_type = 1
+    elif useful_event.isSoftwareTrigger():
+       trig_type = 2
 
-    num_ddas = 4
+    num_ddas = constants.num_dda 
     blk_len = read_win // num_ddas
-    cal,rf,soft = useful_event.isCalpulserEvent(),useful_event.isRFTrigger(),useful_event.isSoftwareTrigger()
-    return blk_len, trig_type, block_nums, channel_mask
+
+    return num_ddas,blk_len, trig_type, block_nums, channel_mask
 
 
-def get_daq_structure_errors(blk_len_sort, trig_sort, irs_block_number, channel_mask):
+def get_daq_structure_errors(num_ddas,blk_len_sort, trig_sort, irs_block_number, channel_mask):
 
     """
     Detect DAQ structure errors for a single event based on provided event data.
 
     Parameters
     ----------
+    num_ddas : int
+        Total number of Digitizing DAughter board.
     blk_len_sort : int
         The block lengths for the event.
     trig_sort : int
@@ -70,12 +77,12 @@ def get_daq_structure_errors(blk_len_sort, trig_sort, irs_block_number, channel_
         True if there are DAQ structure errors, False otherwise.
     """
 
-    num_ddas = 4  # Number of DDAs (Data Digitization Assemblies)
-    num_chs = 8   # Number of channels
+    num_chs = constants.rf_chans_per_dda   # Number of channels
+    num_blocks_per_dda = constants.num_blocks_per_dda
     bi_ch_mask = 1 << np.arange(num_chs, dtype=int)  # Bit mask for channels
     dda_ch = np.arange(num_ddas, dtype=int)  # DDA channels
     dda_idx = (channel_mask & 0x300) >> 8  # DDA index from channel mask
-    max_blk_diff = -(512 - 1)  # Maximum block difference (wrap-around at 512)
+    max_blk_diff = -(num_blocks_per_dda - 1)  # Maximum block difference (wrap-around at 512)
 
     daq_st_err = np.full(5, 0, dtype=int)  # Error array for this single event
 
@@ -99,7 +106,7 @@ def get_daq_structure_errors(blk_len_sort, trig_sort, irs_block_number, channel_
 
         # Check block continuity, accounting for wrap-around at 512
         if first_block_idx + block_diff != last_block_idx:
-            if 512 - first_block_idx + last_block_idx != block_diff:
+            if num_blocks_per_dda - first_block_idx + last_block_idx != block_diff:
                 daq_st_err[2] += 1
 
         # Check block index increments
@@ -126,61 +133,41 @@ def get_daq_structure_errors(blk_len_sort, trig_sort, irs_block_number, channel_
 def get_read_win_limit(st, run):
 
     """
-    Determine the readout window limits based on station and run number.
-    Returns the RF and soft readout limits.
+    Detect readout window errors for a single event based on event data.
+
+    Parameters
+    ----------
+    st : int
+        Station id number.
+    run : int
+        Run Number
+    Returns
+    -------
+    rf_readout_limit: int
+        RF trig readout window limit.
+    soft_readout_limit: int
+        Soft trig readout window limit.
     """
-    if st == 1:
-        if run < 4029:
-            rf_readout_limit = 20
-        elif run > 4028 and run < 9749:
-            rf_readout_limit = 26
-        elif run > 9748:
-            rf_readout_limit = 28
-    if st == 2:
-        if run < 4029:
-            rf_readout_limit = 20
-        elif run > 4028 and run < 9749:
-            rf_readout_limit = 26
-        elif run > 9748:
-            rf_readout_limit = 28
-    elif st == 3:
-        if run < 3104:
-            rf_readout_limit = 20
-        elif run > 3103 and run < 10001:
-            rf_readout_limit = 26
-        elif run > 10000:
-            rf_readout_limit = 28
-    elif st == 4:
-        if run < 3600:
-            rf_readout_limit = 28
-        elif run > 3600:
-            rf_readout_limit = 32
-    elif st == 5:
-        if run < 3600:
-            rf_readout_limit = 28
-        elif run > 3600:
-            rf_readout_limit = 32
 
-    if st == 1:
-        if run < 9505:
-            soft_readout_limit = 8
-        else:
-            soft_readout_limit = 12
-    if st == 2:
-        if run < 9505:
-            soft_readout_limit = 8
-        else:
-            soft_readout_limit = 12
-    elif st == 3:
-        if run < 10001:
-            soft_readout_limit = 8
-        else:
-            soft_readout_limit = 12
-    elif st == 4:
-        soft_readout_limit = 10
-    elif st == 5:
-        soft_readout_limit = 10
+    file = pkg_resources.open_text(config_files,"analysis_configs.yaml")
+    file_content = yaml.safe_load(file)
 
+    readout_limits = file_content[f"station{st}"]["readout_limits"]
+
+    limit_values = sorted(readout_limits.keys())
+
+    # Calculate the differences between limit values and the run number
+    diff = np.array(limit_values) - run
+
+    # Find the index of the first limit value that exceeds the run number
+    limit_index = np.where(diff > 0)[0]
+
+    # Retrieve the corresponding limits
+    limits = limit_values[limit_index[0]]
+    rf_readout_limit = readout_limits[limits]["rf_readout_limit"]
+    soft_readout_limit = readout_limits[limits]["soft_readout_limit"]
+ 
+    file.close()
     return rf_readout_limit, soft_readout_limit
 
 def get_readout_window_errors(blk_len_sort, trig_sort, channel_mask, run, st):
@@ -246,20 +233,21 @@ def check_daq_quality(useful_event, station_id, run):
 
     Returns
     -------
-    daq_errors : bool
-        True if there are DAQ structure errors, False otherwise.
-    readout_errors : bool
-        True if there are readout window errors, False otherwise.
+    combined_errors : bool
+        True if there are DAQ structure errors or readout window errors, False otherwise.
+        
     """
 
     # Extract necessary information from useful_event using the merged function
-    blk_len, trig_type, irs_block_number, channel_mask = process_event_info(useful_event, station_id)
+    num_ddas,blk_len, trig_type, irs_block_number, channel_mask = process_event_info(useful_event, station_id)
 
     # Get DAQ structure errors
-    daq_errors = get_daq_structure_errors(blk_len, trig_type, irs_block_number, channel_mask)
+    daq_errors = get_daq_structure_errors(num_ddas,blk_len, trig_type, irs_block_number, channel_mask)
 
     # Get readout window errors
     readout_errors = get_readout_window_errors(blk_len, trig_type, channel_mask, run, station_id)
 
-    return daq_errors, readout_errors
+    combined_errors = daq_errors or readout_errors
+
+    return combined_errors
 
