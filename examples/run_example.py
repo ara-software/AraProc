@@ -80,14 +80,17 @@ for e in range(iter_start, iter_stop, 1):
       
         # by default, you get all the bells and whistles
         # (interpolated, dedispersed, cw filtered, and bandpassed)
-        wave_bundle = d.get_waveforms(useful_event)
+        wavepacket = d.get_wavepacket(useful_event)
+        wave_bundle = wavepacket["waveforms"]
 
         # print the average snr across channels 
         avg_snr = snr.get_avg_snr(wave_bundle, excluded_channels=d.excluded_channels)
         print(f"The Average SNR is {avg_snr:.1f}")
  
         # run our standard suite of reconstructions
-        reco_results = reco.do_standard_reco(wave_bundle)
+        reco_results = reco.do_standard_reco(wavepacket)
+
+        pair_idx = reco.get_pair_index(1, 2, reco.pairs_v)
 
         # here's how we can lookup arrival times given a reconstructed direction
         arrival_time = reco.lookup_arrival_time(channel = 0, 
