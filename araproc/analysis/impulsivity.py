@@ -4,6 +4,7 @@ from scipy.signal import hilbert
 from scipy.stats import linregress
 from scipy.optimize import curve_fit
 from scipy.special import erf
+from araproc.framework import waveform_utilities as wfu
 
 # Define the erf-linear model for curve fitting
 def erf_linear(x, A, B):
@@ -28,15 +29,15 @@ def erf_linear(x, A, B):
 
 
 # Function to calculate impulsivity-related variables
-def calculate_impulsivity_measures(voltage_array, time_array):
+def calculate_impulsivity_measures(channel_wf,channel_time):
     """
     Calculates impulsivity and other statistical measures from a waveform's voltage and time arrays.
 
     Parameters
     ----------
-    voltage_array : np.ndarray
+    channel_wf : np.ndarray
         Array containing the voltage values of the waveform.
-    time_array : np.ndarray
+    channel_time : np.ndarray
         Array containing the corresponding time values of the waveform.
 
     Returns
@@ -69,14 +70,13 @@ def calculate_impulsivity_measures(voltage_array, time_array):
     result = {}
 
     # Hilbert transform to get the envelope of the waveform
-    hilbert_envelope = np.abs(hilbert(voltage_array))
-
+    hilbert_envelope = wfu.get_hilbert_envelope(channel_wf)   
     # Find the index of the maximum value in the Hilbert envelope
     hill_max_idx = np.argmax(hilbert_envelope)
     hill_max = hilbert_envelope[hill_max_idx]
 
     # Sorting based on closeness to the maximum index
-    closeness = np.abs(np.arange(len(voltage_array)) - hill_max_idx)
+    closeness = np.abs(np.arange(len(channel_wf)) - hill_max_idx)
     clo_sort_idx = np.argsort(closeness)
 
     # Sort the Hilbert envelope by closeness to the maximum
