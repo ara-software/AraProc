@@ -46,7 +46,7 @@ def _get_channels_to_csw(excluded_channels, data, polarization):
     return channels_to_csw[:]
 
 def _get_arrival_delays_reco(
-    data, waveforms, channels_to_csw, excluded_channels, reference_ch, 
+    data, wavepacket, channels_to_csw, excluded_channels, reference_ch, 
     which_distance, polarization, solution, e
 ):
     """
@@ -55,7 +55,7 @@ def _get_arrival_delays_reco(
     """
 
     reco = sr.StandardReco(data.station_id, excluded_channels=excluded_channels)
-    reco_results = reco.do_standard_reco(waveforms)
+    reco_results = reco.do_standard_reco(wavepacket)
     pol_int_to_str = {0: "v", 1: "h"}
     distance_to_key = {'distant': 'distant', 'nearby': 'pulser'}
     reco_key = f"{distance_to_key[which_distance]}_{pol_int_to_str[polarization]}"
@@ -77,7 +77,7 @@ def _get_arrival_delays_reco(
 
         # Uncomment the line below to overwrite the calculated arrival time
         #   from the correlator with the time of the signal peak
-        # arrival_times[ch_ID] = _get_peak(*wu.tgraph_to_arrays(waveforms[ch_ID]))[0]
+        # arrival_times[ch_ID] = _get_peak(*wu.tgraph_to_arrays(wavepacket[ch_ID]))[0]
         
         del pol
     
@@ -134,9 +134,9 @@ def _get_arrival_delays(waveforms, times, channels_to_csw, reference_ch):
 
     return arrival_delays
 
-def _get_catchall_time_array(waveforms, channels_to_csw, arrival_delays):
+def _get_catchall_time_array(wavepacket, channels_to_csw, arrival_delays):
     """
-    For a list of waveforms that will be shifted by the provided 
+    For a list of antennas with waveforms that will be shifted by the provided 
       `arrival_delays`, build a time array from the earliest waveform time
       to the latest waveform time, using the same binning as the waveforms.
     """
@@ -146,13 +146,13 @@ def _get_catchall_time_array(waveforms, channels_to_csw, arrival_delays):
     earliest_wf_time = 123456
     latest_wf_time = -123456
     for c, ch_ID in enumerate(channels_to_csw):
-        waveform_times = np.asarray(waveforms[ch_ID].GetX())
+        waveform_times = np.asarray(wavepacket[ch_ID].GetX())
         if (waveform_times[0] + arrival_delays[ch_ID]) < earliest_wf_time:
             earliest_wf_time = (waveform_times[0] + arrival_delays[ch_ID])
         if (waveform_times[-1] + arrival_delays[ch_ID]) > latest_wf_time:
             latest_wf_time = (waveform_times[-1] + arrival_delays[ch_ID])
         del waveform_times
-    waveform_dt = waveforms[ch_ID].GetX()[1] - waveforms[ch_ID].GetX()[0]
+    waveform_dt = wavepacket[ch_ID].GetX()[1] - wavepacket[ch_ID].GetX()[0]
     big_times = np.arange(
         earliest_wf_time, latest_wf_time+waveform_dt, waveform_dt)
     
@@ -184,33 +184,33 @@ def _shift_wf(xs, ys, x_shift, new_xs):
 
     return new_ys
 
-def _get_channel_with_max_V(waveforms, waveforms_to_analyze):
+def _get_channel_with_max_V(wavepacket, wavepacket_to_analyze):
     """
-    Out of a given set of waveforms for different channels, 
+    Out of a given wavepacket for different channels, 
       find and return the one with the greatest maximum voltage
     """
 
     max_voltage = {'voltage': -1, 'channel':-123456}
-    for ch_ID in waveforms_to_analyze:
-        this_max_voltage = np.max(waveforms[ch_ID].GetY())
+    for ch_ID in wavepacket_to_analyze:
+        this_max_voltage = np.max(wavepacket[ch_ID].GetY())
         if this_max_voltage > max_voltage['voltage']:
             max_voltage['voltage'] = this_max_voltage
             max_voltage['channel'] = ch_ID 
 
     return max_voltage['channel']
 
-def _get_shifts(waveforms, reference_ch):
+def _get_shifts(wavepacket, reference_ch):
     """
     For each waveform, calculate the number of bins you need to roll by.
 
-    This function will fail if any waveforms passed to it are entirely 
+    This function will fail if any wavepacket passed to it are entirely 
       composed of `nan`s
 
     Parameters
     ----------
-    waveforms : dict
+    wavepacket : dict
         Dictionary where keys are channel IDs and values are the corresponding
-            waveforms as TGraphs
+            waveform as TGraphs
     n_sols : int
         Number of ray solutions to solve for
 
@@ -223,7 +223,7 @@ def _get_shifts(waveforms, reference_ch):
 
     ant_first_nonnans = {
         ch_ID: np.where( ~np.isnan(wf) )[0][0] 
-        for ch_ID, wf in waveforms.items()
+        for ch_ID, wf in wavepacket.items()
     }
 
     # Determine all shifts for rolling based on the earliest waveform
@@ -299,31 +299,31 @@ def get_csw_reco(e,
     From a given `useful_event`, return the coherently summed waveform (CSW)
     """
 
-    # Pull waveforms from the dataset
-    waveforms = data.get_waveforms(useful_event=useful_event, which_traces='filtered')
+    # Pull wavepacket from the dataset
+    wavepacket = data.get_wavepacket(useful_event=useful_event, which_traces='filtered')
 
     # Make a list of channels to analyze
     channels_to_csw = _get_channels_to_csw(excluded_channels, data, polarization)
 
     # Calculate the arrival delays in each channel relative to some 
     #   reference channel
-    reference_ch = _get_channel_with_max_V(waveforms, channels_to_csw)
+    reference_ch = _get_channel_with_max_V(wavepacket, channels_to_csw)
     arrival_delays = _get_arrival_delays_reco(
-        data, waveforms, channels_to_csw, excluded_channels, reference_ch,
+        data, wavepacket, channels_to_csw, excluded_channels, reference_ch,
         which_distance, polarization, solution, e)
     
     # Shift each waveform by the arrival delay then interpolate each waveform 
     #   so it exists within an array that stretches from the earliest wf 
     #   time to the last wf time. Waveform values are set to `nan` at all 
     #   times for which it does not exist. These will be trimmed later.
-    big_times = _get_catchall_time_array(waveforms, channels_to_csw, arrival_delays)
+    big_times = _get_catchall_time_array(wavepacket, channels_to_csw, arrival_delays)
     interpolated_wfs = {
         ch_ID: np.full(len(big_times), -123456.0) for ch_ID in channels_to_csw}
     for ch_ID in channels_to_csw:
-        # print("Interpolating", ch_ID, np.round(_get_peak(*wu.tgraph_to_arrays(waveforms[ch_ID]))), 
+        # print("Interpolating", ch_ID, np.round(_get_peak(*wu.tgraph_to_arrays(wavepacket[ch_ID]))), 
         #       "shifted by", round(-arrival_delays[ch_ID]), end=" -> ")
         interpolated_wfs[ch_ID] = _shift_wf(
-            *wu.tgraph_to_arrays(waveforms[ch_ID]), 
+            *wu.tgraph_to_arrays(wavepacket[ch_ID]), 
             -arrival_delays[ch_ID], big_times
         )
         # print(np.round(_get_peak(big_times, interpolated_wfs[ch_ID])))
@@ -373,27 +373,28 @@ def get_csw(e,
     From a given `useful_event`, return the coherently summed waveform (CSW)
     """
 
-    # Pull waveforms from the dataset
-    waveforms = data.get_waveforms(useful_event=useful_event, which_traces='filtered')
+    # Pull wavepacket from the dataset
+    wavepacket = data.get_wavepacket(
+        useful_event=useful_event, which_traces='filtered')['waveforms']
 
     # Make a list of channels to analyze
     channels_to_csw = _get_channels_to_csw(excluded_channels, data, polarization)
 
     # 
     big_times = _get_catchall_time_array(
-        waveforms, channels_to_csw, {ch_ID:0 for ch_ID in channels_to_csw})
+        wavepacket, channels_to_csw, {ch_ID:0 for ch_ID in channels_to_csw})
     interpolated_wfs = {
         ch_ID: np.full(len(big_times), -123456.0) for ch_ID in channels_to_csw}
     for ch_ID in channels_to_csw:
-        # print("Interpolating", ch_ID, np.round(_get_peak(*wu.tgraph_to_arrays(waveforms[ch_ID]))), 
+        # print("Interpolating", ch_ID, np.round(_get_peak(*wu.tgraph_to_arrays(wavepacket[ch_ID]))), 
         #       "shifted by", round(-arrival_delays[ch_ID]), end=" -> ")
         interpolated_wfs[ch_ID] = _shift_wf(
-            *wu.tgraph_to_arrays(waveforms[ch_ID]), 0, big_times)
+            *wu.tgraph_to_arrays(wavepacket[ch_ID]), 0, big_times)
         # print(np.round(_get_peak(big_times, interpolated_wfs[ch_ID])))
 
     # Calculate the arrival delays in each channel relative to some 
     #   reference channel
-    reference_ch = _get_channel_with_max_V(waveforms, channels_to_csw)
+    reference_ch = _get_channel_with_max_V(wavepacket, channels_to_csw)
     arrival_delays = _get_arrival_delays(interpolated_wfs, big_times, channels_to_csw, reference_ch)
     for ch_ID in channels_to_csw:
         interpolated_wfs[ch_ID] = np.roll(interpolated_wfs[ch_ID], -arrival_delays[ch_ID])
