@@ -16,10 +16,9 @@ logging.getLogger().setLevel(logging.INFO)
 d = dataset.AnalysisDataset(
     station_id=5,
     path_to_data_file="/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/event005626.root",
-    path_to_pedestal_file="/data/ana/ARA/ARA05PA/ARA05_pedestals/ped_full_values_A5_run005626.dat"
 )
 iter_start = 0
-iter_stop = 20700
+iter_stop = 200
 
 ################################################################
 ################################################################
@@ -38,14 +37,13 @@ iter_stop = 20700
 ################################################################
 ################################################################
 # uncomment this dataset loader to see a nice CW contaminated A2 event
+# (eventNumber 213179, which is TTree index 20695 in the burn sample file)
 ################################################################
 ################################################################
 
-# (eventNumber 213179, which is TTree index 20695 in the burn sample file)
 # d = dataset.AnalysisDataset(
 #     station_id = 2,
 #     path_to_data_file="/data/exp/ARA/2013/filtered/burnSample1in10/ARA02/root/run1548/event1548.root",
-#     path_to_pedestal_file="/cvmfs/ara.opensciencegrid.org/trunk/RHEL_7_x86_64/ara_build/share/araCalib/ATRI/araAtriStation2Pedestals.txt"
 # )
 # iter_start = 20690
 # iter_stop = 20700
@@ -82,14 +80,17 @@ for e in range(iter_start, iter_stop, 1):
       
         # by default, you get all the bells and whistles
         # (interpolated, dedispersed, cw filtered, and bandpassed)
-        wave_bundle = d.get_waveforms(useful_event)
+        wavepacket = d.get_wavepacket(useful_event)
+        wave_bundle = wavepacket["waveforms"]
 
         # print the average snr across channels 
         avg_snr = snr.get_avg_snr(wave_bundle, excluded_channels=d.excluded_channels)
         print(f"The Average SNR is {avg_snr:.1f}")
  
         # run our standard suite of reconstructions
-        reco_results = reco.do_standard_reco(wave_bundle)
+        reco_results = reco.do_standard_reco(wavepacket)
+
+        pair_idx = reco.get_pair_index(1, 2, reco.pairs_v)
 
         # here's how we can lookup arrival times given a reconstructed direction
         arrival_time = reco.lookup_arrival_time(channel = 0, 
