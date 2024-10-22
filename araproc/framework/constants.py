@@ -8,6 +8,7 @@ hpol_channel_ids = [8, 9, 10, 11, 12, 13, 14, 15]
 
 num_string = 4
 num_dda = 4
+rf_chans_per_dda = 8
 num_antennas_per_dda = 4
 num_blocks_per_dda = 512
 num_samples_per_block = 64
