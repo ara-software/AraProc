@@ -28,14 +28,14 @@ if (not args.is_simulation) and (args.ped_file is None):
 d = dataset.AnalysisDataset(
     station_id=args.station,
     path_to_data_file=args.input_file,
-    path_to_pedestal_file=args.ped_file,
+    path_to_pedestal_file = args.ped_file,
     is_simulation=args.is_simulation
 )
 
-# Read run number and total events
+# Read run number, total events and config
 run_number = d.run_number
 num_evts = d.num_events
-
+config = d.config
 # Setup output arrays
 save_final_cuts = np.full((num_evts), 0, dtype=float)
 
@@ -45,7 +45,7 @@ save_final_cuts = np.full((num_evts), 0, dtype=float)
 for e in range(5):
     useful_event = d.get_useful_event(e)
     evt_num = useful_event.eventNumber
-    combined_errors = daq_qual_cut.check_daq_quality(useful_event, args.station, run_number)
+    combined_errors = daq_qual_cut.check_daq_quality(useful_event, args.station,config)
     save_final_cuts[e] = combined_errors  # If this sum value is >0 for an event then it's a bad event 
     del useful_event,evt_num
     print(combined_errors)

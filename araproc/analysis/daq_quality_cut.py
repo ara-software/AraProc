@@ -5,6 +5,10 @@ from araproc.framework import constants
 import importlib.resources as pkg_resources
 import araproc.framework.config_files as config_files
 
+# Set up logging
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
+
 def process_event_info(useful_event, station_id):
 
     """
@@ -40,13 +44,14 @@ def process_event_info(useful_event, station_id):
     # Extract event-level information
     read_win = useful_event.numReadoutBlocks  # Number of readout blocks
 
-    if useful_event.isRFTrigger():
-       trig_type = 0
-    elif useful_event.isCalpulserEvent():
+    if useful_event.isCalpulserEvent():
        trig_type = 1
+    elif useful_event.isRFTrigger():
+       trig_type = 0
     elif useful_event.isSoftwareTrigger():
        trig_type = 2
-
+    else:
+       logger.error("__________________ Unknown trigger type for the event _______________________")  # error message
     num_ddas = constants.num_dda 
     blk_len = read_win // num_ddas
 
@@ -130,7 +135,7 @@ def get_daq_structure_errors(num_ddas,blk_len_sort, trig_sort, irs_block_number,
     return np.sum(daq_st_err) > 0
 
 
-def get_read_win_limit(st, run):
+def get_read_win_limit(st,config):
 
     """
     Detect readout window errors for a single event based on event data.
@@ -139,8 +144,8 @@ def get_read_win_limit(st, run):
     ----------
     st : int
         Station id number.
-    run : int
-        Run Number
+    config : int
+        Configuration Number
     Returns
     -------
     rf_readout_limit: int
@@ -151,26 +156,14 @@ def get_read_win_limit(st, run):
 
     file = pkg_resources.open_text(config_files,"analysis_configs.yaml")
     file_content = yaml.safe_load(file)
-
-    readout_limits = file_content[f"station{st}"]["readout_limits"]
-
-    limit_values = sorted(readout_limits.keys())
-
-    # Calculate the differences between limit values and the run number
-    diff = np.array(limit_values) - run
-
-    # Find the index of the first limit value that exceeds the run number
-    limit_index = np.where(diff > 0)[0]
-
-    # Retrieve the corresponding limits
-    limits = limit_values[limit_index[0]]
-    rf_readout_limit = readout_limits[limits]["rf_readout_limit"]
-    soft_readout_limit = readout_limits[limits]["soft_readout_limit"]
- 
+    #Get the readout limits for different triggers
+    readout_limits = file_content[f"station{st}"][f"config{config}"]["readout_limits"]
+    rf_readout_limit = readout_limits["rf_readout_limit"]
+    soft_readout_limit = readout_limits["soft_readout_limit"]
     file.close()
     return rf_readout_limit, soft_readout_limit
 
-def get_readout_window_errors(blk_len_sort, trig_sort, channel_mask, run, st):
+def get_readout_window_errors(blk_len_sort, trig_sort, channel_mask, st,config):
 
     """
     Detect readout window errors for a single event based on event data.
@@ -183,8 +176,8 @@ def get_readout_window_errors(blk_len_sort, trig_sort, channel_mask, run, st):
         The trigger information for the event.
     channel_mask : array-like
         The channel mask for the event.
-    run : int
-        The run number for the event.
+    config : int
+        Configuration Number
     st : int
         The station ID for the event.
 
@@ -195,7 +188,7 @@ def get_readout_window_errors(blk_len_sort, trig_sort, channel_mask, run, st):
     """
 
     # Get readout window limits for RF and software triggers
-    rf_read_win_len, soft_read_win_len = get_read_win_limit(st, run)
+    rf_read_win_len, soft_read_win_len = get_read_win_limit(st,config)
 
     # Define boolean conditions for various readout errors
     single_read_bools = blk_len_sort < 2
@@ -217,7 +210,7 @@ def get_readout_window_errors(blk_len_sort, trig_sort, channel_mask, run, st):
     return np.sum(read_win_err) > 0
 
 
-def check_daq_quality(useful_event, station_id, run):
+def check_daq_quality(useful_event, station_id, config):
 
     """
     Main function to extract DAQ structure and readout window errors for a single event.
@@ -228,8 +221,8 @@ def check_daq_quality(useful_event, station_id, run):
         The useful event object containing event information.
     station_id : int
         The station ID for the event.
-    run : int
-        The run number for the event.
+    config : int
+        Configuration Number
 
     Returns
     -------
@@ -245,7 +238,7 @@ def check_daq_quality(useful_event, station_id, run):
     daq_errors = get_daq_structure_errors(num_ddas,blk_len, trig_type, irs_block_number, channel_mask)
 
     # Get readout window errors
-    readout_errors = get_readout_window_errors(blk_len, trig_type, channel_mask, run, station_id)
+    readout_errors = get_readout_window_errors(blk_len, trig_type, channel_mask,station_id,config)
 
     combined_errors = daq_errors or readout_errors
 
