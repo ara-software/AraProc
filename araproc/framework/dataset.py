@@ -576,7 +576,7 @@ class AnalysisDataset:
                  path_to_data_file : str,
                  station_id : int,
                  path_to_pedestal_file : str = None,
-                 interp_tstep : float = 0.5 ,
+                 interp_tstep : float = 0.25 ,
                  is_simulation : bool = False
                  ):
     

@@ -47,7 +47,15 @@ class StandardReco:
         The list of hpol pairs we want in the reconstruction
         This is returned directly by AraRoot.
         https://github.com/ara-software/AraRoot/blob/master/AraCorrelator/RayTraceCorrelator.h#L190C42-L190C52
-    
+    the_arrival_delays_v : std::pair<bins, delays>
+        This is a complicated struct, but it stores the delays between the vpol pairs.
+        This is returned by AraRoot.
+        See https://github.com/ara-software/AraRoot/blob/master/AraCorrelator/RayTraceCorrelator.h#L79
+    the_arrival_delays_h : std::pair<bins, delays>
+        This is a complicated struct, but it stores the delays between the hpol pairs.
+        This is returned by AraRoot.
+        See https://github.com/ara-software/AraRoot/blob/master/AraCorrelator/RayTraceCorrelator.h#L79
+
     """
 
 
@@ -145,6 +153,10 @@ class StandardReco:
                                                        )
         ROOT.SetOwnership(the_pairs_h, True) # take posession
         self.pairs_h = the_pairs_h
+
+        # get the arrival delays
+        self.__arrival_delays_v = self.rtc_wrapper.correlators["distant"].GetArrivalDelays(self.pairs_v)
+        self.__arrival_delays_h  = self.rtc_wrapper.correlators["distant"].GetArrivalDelays(self.pairs_h)
 
         self.__latest_event_num = -1
 
@@ -258,51 +270,35 @@ class StandardReco:
         if(self.__latest_event_num != event_number):
           self.__latest_event_num = event_number
 
-          # get the correlation functions
-          self.__corr_functions_v = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v)
-          self.__corr_functions_h = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h) 
+        # get the correlation functions
+        self.__corr_functions_v = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v)
+        self.__corr_functions_h = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h) 
         
+        ############################
+        ####### VPol Pulser ########
+        ############################
+
         # check the cal pulser in V
         pulser_map_v = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
-            self.pairs_v,
-            self.__corr_functions_v,
-            0
-        )
+            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v, 0,)
+        
         corr_pulser_v, phi_pulser_v, theta_pulser_v = mu.get_corr_map_peak(pulser_map_v)
-        reco_results["pulser_v"] = {"corr" : corr_pulser_v, 
-                                    "theta" : theta_pulser_v,
-                                    "phi" : phi_pulser_v,
-                                    "map" : pulser_map_v,
-                                    "radius" : self.rtc_wrapper.correlators["nearby"].GetRadius()
-                                    }
+        reco_results["pulser_v"] = {
+            "corr" : corr_pulser_v,  "theta" : theta_pulser_v, "phi" : phi_pulser_v,
+            "map" : pulser_map_v, "radius" : self.rtc_wrapper.correlators["nearby"].GetRadius(),
+        }
 
-        # # check the cal pulser in H
-        # pulser_map_h = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
-        #     self.pairs_h,
-        #     self.__corr_functions_h,
-        #     0
-        # )
-        # corr_pulser_h, phi_pulser_h, theta_pulser_h = mu.get_corr_map_peak(pulser_map_h)
-        # reco_results["pulser_h"] = {"corr" : corr_pulser_h, 
-        #                             "theta" : theta_pulser_h,
-        #                             "phi" : phi_pulser_h,
-        #                             "map" : pulser_map_h,
-        #                             "radius" : self.rtc_wrapper.correlators["nearby"].GetRadius()
-        #                             }
+        ############################
+        ####### VPol Maps ##########
+        ############################
 
         # make a 300 m map in V (Direct rays)
         distant_map_v_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v,
-            self.__corr_functions_v,
-            0
-        )
+            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v, 0,)
 
         # make a 300 m map in V (Refracted/Reflected rays)
         distant_map_v_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v,
-            self.__corr_functions_v,
-            1
-        )
+            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v, 1,)
 
         # Get the correlation, phi, and theta for both maps
         corr_distant_v_dir, phi_distant_v_dir, theta_distant_v_dir = mu.get_corr_map_peak(distant_map_v_dir)
@@ -310,35 +306,27 @@ class StandardReco:
 
         # Store the direct rays results
         reco_results["distant_v_dir"] = {
-            "corr": corr_distant_v_dir, 
-            "theta": theta_distant_v_dir,
-            "phi": phi_distant_v_dir,
-            "map": distant_map_v_dir,
-            "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
+            "corr": corr_distant_v_dir,  "theta": theta_distant_v_dir, "phi": phi_distant_v_dir,
+            "map": distant_map_v_dir, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
         }
 
         # Store the refracted/reflected rays results
         reco_results["distant_v_ref"] = {
-            "corr": corr_distant_v_ref, 
-            "theta": theta_distant_v_ref,
-            "phi": phi_distant_v_ref,
-            "map": distant_map_v_ref,
-            "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
+            "corr": corr_distant_v_ref,  "theta": theta_distant_v_ref, "phi": phi_distant_v_ref,
+            "map": distant_map_v_ref, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
         }
+
+        ############################
+        ####### HPol Maps ##########
+        ############################
 
         # make a 300 m map in H (Direct rays)
         distant_map_h_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_h,
-            self.__corr_functions_h,
-            0
-        )
+            self.pairs_h, self.__corr_functions_h, self.__arrival_delays_h, 0, )
 
         # make a 300 m map in H (Refracted/Reflected rays)
         distant_map_h_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_h,
-            self.__corr_functions_h,
-            1
-        )
+            self.pairs_h, self.__corr_functions_h, self.__arrival_delays_h, 1, )
 
         # Get the correlation, phi, and theta for both maps
         corr_distant_h_dir, phi_distant_h_dir, theta_distant_h_dir = mu.get_corr_map_peak(distant_map_h_dir)
@@ -346,20 +334,14 @@ class StandardReco:
 
         # Store the direct rays results
         reco_results["distant_h_dir"] = {
-            "corr": corr_distant_h_dir, 
-            "theta": theta_distant_h_dir,
-            "phi": phi_distant_h_dir,
-            "map": distant_map_v_dir,
-            "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
+            "corr": corr_distant_h_dir,  "theta": theta_distant_h_dir, "phi": phi_distant_h_dir,
+            "map": distant_map_v_dir, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
         }
 
         # Store the refracted/reflected rays results in a separate dictionary
         reco_results["distant_h_ref"] = {
-            "corr": corr_distant_h_ref, 
-            "theta": theta_distant_h_ref,
-            "phi": phi_distant_h_ref,
-            "map": distant_map_v_ref,
-            "radius": self.rtc_wrapper.correlators["distant"].GetRadius()
+            "corr": corr_distant_h_ref,  "theta": theta_distant_h_ref, "phi": phi_distant_h_ref,
+            "map": distant_map_v_ref, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
         }
 
         return reco_results
