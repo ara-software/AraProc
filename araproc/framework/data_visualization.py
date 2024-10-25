@@ -11,10 +11,11 @@ It's important to use a non-GUI backend!
 Otherwise using matplotlib functions in a loop can memory leak.
 See this thread for an interesting discussion:
 https://github.com/matplotlib/matplotlib/issues/20300.
+
+But also, "agg" sometimes give segfaults, so instead we use "pdf".
 """
 import matplotlib # noqa : E402
-matplotlib.use("agg")
-__mplver = matplotlib.__version__ # this seems to fix a rare segfault (don't ask me...)
+matplotlib.use("pdf")
 
 def plot_waveform_bundle(
     waveform_dict = None,
