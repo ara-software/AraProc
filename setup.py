@@ -11,7 +11,7 @@ setup(
     python_requires=">= 3.9",
     install_requires=["numpy < 2", "scipy >= 1.13.0", 
                       "matplotlib", "pyyaml", "ruff",
-                      "scikit-learn"
+                      "scikit-learn", "pandas",
                       ],
     version="0.1",
     license="GPLv3",
