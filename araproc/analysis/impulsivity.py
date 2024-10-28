@@ -4,6 +4,7 @@ from scipy.signal import hilbert
 from scipy.stats import linregress
 from scipy.optimize import curve_fit
 from scipy.special import erf
+from scipy.stats import chi2
 from araproc.framework import waveform_utilities as wfu
 
 # Define the erf-linear model for curve fitting
@@ -62,6 +63,8 @@ def calculate_impulsivity_measures(channel_wf,channel_time):
             Chi-square value for the linear fit.
         - 'impErfLinChi2' : float
             Chi-square value for the erf-linear fit.
+        - 'impSig' : float
+            Significance of erf-linear fit over the linear fit.
         - 'impErfA' : float
             Fitted parameter A for the erf-linear model.
         - 'impErfB' : float
@@ -108,6 +111,11 @@ def calculate_impulsivity_measures(channel_wf,channel_time):
     # Calculate erf-linear chi2 (difference between erf-linear fit and data)
     chi2_erf_linear = np.sum((cdf - cdf_erf_fit) ** 2)
 
+    # Calculate significance of erf-linear fit over linear fit using Wilks' theorem
+    dChi2 = chi2_linear - chi2_erf_linear
+    impSig = np.sign(dChi2)*np.sqrt(chi2.ppf(chi2.cdf(abs(dChi2), 2), 1))
+    impSig = min(10, impSig) # bound the significance
+
     # Store the results
     result['impulsivity'] = impulsivity
     result['slope'] = slope
@@ -118,6 +126,7 @@ def calculate_impulsivity_measures(channel_wf,channel_time):
     result['std_err'] = std_err
     result['impLinChi2'] = chi2_linear
     result['impErfLinChi2'] = chi2_erf_linear
+    result['impSig'] = impSig
     result['impErfA'] = A_fit
     result['impErfB'] = B_fit
 
