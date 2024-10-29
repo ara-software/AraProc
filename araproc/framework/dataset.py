@@ -570,6 +570,14 @@ class AnalysisDataset:
         which, except for getting the "is_simulation" flag right.
     excluded_channels : array of ints
         A list of the RF channels you want excluded from the analysis
+    exluded_channels_and_vpol: array of ints
+        The excluded_channel list, plus channels 0->7 (inclusive).
+        This list can be used to calculate hpol only variables, so you get e.g.
+        bad channels and the exclusion of the vpol channels.
+    exluded_channels_and_hpol: array of ints
+        The excluded_channel list, plus channels 8->15 (inclusive).
+        This list can be used to calculate pol only variables, so you get e.g.
+        bad channels and the exclusion of the hpol channels.
     """
 
     def __init__(self, 
@@ -592,9 +600,11 @@ class AnalysisDataset:
         self.interp_tstep = None
         self.__dataset_wrapper = None
         self.excluded_channels = None
+        self.excluded_channels_and_hpol = None
+        self.excluded_channels_and_vpol = None
 
         self.num_rf_channels = 16 # hard coded, but a variable
-        self.rf_channel_indices = np.arange(0, self.num_rf_channels).tolist() # make indices
+        self.rf_channel_indices = const.rf_channels_ids
 
         self.rf_channel_polarizations = [ ch//8 for ch in self.rf_channel_indices ]
 
@@ -643,7 +653,8 @@ class AnalysisDataset:
             raise
 
         self.excluded_channels = np.asarray(this_station_config["excluded_channels"])
-
+        self.excluded_channels_and_vpol = np.concatenate((self.excluded_channels, np.asarray(const.vpol_channel_ids)))
+        self.excluded_channels_and_hpol = np.concatenate((self.excluded_channels, np.asarray(const.hpol_channel_ids)))
         file.close()
 
     def __setup_bandpass_filters(self):
