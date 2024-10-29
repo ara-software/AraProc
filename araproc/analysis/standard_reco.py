@@ -479,13 +479,13 @@ class StandardReco:
         # Vpols
         if(ch1//8 == 0):
           idx = self.get_pair_index(ch1, ch2, self.pairs_v)
-          if(applyHilbert)
+          if(applyHilbert):
             return self.__corr_functions_v[idx]
-          else
+          else:
             return self.__corr_functions_v_fullphase[idx]
 
         idx = self.get_pair_index(ch1, ch2, self.pairs_h)
-        if(applyHilbert)
+        if(applyHilbert):
           return self.__corr_functions_h[idx]
         return self.__corr_functions_h_fullphase[idx]
 
