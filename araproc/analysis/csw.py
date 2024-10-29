@@ -59,7 +59,7 @@ def _get_arrival_delays_reco(
     #     ouput_file_path=f"./station_{data.station_id}_run_{data.run_number}_event_{e}_map.png")
 
     # Get all the arrival delays
-    arrival_times = {ch: None for ch in channels_to_csw }
+    arrival_times = {ch: 0.0 for ch in channels_to_csw }
     for c, ch_ID in enumerate(channels_to_csw):
         arrival_times[ch_ID] = reco.lookup_arrival_time(
             ch_ID, reco_results['theta'], reco_results['phi'], 
@@ -68,7 +68,7 @@ def _get_arrival_delays_reco(
     
     # Center all arrival delays around a reference channel
     reference_arrival_time = arrival_times[reference_ch]
-    arrival_delays = {ch: None for ch in channels_to_csw }
+    arrival_delays = {ch: 0.0 for ch in channels_to_csw }
     for ch_ID in arrival_delays.keys():
         arrival_delays[ch_ID] = arrival_times[ch_ID] - reference_arrival_time
 
@@ -90,7 +90,7 @@ def _get_arrival_delays_xcorr(
     return arrival_delays
 
 def _get_arrival_delays_AraRoot_xcorr(
-    waveform_bundle, reco, pol, reference_ch, reco_delays, zoom_window=20):
+    waveform_bundle, reco, pol, reference_ch, reco_delays, wf_type, zoom_window=20):
     """
     Determine the arrival delays from each channel by finding the time of
       max correlation between each channel and the reference channel in a 
@@ -107,7 +107,7 @@ def _get_arrival_delays_AraRoot_xcorr(
     for chan_i in waveform_bundle.keys():
         wf_map[chan_i] = waveform_bundle[chan_i]
 
-    cross_corr_unhilberted = reco.rtc_wrapper.correlators["distant"].GetCorrFunctions(
+    cross_corr_unhilberted = reco.rtc_wrapper.correlators["nearby"].GetCorrFunctions(
         pairs, wf_map, False)
 
     delays = {}
@@ -121,10 +121,31 @@ def _get_arrival_delays_AraRoot_xcorr(
             zoomed_indices = np.where(
                 (np.abs( np.asarray(xcorr.GetX()) - reco_delays[ch_ID] )) < zoom_window
             )[0]
-            delay = _get_peak(
-                np.asarray(xcorr.GetX())[zoomed_indices], 
-                np.asarray(xcorr.GetY())[zoomed_indices]
-            )[0] 
+            if len(zoomed_indices) == 0: 
+                if wf_type != "soft": 
+                    print(
+                        f"Touble calculating csw for {wf_type} event with "
+                        f"channels {ch_ID} and {reference_ch}")
+                delay = _get_peak(
+                    np.asarray(xcorr.GetX()), 
+                    np.asarray(xcorr.GetY())
+                )[0] 
+            else: 
+                print(
+                    ch_ID, len(zoomed_indices), xcorr.GetN(), 
+                    round(reco_delays[ch_ID], 1), 
+                    np.nanargmax( np.asarray( xcorr.GetY() ) ),
+                    np.round(_get_peak(
+                        np.asarray(xcorr.GetX())[zoomed_indices], 
+                        np.asarray(xcorr.GetY())[zoomed_indices]
+                    )[0], 1)
+                )
+                print(ch_ID, xcorr.GetX()[zoomed_indices[0]], xcorr.GetX()[zoomed_indices[1]],
+                    xcorr.GetY()[zoomed_indices[0]], xcorr.GetY()[zoomed_indices[-1]])
+                delay = _get_peak(
+                    np.asarray(xcorr.GetX())[zoomed_indices], 
+                    np.asarray(xcorr.GetY())[zoomed_indices]
+                )[0] 
 
         # AraRoot always compared channels with smaller IDs to channels with 
         #   larger IDs but we always want to compare to the reference channel.
@@ -460,14 +481,17 @@ def get_csw(e,
     arrival_delays_reco = _get_arrival_delays_reco(
         data, reco, reco_results[reco_key], channels_to_csw, reference_ch, 
         which_distance, solution)
+    if useful_event.isSoftwareTrigger(): wf_type = 'soft'
+    elif useful_event.isCalpulserEvent(): wf_type = 'cp'
+    else: wf_type = 'rf'
     arrival_delays = _get_arrival_delays_AraRoot_xcorr(
-        wavepacket['waveforms'], reco, polarization, reference_ch, arrival_delays_reco)
+        wavepacket['waveforms'], reco, polarization, reference_ch, arrival_delays_reco, wf_type)
     
     # Prepare the final CSW waveform time and voltage arrays
     csw_values = np.zeros((1, csw_length))
     csw_times = _trim_array(
-        wavepacket['waveforms'][reference_ch].GetX(), 
-        wavepacket['waveforms'][reference_ch].GetY(), 
+        np.asarray(wavepacket['waveforms'][reference_ch].GetX()), 
+        np.asarray(wavepacket['waveforms'][reference_ch].GetY()), 
         wavepacket['waveforms'][reference_ch].GetN()-csw_length
     )[0]
     dt = csw_times[1] - csw_times[0]
