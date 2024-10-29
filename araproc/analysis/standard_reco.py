@@ -1154,8 +1154,6 @@ class StandardReco:
 
         Returns
         -------
-        csw_snr : float
-            The SNR of the coherently summed waveform
         csw : ROOT.TGraph
             The coherently summed waveform. Only returned if `return_csw==True`
         """
@@ -1269,12 +1267,5 @@ class StandardReco:
 
         # Un-nest the csw. csw.shape was (1,len(big_times)) but is now len(big_times)
         csw_values = csw_values[0]
-            
-        # Calculate CSW SNR
-        csw_snr = snr.get_snr(csw_values)
-
-        # Return the csw_snr (and the csw, if user requested)
-        if return_csw:
-            return csw_snr, wu.arrays_to_tgraph(csw_times, csw_values)
-        else: 
-            return csw_snr
+        
+        return wu.arrays_to_tgraph(csw_times, csw_values)
