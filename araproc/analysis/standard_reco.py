@@ -206,7 +206,7 @@ class StandardReco:
 
         return cross_correlations
 
-    def do_standard_reco(self, wavepacket):
+    def do_standard_reco(self, wavepacket, applyHilbert=True):
         
         """
         A function to do a standard set of reconstructions.
@@ -247,6 +247,8 @@ class StandardReco:
                 The exclusions are handled further down under the excluded channels section.
               "trace_type" : string
                 Waveform type requested by which_trace
+        applyHilbert : bool
+            Boolean whether the cross-correlation function is Hilbert enveloped.
  
         Returns
         -------
@@ -285,6 +287,14 @@ class StandardReco:
         self.__corr_functions_h_fullphase = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h, False)
         self.__corr_functions_v = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v, True)
         self.__corr_functions_h = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h, True) 
+
+        # choose right correlation function for requested maps
+        if(applyHilbert):
+          this_corr_functions_v = self.__corr_functions_v
+          this_corr_functions_h = self.__corr_functions_h
+        else:
+          this_corr_functions_v = self.__corr_functions_v_fullphase
+          this_corr_functions_h = self.__corr_functions_h_fullphase
  
         ############################
         ####### VPol Pulser ########
@@ -292,7 +302,7 @@ class StandardReco:
 
         # check the cal pulser in V
         pulser_map_v = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
-            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v_nearby, 0,)
+            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_nearby, 0,)
         
         corr_pulser_v, phi_pulser_v, theta_pulser_v = mu.get_corr_map_peak(pulser_map_v)
         reco_results["pulser_v"] = {
@@ -306,11 +316,11 @@ class StandardReco:
 
         # make a 300 m map in V (Direct rays)
         distant_map_v_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v_distant, 0,)
+            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 0,)
 
         # make a 300 m map in V (Refracted/Reflected rays)
         distant_map_v_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v_distant, 1,)
+            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 1,)
 
         # Get the correlation, phi, and theta for both maps
         corr_distant_v_dir, phi_distant_v_dir, theta_distant_v_dir = mu.get_corr_map_peak(distant_map_v_dir)
@@ -334,11 +344,11 @@ class StandardReco:
 
         # make a 300 m map in H (Direct rays)
         distant_map_h_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_h, self.__corr_functions_h, self.__arrival_delays_h_distant, 0, )
+            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 0, )
 
         # make a 300 m map in H (Refracted/Reflected rays)
         distant_map_h_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_h, self.__corr_functions_h, self.__arrival_delays_h_distant, 1, )
+            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 1, )
 
         # Get the correlation, phi, and theta for both maps
         corr_distant_h_dir, phi_distant_h_dir, theta_distant_h_dir = mu.get_corr_map_peak(distant_map_h_dir)
