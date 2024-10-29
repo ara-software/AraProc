@@ -56,7 +56,7 @@ class StandardReco:
         This is a complicated struct, but it stores the delays between the hpol pairs.
         This is returned by AraRoot.
         See https://github.com/ara-software/AraRoot/blob/master/AraCorrelator/RayTraceCorrelator.h#L79
-        This fo the hpol distant hypothesis.
+        This for the hpol distant hypothesis.
     __arrival_delays_v_nearby : std::pair<bins, delays>
         Ditto to above, just nearby distant hypothesis.
     __arrival_delays_h_nearby : std::pair<bins, delays>
