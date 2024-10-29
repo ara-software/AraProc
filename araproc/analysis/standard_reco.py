@@ -1124,7 +1124,7 @@ class StandardReco:
 
     def get_csw(
         self, data, useful_event, solution, polarization, reco_results,
-        excluded_channels=[], which_distance='distant', return_csw=False
+        excluded_channels=[], which_distance='distant'
     ):
         """
         Build the Coherently Summed Waveform (CSW) for the given `useful_event`
@@ -1149,8 +1149,6 @@ class StandardReco:
         which_distance : str
             The distance of the reconstruction for analysis, following the 
             convention of other functions in this class. 
-        return_csw : bool
-            If True, will return the CSW_SNR and a ROOT.TGraph of the CSW
 
         Returns
         -------
