@@ -1122,7 +1122,7 @@ class StandardReco:
         else: 
             return times[front_trim:-back_trim], values[front_trim:-back_trim]
 
-    def get_csw_snr(
+    def get_csw(
         self, data, useful_event, solution, polarization, reco_results,
         excluded_channels=[], which_distance='distant', return_csw=False
     ):
