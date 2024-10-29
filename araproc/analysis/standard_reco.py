@@ -473,7 +473,8 @@ class StandardReco:
           self.__corr_functions_v = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v, True)
           self.__corr_functions_h = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h, True) 
 
-        if(ch1//8 != ch2//8):
+        if((ch1 in const.vpol_channel_ids and ch2 in const.hpol_channel_ids) 
+            or (ch1 in const.hpol_channel_ids and ch2 in const.vpol_channel_ids)):
           raise Exception("Correlation functions only available for like-polarization channels. Abort.")
 
         # Vpols
