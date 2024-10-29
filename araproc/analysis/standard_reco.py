@@ -168,7 +168,7 @@ class StandardReco:
 
         self.__latest_event_num = -1
 
-    def __calculate_cross_correlations(self, waveform_bundle, pairs):
+    def __calculate_cross_correlations(self, waveform_bundle, pairs, applyHilbert):
 
         """
         Wrapper for cross-correlation calculation.
@@ -183,7 +183,9 @@ class StandardReco:
             16 traces in your interferometry.
             The exclusions are handled further down under the excluded channels section.       
         pairs : std::map<int, std::vector<int> >
-          Channel pairs to form cross-correlations from.
+            Channel pairs to form cross-correlations from.
+        applyHilbert : bool
+            Boolean whether the cross-correlation function is Hilbert enveloped.
  
         Returns
         -------
@@ -198,13 +200,13 @@ class StandardReco:
         for chan_i in waveform_bundle.keys():
             wf_map[chan_i] = waveform_bundle[chan_i]
                 
-        cross_correlations = self.rtc_wrapper.correlators["distant"].GetCorrFunctions(pairs, wf_map)
+        cross_correlations = self.rtc_wrapper.correlators["distant"].GetCorrFunctions(pairs, wf_map, applyHilbert)
         
         del wf_map
 
         return cross_correlations
 
-    def do_standard_reco(self, wavepacket):
+    def do_standard_reco(self, wavepacket, applyHilbert=True):
         
         """
         A function to do a standard set of reconstructions.
@@ -245,6 +247,8 @@ class StandardReco:
                 The exclusions are handled further down under the excluded channels section.
               "trace_type" : string
                 Waveform type requested by which_trace
+        applyHilbert : bool
+            Boolean whether the cross-correlation function is Hilbert enveloped.
  
         Returns
         -------
@@ -279,16 +283,26 @@ class StandardReco:
           self.__latest_event_num = event_number
 
         # get the correlation functions
-        self.__corr_functions_v = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v)
-        self.__corr_functions_h = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h) 
-        
+        self.__corr_functions_v_fullphase = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v, False)
+        self.__corr_functions_h_fullphase = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h, False)
+        self.__corr_functions_v = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v, True)
+        self.__corr_functions_h = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h, True) 
+
+        # choose right correlation function for requested maps
+        if(applyHilbert):
+          this_corr_functions_v = self.__corr_functions_v
+          this_corr_functions_h = self.__corr_functions_h
+        else:
+          this_corr_functions_v = self.__corr_functions_v_fullphase
+          this_corr_functions_h = self.__corr_functions_h_fullphase
+ 
         ############################
         ####### VPol Pulser ########
         ############################
 
         # check the cal pulser in V
         pulser_map_v = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
-            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v_nearby, 0,)
+            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_nearby, 0,)
         
         corr_pulser_v, phi_pulser_v, theta_pulser_v = mu.get_corr_map_peak(pulser_map_v)
         reco_results["pulser_v"] = {
@@ -302,11 +316,11 @@ class StandardReco:
 
         # make a 300 m map in V (Direct rays)
         distant_map_v_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v_distant, 0,)
+            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 0,)
 
         # make a 300 m map in V (Refracted/Reflected rays)
         distant_map_v_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v_distant, 1,)
+            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 1,)
 
         # Get the correlation, phi, and theta for both maps
         corr_distant_v_dir, phi_distant_v_dir, theta_distant_v_dir = mu.get_corr_map_peak(distant_map_v_dir)
@@ -330,11 +344,11 @@ class StandardReco:
 
         # make a 300 m map in H (Direct rays)
         distant_map_h_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_h, self.__corr_functions_h, self.__arrival_delays_h_distant, 0, )
+            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 0, )
 
         # make a 300 m map in H (Refracted/Reflected rays)
         distant_map_h_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_h, self.__corr_functions_h, self.__arrival_delays_h_distant, 1, )
+            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 1, )
 
         # Get the correlation, phi, and theta for both maps
         corr_distant_h_dir, phi_distant_h_dir, theta_distant_h_dir = mu.get_corr_map_peak(distant_map_h_dir)
@@ -417,7 +431,7 @@ class StandardReco:
                                                                                        )
         return arrival_time
 
-    def __get_correlation_function(self, ch1, ch2, wavepacket):
+    def __get_correlation_function(self, ch1, ch2, wavepacket, applyHilbert):
         """
         Returns the correlation function for the channel pair ch1-ch2.
 
@@ -437,6 +451,8 @@ class StandardReco:
                 Values are TGraphs
               "trace_type" : string
                 Waveform type requested by which_trace
+        applyHilbert : bool
+            Boolean whether the cross-correlation function is Hilbert enveloped.
 
         Returns
         -------
@@ -452,19 +468,27 @@ class StandardReco:
           self.__latest_event_num = event_number
 
           # get the correlation functions
-          self.__corr_functions_v = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v)
-          self.__corr_functions_h = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h) 
+          self.__corr_functions_v_fullphase = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v, False)
+          self.__corr_functions_h_fullphase = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h, False)
+          self.__corr_functions_v = self.__calculate_cross_correlations(waveform_bundle, self.pairs_v, True)
+          self.__corr_functions_h = self.__calculate_cross_correlations(waveform_bundle, self.pairs_h, True) 
 
-        if(ch1//8 != ch2//8):
+        if((ch1 in const.vpol_channel_ids and ch2 in const.hpol_channel_ids) 
+            or (ch1 in const.hpol_channel_ids and ch2 in const.vpol_channel_ids)):
           raise Exception("Correlation functions only available for like-polarization channels. Abort.")
 
         # Vpols
-        if(ch1//8 == 0):
+        if(ch1 in const.vpol_channel_ids):
           idx = self.get_pair_index(ch1, ch2, self.pairs_v)
-          return self.__corr_functions_v[idx]
+          if(applyHilbert):
+            return self.__corr_functions_v[idx]
+          else:
+            return self.__corr_functions_v_fullphase[idx]
 
         idx = self.get_pair_index(ch1, ch2, self.pairs_h)
-        return self.__corr_functions_h[idx]
+        if(applyHilbert):
+          return self.__corr_functions_h[idx]
+        return self.__corr_functions_h_fullphase[idx]
 
     def get_pair_index(self, ch1, ch2, pairs):
         """
@@ -839,16 +863,9 @@ class StandardReco:
            Channel pair correlation SNR.
         """
 
-        corr_func = self.__get_correlation_function(ch1, ch2, wave_packet)
-        corr_func_max_idx = np.argmax(corr_func)
-        corr_func_max = corr_func[corr_func_max_idx]
-        corr_func_rms = snr.get_min_segmented_rms(corr_func)
+        corr_func = self.__get_correlation_function(ch1, ch2, wave_packet, False)
+        corr_snr = snr.get_snr(corr_func)
 
-        if(corr_func_rms == 0.0):
-          return 0
-
-        corr_snr = corr_func_max/corr_func_rms
-        
         return corr_snr
 
     def get_avg_corr_snr(self, wave_packet, excluded_channels = []):
