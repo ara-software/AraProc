@@ -478,7 +478,7 @@ class StandardReco:
           raise Exception("Correlation functions only available for like-polarization channels. Abort.")
 
         # Vpols
-        if(ch1//8 == 0):
+        if(ch1 in const.vpol_channel_ids):
           idx = self.get_pair_index(ch1, ch2, self.pairs_v)
           if(applyHilbert):
             return self.__corr_functions_v[idx]
