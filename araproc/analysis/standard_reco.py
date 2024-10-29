@@ -47,15 +47,20 @@ class StandardReco:
         The list of hpol pairs we want in the reconstruction
         This is returned directly by AraRoot.
         https://github.com/ara-software/AraRoot/blob/master/AraCorrelator/RayTraceCorrelator.h#L190C42-L190C52
-    the_arrival_delays_v : std::pair<bins, delays>
+    __arrival_delays_v_distant : std::pair<bins, delays>
         This is a complicated struct, but it stores the delays between the vpol pairs.
         This is returned by AraRoot.
         See https://github.com/ara-software/AraRoot/blob/master/AraCorrelator/RayTraceCorrelator.h#L79
-    the_arrival_delays_h : std::pair<bins, delays>
+        This for the vpol distant hypothesis.
+    __arrival_delays_h_distant : std::pair<bins, delays>
         This is a complicated struct, but it stores the delays between the hpol pairs.
         This is returned by AraRoot.
         See https://github.com/ara-software/AraRoot/blob/master/AraCorrelator/RayTraceCorrelator.h#L79
-
+        This fo the hpol distant hypothesis.
+    __arrival_delays_v_nearby : std::pair<bins, delays>
+        Ditto to above, just nearby distant hypothesis.
+    __arrival_delays_h_nearby : std::pair<bins, delays>
+        Ditto to above, just nearby distant hypothesis.
     """
 
 
@@ -155,8 +160,11 @@ class StandardReco:
         self.pairs_h = the_pairs_h
 
         # get the arrival delays
-        self.__arrival_delays_v = self.rtc_wrapper.correlators["distant"].GetArrivalDelays(self.pairs_v)
-        self.__arrival_delays_h  = self.rtc_wrapper.correlators["distant"].GetArrivalDelays(self.pairs_h)
+        self.__arrival_delays_v_distant = self.rtc_wrapper.correlators["distant"].GetArrivalDelays(self.pairs_v)
+        self.__arrival_delays_h_distant  = self.rtc_wrapper.correlators["distant"].GetArrivalDelays(self.pairs_h)
+        self.__arrival_delays_v_nearby = self.rtc_wrapper.correlators["nearby"].GetArrivalDelays(self.pairs_v)
+        self.__arrival_delays_h_nearby  = self.rtc_wrapper.correlators["nearby"].GetArrivalDelays(self.pairs_h)
+
 
         self.__latest_event_num = -1
 
@@ -280,7 +288,7 @@ class StandardReco:
 
         # check the cal pulser in V
         pulser_map_v = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
-            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v, 0,)
+            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v_nearby, 0,)
         
         corr_pulser_v, phi_pulser_v, theta_pulser_v = mu.get_corr_map_peak(pulser_map_v)
         reco_results["pulser_v"] = {
@@ -294,11 +302,11 @@ class StandardReco:
 
         # make a 300 m map in V (Direct rays)
         distant_map_v_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v, 0,)
+            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v_distant, 0,)
 
         # make a 300 m map in V (Refracted/Reflected rays)
         distant_map_v_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v, 1,)
+            self.pairs_v, self.__corr_functions_v, self.__arrival_delays_v_distant, 1,)
 
         # Get the correlation, phi, and theta for both maps
         corr_distant_v_dir, phi_distant_v_dir, theta_distant_v_dir = mu.get_corr_map_peak(distant_map_v_dir)
@@ -322,11 +330,11 @@ class StandardReco:
 
         # make a 300 m map in H (Direct rays)
         distant_map_h_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_h, self.__corr_functions_h, self.__arrival_delays_h, 0, )
+            self.pairs_h, self.__corr_functions_h, self.__arrival_delays_h_distant, 0, )
 
         # make a 300 m map in H (Refracted/Reflected rays)
         distant_map_h_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_h, self.__corr_functions_h, self.__arrival_delays_h, 1, )
+            self.pairs_h, self.__corr_functions_h, self.__arrival_delays_h_distant, 1, )
 
         # Get the correlation, phi, and theta for both maps
         corr_distant_h_dir, phi_distant_h_dir, theta_distant_h_dir = mu.get_corr_map_peak(distant_map_h_dir)
