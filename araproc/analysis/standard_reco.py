@@ -1164,7 +1164,13 @@ class StandardReco:
         -------
         csw : ROOT.TGraph
             The coherently summed waveform. Only returned if `return_csw==True`
+        warning : int
+            If non-zero, contains information about something that went wrong
+              in the CSW calculation.
         """
+
+        # Initialize warning object as 0
+        warning = 0
 
         # Check that reco_results have been passed in properly
         if 'theta' not in reco_results.keys():
@@ -1230,28 +1236,30 @@ class StandardReco:
             times = np.asarray(wavepacket['waveforms'][ch_ID].GetX()) - arrival_delays[ch_ID]
 
             # Determine if the time binning of this channel matches the time binning
-            #   of the CSW and adjust if it doesn't. 
-            # Ex: If the CSW has times of [0.9, 1.4, 1.9] then a channel
-            #   with a time array of [1.6, 2.1, 2.6] needs to be rebinned/shifted 
-            #   backwards by 0.2 but a channel with the time array [3.4, 3.9, 4.4 ] 
-            #   doesn't because each bin starts and ends on the same fraction of a 
-            #   nanosecond that the CSW does. 
-            rebinning_shift = round( (times[0] - csw_times[0]) % csw_dt, 4) 
-            if rebinning_shift != 0: 
-                # Rebin waveform
-                waveform_interpolation = Akima1DInterpolator(times, values)
-                times = times - rebinning_shift
-                values = waveform_interpolation(times)
-                # Trim off leading`nan` value from extrapolating the waveform
-                if np.isnan(values[0]):
-                    times = times[1:]
-                    values = values[1:]
-                # If this makes this waveform shorter than the csw_length, 
-                #   adapt the csw to match this shorter length
-                if len(csw_times) - len(times) == 1:
-                    csw_times = csw_times[:-1]
-                    csw_values = np.delete(csw_values, -1, axis=1)
-                    csw_length = len(csw_times)
+            #   of the CSW. This assumes all waveforms have the same time
+            #   bin size. Calculating arrival delays via the cross correlation
+            #   should fix this already, so just raise a warning if
+            #   the bins aren't lined up.
+            # Ex: If the CSW has times of [0.9, 1.4, 1.9], waveform 1 has a
+            #   time array of [3.4, 3.9, 4.4 ], waveform 2 has a time array 
+            #   of [1.6, 2.1, 2.6], and waveform 3 has a time array of 
+            #   [0.5, 1.0, 1.5] then waveform 1 doesn't need rebinning since 
+            #   each time step starts and ends on the same fraction of a time 
+            #   bin as the CSW does. However, waveform 2 needs to be shifted back
+            #   by 0.2 nanoseconds to get a fitting time aray of [1.4, 1.9, 2.4]
+            #   and waveform 3 needes to be shifted back by 0.1
+            rebinning_shift = (
+                (csw_times[0] - times[0])
+                % csw_dt
+                # Take the remainder of the start time difference with csw_dt.
+                #   If this is ~0, the waveforms have the same binning 
+                #   otherwise, this reveals how much to shift the waveform by. 
+                # For example, waveform 1 yeilds: (3.4 - 0.9) % 0.5 = 0
+                #   waveform 2 yeilds (1.6 - 1.4) % 0.5 = 0.2 
+                #   and waveform 3 yeilds (0.9 - 0.5) % 0.5 = 0.4 
+            ) 
+            if csw_dt - 0.0001 > abs(rebinning_shift) > 0.0001: 
+                warning += 10000
 
             # Trim this waveform's length to match the CSW length but try 
             #   not to remove the maximal waveform point
@@ -1277,4 +1285,4 @@ class StandardReco:
         # Un-nest the csw. csw.shape was (1,len(csw_times)) but is now len(csw_times)
         csw_values = np.squeeze(csw_values)
         
-        return wfu.arrays_to_tgraph(csw_times, csw_values)
+        return wfu.arrays_to_tgraph(csw_times, csw_values), warning
