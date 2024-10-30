@@ -1082,53 +1082,6 @@ class StandardReco:
 
         return delays
 
-    def __trim_array(self, times, values, trim):
-        """
-        Trim an array by `trim` values, being careful to avoid trimming out the
-        maximum signal
-
-        Parameters
-        ----------
-        times : Iterable
-        values : Iterable
-        trim : int
-            The number of data points to trim the waveform by.
-
-        Returns
-        -------
-        times : Iterable
-        values : Iterable
-        """
-
-        # Soft exit if the user doesn't actually request a trim
-        if trim == 0: 
-            return times, values
-        
-        # Identify the index where the peak signal is held
-        value_max_idx = np.argmax(values)
-
-        # Calculate amount to trim off beginning and end of the waveform, 
-        #   initially triming equal parts off the front and back unless the 
-        #   index with maximal signal is in one of those regions
-        front_trim = trim // 2
-        back_trim = int( np.ceil( trim / 2 ) )
-        if value_max_idx - front_trim < 0:
-            # The peak of the signal is within the front region of the waveform 
-            #   about to be trimmed. Switch to trimming off the back entirely.
-            front_trim = 0
-            back_trim = trim
-        elif back_trim - value_max_idx < 0:
-            # The peak of the signal is within the back region of the waveform
-            #   about to be trimmed. Switch to trimming off the front entirely.
-            front_trim = trim
-            back_trim = 0
-
-        # Return the results
-        if back_trim == 0:
-            return times[front_trim:], values[front_trim:]
-        else: 
-            return times[front_trim:-back_trim], values[front_trim:-back_trim]
-
     def get_csw(
         self, wavepacket, is_software, solution, polarization, reco_results,
         excluded_channels, which_distance='distant'
@@ -1188,13 +1141,6 @@ class StandardReco:
             if ch_ID not in excluded_channels:
                 channels_to_csw.append(ch_ID)
 
-        # In case some channels have different lengths than others, choose the
-        #   smallest waveform size for the length of the csw
-        csw_length = np.inf
-        for ch_ID in channels_to_csw:
-            if wavepacket['waveforms'][ch_ID].GetN() < csw_length: 
-                csw_length = wavepacket['waveforms'][ch_ID].GetN() 
-
         # Determine the "reference channel" to base the CSW around as the
         #   channel with the maximum voltage
         reference_ch = -123456
@@ -1218,13 +1164,18 @@ class StandardReco:
             wavepacket, excluded_channels, reference_ch, 
             arrival_delays_reco, is_software)  
 
-        # Initialize the final CSW waveform time and voltage arrays
-        csw_values = np.zeros((1, csw_length))
-        csw_times = self.__trim_array(
-            np.asarray(wavepacket['waveforms'][reference_ch].GetX()), 
-            np.asarray(wavepacket['waveforms'][reference_ch].GetY()), 
-            wavepacket['waveforms'][reference_ch].GetN()-csw_length
-        )[0]
+        # Initialize the final CSW waveform time and voltage arrays using the
+        #   reference channel's time array resized to size of the channel with 
+        #   the shortest waveform's waveform
+        shortest_wf_ch = 123456
+        shortest_wf_length = np.inf
+        for ch_ID in channels_to_csw:
+            if wavepacket['waveforms'][ch_ID].GetN() < shortest_wf_length: 
+                shortest_wf_length = wavepacket['waveforms'][ch_ID].GetN() 
+                shortest_wf_ch = ch_ID
+        csw_values = np.zeros((1, shortest_wf_length))
+        csw_times = np.asarray(
+            wavepacket['waveforms'][reference_ch].GetX())[:shortest_wf_length]
         csw_dt = csw_times[1] - csw_times[0]
 
         # Roll the waveform from each channel so the starting time of each
@@ -1261,10 +1212,38 @@ class StandardReco:
             if csw_dt - 0.0001 > abs(rebinning_shift) > 0.0001: 
                 warning += 10000
 
-            # Trim this waveform's length to match the CSW length but try 
-            #   not to remove the maximal waveform point
-            # TODO could combine this logic with the rolling
-            times, values = self.__trim_array(times, values, len(values)-csw_length)
+            # Trim this waveform's length to match the CSW length
+            if len(times) > len(csw_times):
+                trim_ammount = len(times) - len(csw_times)
+                if (times[0]<csw_times[0]) and (times[-1]<=csw_times[-1]): 
+                    # If this wf has an earlier start time and a later or equal 
+                    #   end time, trim from front
+                    times  = times [trim_ammount:]
+                    values = values[trim_ammount:]
+                elif (times[0]>=csw_times[0]) and (times[-1]>csw_times[-1]): 
+                    # If this wf has later or equal start time and a later 
+                    #   end time, trim from back
+                    times  = times [:-trim_ammount]
+                    values = values[:-trim_ammount]
+                elif (times[0]<csw_times[0]) and (times[-1]>csw_times[-1]): 
+                    # If waveform starts earlier and ends later, trim from both ends
+                    leading_trimmable = np.argwhere( times < csw_times[0] )
+                    trailing_trimmable = np.argwhere( times > csw_times[-1] )
+                    times  = times [ len(leading_trimmable) : -len(trailing_trimmable) ] 
+                    values = values[ len(leading_trimmable) : -len(trailing_trimmable) ] 
+                else: 
+                    # This waveform either has the same start and end time and 
+                    #   has no need to be trimmed, or starts and ends within
+                    #   the CSW time array, so it should be the shortest
+                    #   waveform unless the binning changed between waveforms.
+                    raise ValueError(
+                        f"Unexpected trimming request for channel {ch_ID}. "
+                        f"The CSW has a length of {len(csw_times)} and a dt of {csw_dt} "
+                        f"which may be incompatible with channel {ch_ID}s waveform "
+                        f"with a length of {len(times)} and a dt of {times[1]-times[0]}. "
+                        f"The CSW runs from {csw_times[0]} to {csw_times[-1]} and "
+                        f"this waveform runs from {times[0]} to {times[-1]}." 
+                    )
 
             # Roll the waveform so that the start and end times of the waveform
             #   line up exactly with the CSW
