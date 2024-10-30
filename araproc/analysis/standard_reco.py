@@ -1248,7 +1248,9 @@ class StandardReco:
             # Roll the waveform so that the start and end times of the waveform
             #   line up exactly with the CSW
             roll_shift = (times[0] - csw_times[0]) / csw_dt
-            # TODO Check that roll_shift is close to an integer
+            if abs(roll_shift) % 1.0 > 0.0001: 
+                # roll_shift is not close to an integer. Add to the warning
+                warning += 10
             # TODO Check that the peak of the waveform or the expected signal 
             #   bin isn't about to get rolled 
             rolled_wf = np.roll( values, int(roll_shift) )
