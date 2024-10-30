@@ -9,7 +9,7 @@ import itertools
 from araproc.analysis import interferometry as interf
 from araproc.framework import constants as const
 from araproc.framework import map_utilities as mu
-from araproc.framework import waveform_utilities as wu
+from araproc.framework import waveform_utilities as wfu
 from araproc.analysis import snr
 
 class StandardReco:
@@ -927,7 +927,7 @@ class StandardReco:
 
         return avg_vpol_corr_snr, avg_hpol_corr_snr  
 
-    def __get_arrival_delays_reco(
+    def get_arrival_delays_reco(
         self, data, reco_results, channels_to_csw, reference_ch, 
         which_distance, solution
     ):
@@ -977,7 +977,7 @@ class StandardReco:
 
         return arrival_delays
 
-    def __get_arrival_delays_AraRoot_xcorr(
+    def get_arrival_delays_AraRoot_xcorr(
         self, wavepacket, pol, channels_to_csw, reference_ch, reco_delays, 
         which_distance, is_software, zoom_window=40
     ):
@@ -1029,7 +1029,7 @@ class StandardReco:
             else: 
                 
                 # Load  the cross correlation for this channel and the reference 
-                xcorr_times, xcorr_volts = wu.tgraph_to_arrays(
+                xcorr_times, xcorr_volts = wfu.tgraph_to_arrays(
                     self.__get_correlation_function(
                         ch_ID, reference_ch, wavepacket, applyHilbert=False
                     )
@@ -1078,7 +1078,7 @@ class StandardReco:
 
     def __trim_array(self, times, values, trim):
         """
-        Trim an array by `trim` values, being careful to avoind trimming out the
+        Trim an array by `trim` values, being careful to avoid trimming out the
         maximum signal
 
         Parameters
@@ -1181,7 +1181,7 @@ class StandardReco:
 
         # In case some channels have different lengths than others, choose the
         #   smallest waveform size for the length of the csw
-        csw_length = 123456
+        csw_length = np.inf
         for ch_ID in channels_to_csw:
             if wavepacket['waveforms'][ch_ID].GetN() < csw_length: 
                 csw_length = wavepacket['waveforms'][ch_ID].GetN() 
@@ -1198,14 +1198,14 @@ class StandardReco:
 
         # Get arrival delays relative to the reference channel based on
         #   expected arrival times from reconstruction results
-        arrival_delays_reco = self.__get_arrival_delays_reco(
+        arrival_delays_reco = self.get_arrival_delays_reco(
             data, reco_results, channels_to_csw, reference_ch, 
             which_distance, solution)
         
         # Get arrival delays by zooming in on the cross correlation between
         #   each channel and the reference channel around the expected
         #   arrival delay from reconstruction results
-        arrival_delays = self.__get_arrival_delays_AraRoot_xcorr(
+        arrival_delays = self.get_arrival_delays_AraRoot_xcorr(
             wavepacket, polarization, channels_to_csw, reference_ch, 
             arrival_delays_reco, which_distance, is_software)  
 
@@ -1235,9 +1235,9 @@ class StandardReco:
             #   nanosecond that the CSW does. 
             rebinning_shift = round( (times[0] - csw_times[0]) % csw_dt, 4) 
             if rebinning_shift != 0: 
-                waveform_model = Akima1DInterpolator(times, values)
+                waveform_interpolation = Akima1DInterpolator(times, values)
                 times = times - rebinning_shift
-                values = waveform_model(times)
+                values = waveform_interpolation(times)
 
             # Trim this waveform's length to match the CSW length but try 
             #   not to remove the maximal waveform point
@@ -1263,4 +1263,4 @@ class StandardReco:
         # Un-nest the csw. csw.shape was (1,len(big_times)) but is now len(big_times)
         csw_values = csw_values[0]
         
-        return wu.arrays_to_tgraph(csw_times, csw_values)
+        return wfu.arrays_to_tgraph(csw_times, csw_values)
