@@ -1118,8 +1118,8 @@ class StandardReco:
             return times[front_trim:-back_trim], values[front_trim:-back_trim]
 
     def get_csw(
-        self, data, wavepacket, is_software, solution, polarization, reco_results,
-        excluded_channels=[], which_distance='distant'
+        self, wavepacket, channels_to_csw, is_software, solution, reco_results,
+        which_distance='distant'
     ):
         """
         Build the Coherently Summed Waveform (CSW) for the given `useful_event`
@@ -1129,21 +1129,17 @@ class StandardReco:
 
         Parameters
         ----------
-        data : AnalysisDataset
         wavepacket : dict
             AraProc wavepacket (keys include waveforms and the event number)
+        channels_to_csw : list
+            A list of channels IDs to combine into the CSW.
         is_software : bool
             Boolean for whether this event is a software trigger or not.
         solution : int
             0 for direct ray solution. 1 for reflected/refracted ray solution.
-        polarization : int
-            0 for VPol, 1 for HPol
         reco_results : dict
             Reco results already with the specific reconstruction reqeusted (so
             the keys of this object include 'theta' and 'phi')
-        excluded_channels : list
-            Any channels to exclude that aren't already excluded by 
-            livetime configurations or polarization. 
         which_distance : str
             The distance of the reconstruction for analysis, following the 
             convention of other functions in this class. 
@@ -1160,18 +1156,6 @@ class StandardReco:
                 "reco_result object passed into this function does not appear "
                 "to be for a specific reconstruction. Should have a 'theta' key "
                 "but only has the following:", reco_results.keys())
-
-        # Determine which channels should be used in the csw
-        if excluded_channels is not None: 
-            if not isinstance(excluded_channels, np.ndarray):
-                excluded_channels = np.array(excluded_channels)
-        else: 
-            excluded_channels = np.array([])
-        channels_to_csw = []
-        for ch_ID in data.rf_channel_indices: 
-            if ((ch_ID not in excluded_channels) and 
-                (data.rf_channel_polarizations[ch_ID] == polarization)):
-                channels_to_csw.append(ch_ID)
 
         # In case some channels have different lengths than others, choose the
         #   smallest waveform size for the length of the csw
