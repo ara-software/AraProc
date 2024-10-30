@@ -979,7 +979,7 @@ class StandardReco:
 
     def __get_arrival_delays_AraRoot_xcorr(
         self, wavepacket, pol, channels_to_csw, reference_ch, reco_delays, 
-        trig_type, which_distance, zoom_window=40
+        which_distance, is_software, zoom_window=40
     ):
         """
         Determine the arrival delays from each channel by finding the time of
@@ -1001,11 +1001,11 @@ class StandardReco:
             Dictionary where keys are channel numbers and values are arrival 
             delays calculated based on expected arrival times from the 
             reconstructed event vertex.
-        trig_type : str
-            Trigger type of this event
         which_distance : str
             The distance of the reconstruction for analysis, following the 
             convention of other functions in this class. 
+        is_software : bool
+            Boolean if the event is a software trigger or not. 
         zoom_window : float
             Total size of the window we will use to find the maximum 
             cross correlation value around the expected arrival delay from 
@@ -1054,7 +1054,7 @@ class StandardReco:
 
                     # If the event can't find the time window to zoom in on
                     #   and its not a software trigger, warn user
-                    if trig_type != "soft": 
+                    if not is_software: 
                         print(
                             f"Touble calculating csw for {trig_type} event with "
                             f"channels {ch_ID} and {reference_ch}")
@@ -1123,7 +1123,7 @@ class StandardReco:
             return times[front_trim:-back_trim], values[front_trim:-back_trim]
 
     def get_csw(
-        self, data, useful_event, solution, polarization, reco_results,
+        self, data, useful_event, is_software, solution, polarization, reco_results,
         excluded_channels=[], which_distance='distant'
     ):
         """
@@ -1205,12 +1205,9 @@ class StandardReco:
         # Get arrival delays by zooming in on the cross correlation between
         #   each channel and the reference channel around the expected
         #   arrival delay from reconstruction results
-        if useful_event.isSoftwareTrigger(): wf_type = 'soft'
-        elif useful_event.isCalpulserEvent(): wf_type = 'cp'
-        else: wf_type = 'rf'
         arrival_delays = self.__get_arrival_delays_AraRoot_xcorr(
             wavepacket, polarization, channels_to_csw, reference_ch, 
-            arrival_delays_reco, wf_type, which_distance)  
+            arrival_delays_reco, which_distance, is_software)  
 
         # Initialize the final CSW waveform time and voltage arrays
         csw_values = np.zeros((1, csw_length))
