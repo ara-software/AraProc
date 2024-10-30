@@ -1254,7 +1254,7 @@ class StandardReco:
             # Add this channel's waveform to the CSW
             csw_values = np.nansum( np.dstack( (csw_values[0], rolled_wf) ), axis=2) 
 
-        # Un-nest the csw. csw.shape was (1,len(big_times)) but is now len(big_times)
-        csw_values = csw_values[0]
+        # Un-nest the csw. csw.shape was (1,len(csw_times)) but is now len(csw_times)
+        csw_values = np.squeeze(csw_values)
         
         return wfu.arrays_to_tgraph(csw_times, csw_values)
