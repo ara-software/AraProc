@@ -928,7 +928,7 @@ class StandardReco:
         return avg_vpol_corr_snr, avg_hpol_corr_snr  
 
     def get_arrival_delays_reco(
-        self, data, reco_results, channels_to_csw, reference_ch, 
+        self, reco_results, channels_to_csw, reference_ch, 
         which_distance, solution
     ):
         """
@@ -937,7 +937,6 @@ class StandardReco:
 
         Parameters
         ----------
-        data : AnalysisDataset
         reco_results : dict
             Reco results already with the specific reconstruction reqeusted (so
             the keys of this object include 'theta' and 'phi')
@@ -978,8 +977,8 @@ class StandardReco:
         return arrival_delays
 
     def get_arrival_delays_AraRoot_xcorr(
-        self, wavepacket, pol, channels_to_csw, reference_ch, reco_delays, 
-        which_distance, is_software, zoom_window=40
+        self, wavepacket, channels_to_csw, reference_ch, reco_delays, 
+        is_software, zoom_window=40
     ):
         """
         Determine the arrival delays from each channel by finding the time of
@@ -990,9 +989,7 @@ class StandardReco:
         Parameters
         ----------
         wavepacket : dict
-            The wavepacket where keys are not yet channel numbers.
-        pol : int
-            Polarization of the signal/antennas. 0 being VPol and 1 being HPol
+            AraProc wavepacket (keys include waveforms and the event number)
         channels_to_csw : list
             A list of channels IDs to calculate arrival delays for
         reference_ch : int
@@ -1001,15 +998,12 @@ class StandardReco:
             Dictionary where keys are channel numbers and values are arrival 
             delays calculated based on expected arrival times from the 
             reconstructed event vertex.
-        which_distance : str
-            The distance of the reconstruction for analysis, following the 
-            convention of other functions in this class. 
         is_software : bool
             Boolean if the event is a software trigger or not. 
         zoom_window : float
-            Total size of the window we will use to find the maximum 
-            cross correlation value around the expected arrival delay from 
-            the reconstructed event vertex.
+            Total size of the window (in nanoseconds) we will use to find the 
+            maximum cross correlation value around the expected arrival delay 
+            from the reconstructed event vertex.
         
         Returns
         -------
@@ -1056,7 +1050,7 @@ class StandardReco:
                     #   and its not a software trigger, warn user
                     if not is_software: 
                         print(
-                            f"Touble calculating csw for {trig_type} event with "
+                            f"Touble calculating csw for Software event with "
                             f"channels {ch_ID} and {reference_ch}")
 
                 else: 
@@ -1086,6 +1080,7 @@ class StandardReco:
         times : Iterable
         values : Iterable
         trim : int
+            The number of data points to trim the waveform by.
 
         Returns
         -------
@@ -1123,7 +1118,7 @@ class StandardReco:
             return times[front_trim:-back_trim], values[front_trim:-back_trim]
 
     def get_csw(
-        self, data, useful_event, is_software, solution, polarization, reco_results,
+        self, data, wavepacket, is_software, solution, polarization, reco_results,
         excluded_channels=[], which_distance='distant'
     ):
         """
@@ -1135,7 +1130,10 @@ class StandardReco:
         Parameters
         ----------
         data : AnalysisDataset
-        useful_event : UsefulAtriStationEvent
+        wavepacket : dict
+            AraProc wavepacket (keys include waveforms and the event number)
+        is_software : bool
+            Boolean for whether this event is a software trigger or not.
         solution : int
             0 for direct ray solution. 1 for reflected/refracted ray solution.
         polarization : int
@@ -1162,10 +1160,6 @@ class StandardReco:
                 "reco_result object passed into this function does not appear "
                 "to be for a specific reconstruction. Should have a 'theta' key "
                 "but only has the following:", reco_results.keys())
-        
-        # Load wavepacket with waveforms
-        wavepacket= data.get_wavepacket(
-            useful_event=useful_event, which_traces='filtered')
 
         # Determine which channels should be used in the csw
         if excluded_channels is not None: 
@@ -1199,15 +1193,15 @@ class StandardReco:
         # Get arrival delays relative to the reference channel based on
         #   expected arrival times from reconstruction results
         arrival_delays_reco = self.get_arrival_delays_reco(
-            data, reco_results, channels_to_csw, reference_ch, 
+            reco_results, channels_to_csw, reference_ch, 
             which_distance, solution)
         
         # Get arrival delays by zooming in on the cross correlation between
         #   each channel and the reference channel around the expected
         #   arrival delay from reconstruction results
         arrival_delays = self.get_arrival_delays_AraRoot_xcorr(
-            wavepacket, polarization, channels_to_csw, reference_ch, 
-            arrival_delays_reco, which_distance, is_software)  
+            wavepacket, channels_to_csw, reference_ch, 
+            arrival_delays_reco, is_software)  
 
         # Initialize the final CSW waveform time and voltage arrays
         csw_values = np.zeros((1, csw_length))
