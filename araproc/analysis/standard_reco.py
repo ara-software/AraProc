@@ -1044,7 +1044,7 @@ class StandardReco:
                     #   As a result, `zoom_indices` will have no entries. 
                     # Just find the time of peak correlation for the full 
                     #   waveform in this scenario.
-                    delay = xcorr_times[ np.nanargmax(xcorr_volts) ]
+                    delay = xcorr_times[ np.argmax(xcorr_volts) ]
 
                     # If the event can't find the time window to zoom in on
                     #   and its not a software trigger, warn user
@@ -1055,7 +1055,7 @@ class StandardReco:
 
                 else: 
                     delay = xcorr_times[ 
-                        np.nanargmax(xcorr_volts[zoomed_indices]) # index of max xcorr in zoomed array
+                        np.argmax(xcorr_volts[zoomed_indices]) # index of max xcorr in zoomed array
                         + zoomed_indices[0] # Adjusted by first zoomed_index
                     ]
 
@@ -1093,7 +1093,7 @@ class StandardReco:
             return times, values
         
         # Identify the index where the peak signal is held
-        value_max_idx = np.nanargmax(values)
+        value_max_idx = np.argmax(values)
 
         # Calculate amount to trim off beginning and end of the waveform, 
         #   initially triming equal parts off the front and back unless the 
@@ -1229,9 +1229,20 @@ class StandardReco:
             #   nanosecond that the CSW does. 
             rebinning_shift = round( (times[0] - csw_times[0]) % csw_dt, 4) 
             if rebinning_shift != 0: 
+                # Rebin waveform
                 waveform_interpolation = Akima1DInterpolator(times, values)
                 times = times - rebinning_shift
                 values = waveform_interpolation(times)
+                # Trim off leading`nan` value from extrapolating the waveform
+                if np.isnan(values[0]):
+                    times = times[1:]
+                    values = values[1:]
+                # If this makes this waveform shorter than the csw_length, 
+                #   adapt the csw to match this shorter length
+                if len(csw_times) - len(times) == 1:
+                    csw_times = csw_times[:-1]
+                    csw_values = np.delete(csw_values, -1, axis=1)
+                    csw_length = len(csw_times)
 
             # Trim this waveform's length to match the CSW length but try 
             #   not to remove the maximal waveform point
@@ -1252,7 +1263,7 @@ class StandardReco:
             )
 
             # Add this channel's waveform to the CSW
-            csw_values = np.nansum( np.dstack( (csw_values[0], rolled_wf) ), axis=2) 
+            csw_values = np.sum( np.dstack( (csw_values[0], rolled_wf) ), axis=2) 
 
         # Un-nest the csw. csw.shape was (1,len(csw_times)) but is now len(csw_times)
         csw_values = np.squeeze(csw_values)
