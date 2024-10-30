@@ -1182,13 +1182,13 @@ class StandardReco:
 
         # Determine the "reference channel" to base the CSW around as the
         #   channel with the maximum voltage
-        max_voltage = {'voltage': -1, 'channel':-123456}
+        reference_ch = -123456
+        reference_ch_max_voltage = -1
         for ch_ID in channels_to_csw:
             this_max_voltage = np.max(wavepacket['waveforms'][ch_ID].GetY())
-            if this_max_voltage > max_voltage['voltage']:
-                max_voltage['voltage'] = this_max_voltage
-                max_voltage['channel'] = ch_ID 
-        reference_ch = max_voltage['channel']
+            if this_max_voltage > reference_ch_max_voltage:
+                reference_ch_max_voltage = this_max_voltage
+                reference_ch = ch_ID 
 
         # Get arrival delays relative to the reference channel based on
         #   expected arrival times from reconstruction results
