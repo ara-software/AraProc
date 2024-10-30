@@ -928,7 +928,7 @@ class StandardReco:
         return avg_vpol_corr_snr, avg_hpol_corr_snr  
 
     def get_arrival_delays_reco(
-        self, reco_results, channels_to_csw, reference_ch, 
+        self, reco_results, rf_channel_IDs, excluded_channels, reference_ch, 
         which_distance, solution
     ):
         """
@@ -940,8 +940,10 @@ class StandardReco:
         reco_results : dict
             Reco results already with the specific reconstruction reqeusted (so
             the keys of this object include 'theta' and 'phi')
-        channels_to_csw : list
-            A list of channels IDs to calculate arrival delays for
+        rf_channel_IDs : list
+            A list of all channel IDs in this station
+        excluded_channels : set
+            A set of channels IDs to exclude from arrival time calcualtion
         reference_ch : int
             Reference channel for use calculating arrival delays
         which_distance : str
@@ -958,10 +960,13 @@ class StandardReco:
             reconstructed event vertex.
         """
 
+        # Make the excluded_channels object a set to speed up computation
+        excluded_channels = set(excluded_channels)
+
         # Get all the arrival times calculated based on the reconstructed
         #   event vertex and the time tables
-        arrival_times = {ch: 0.0 for ch in channels_to_csw }
-        for c, ch_ID in enumerate(channels_to_csw):
+        arrival_times = {ch: 0.0 for ch in rf_channel_IDs if ch not in excluded_channels}
+        for ch_ID in arrival_times.keys():
             arrival_times[ch_ID] = self.lookup_arrival_time(
                 ch_ID, reco_results['theta'], reco_results['phi'], 
                 which_distance=which_distance, solution=solution
@@ -970,14 +975,14 @@ class StandardReco:
         # Calculate time difference between each channel's arrival time
         #   and the reference channel's arrival time
         reference_arrival_time = arrival_times[reference_ch]
-        arrival_delays = {ch: 0.0 for ch in channels_to_csw }
+        arrival_delays = {ch: 0.0 for ch in arrival_times.keys()}
         for ch_ID in arrival_delays.keys():
             arrival_delays[ch_ID] = arrival_times[ch_ID] - reference_arrival_time
 
         return arrival_delays
 
     def get_arrival_delays_AraRoot_xcorr(
-        self, wavepacket, channels_to_csw, reference_ch, reco_delays, 
+        self, wavepacket, excluded_channels, reference_ch, reco_delays, 
         is_software, zoom_window=40
     ):
         """
@@ -990,8 +995,8 @@ class StandardReco:
         ----------
         wavepacket : dict
             AraProc wavepacket (keys include waveforms and the event number)
-        channels_to_csw : list
-            A list of channels IDs to calculate arrival delays for
+        excluded_channels : set
+            A set of channels IDs to exclude from arrival time calcualtion
         reference_ch : int
             Reference channel for use calculating arrival delays
         reco_delays : dict
@@ -1013,9 +1018,16 @@ class StandardReco:
             the reference channel.
         """
 
+        # Make the excluded_channels object a set to speed up computation
+        excluded_channels = set(excluded_channels)
+
         # Calculate the time delay between each channel and the reference channel
         delays = {}
-        for ch_ID in channels_to_csw:
+        for ch_ID in wavepacket['waveforms'].keys():
+
+            # If this channel is to be excluded, skip it.
+            if ch_ID in excluded_channels: 
+                continue
 
             if ch_ID == reference_ch: 
                 # Delay between the reference channel and itself will be 0
@@ -1118,8 +1130,8 @@ class StandardReco:
             return times[front_trim:-back_trim], values[front_trim:-back_trim]
 
     def get_csw(
-        self, data, wavepacket, is_software, solution, polarization, reco_results,
-        excluded_channels=[], which_distance='distant'
+        self, wavepacket, is_software, solution, polarization, reco_results,
+        excluded_channels, which_distance='distant'
     ):
         """
         Build the Coherently Summed Waveform (CSW) for the given `useful_event`
@@ -1141,9 +1153,9 @@ class StandardReco:
         reco_results : dict
             Reco results already with the specific reconstruction reqeusted (so
             the keys of this object include 'theta' and 'phi')
-        excluded_channels : list
+        excluded_channels : set
             Any channels to exclude that aren't already excluded by 
-            livetime configurations or polarization. 
+            livetime configurations.
         which_distance : str
             The distance of the reconstruction for analysis, following the 
             convention of other functions in this class. 
@@ -1161,16 +1173,13 @@ class StandardReco:
                 "to be for a specific reconstruction. Should have a 'theta' key "
                 "but only has the following:", reco_results.keys())
 
+        # Make the excluded_channels object a set to speed up computation
+        excluded_channels = set(excluded_channels)
+
         # Determine which channels should be used in the csw
-        if excluded_channels is not None: 
-            if not isinstance(excluded_channels, np.ndarray):
-                excluded_channels = np.array(excluded_channels)
-        else: 
-            excluded_channels = np.array([])
         channels_to_csw = []
-        for ch_ID in data.rf_channel_indices: 
-            if ((ch_ID not in excluded_channels) and 
-                (data.rf_channel_polarizations[ch_ID] == polarization)):
+        for ch_ID in wavepacket['waveforms'].keys(): 
+            if ch_ID not in excluded_channels:
                 channels_to_csw.append(ch_ID)
 
         # In case some channels have different lengths than others, choose the
@@ -1193,14 +1202,14 @@ class StandardReco:
         # Get arrival delays relative to the reference channel based on
         #   expected arrival times from reconstruction results
         arrival_delays_reco = self.get_arrival_delays_reco(
-            reco_results, channels_to_csw, reference_ch, 
-            which_distance, solution)
+            reco_results, wavepacket['waveforms'].keys(), excluded_channels, 
+            reference_ch, which_distance, solution)
         
         # Get arrival delays by zooming in on the cross correlation between
         #   each channel and the reference channel around the expected
         #   arrival delay from reconstruction results
         arrival_delays = self.get_arrival_delays_AraRoot_xcorr(
-            wavepacket, channels_to_csw, reference_ch, 
+            wavepacket, excluded_channels, reference_ch, 
             arrival_delays_reco, is_software)  
 
         # Initialize the final CSW waveform time and voltage arrays
