@@ -1145,7 +1145,7 @@ class StandardReco:
         reference_ch = -123456
         reference_ch_max_voltage = -1
         for ch_ID in channels_to_csw:
-            this_max_voltage = np.max(wavepacket['waveforms'][ch_ID].GetY())
+            this_max_voltage = np.max(np.asarray(wavepacket['waveforms'][ch_ID].GetY()))
             if this_max_voltage > reference_ch_max_voltage:
                 reference_ch_max_voltage = this_max_voltage
                 reference_ch = ch_ID 
@@ -1164,7 +1164,7 @@ class StandardReco:
         
         # Calculate expected signal time as when the reference channel saw 
         #   its maximum signal
-        expected_signal_time = wavepacket['waveforms'][reference_ch].GetX()[
+        expected_signal_time = np.asarray(wavepacket['waveforms'][reference_ch].GetX())[
             np.argmax( np.asarray(wavepacket['waveforms'][reference_ch].GetY()) )
         ]
 
