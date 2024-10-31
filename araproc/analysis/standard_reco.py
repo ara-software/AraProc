@@ -1264,25 +1264,14 @@ class StandardReco:
                 #   so add to the warning tracker. 
                 # Software triggers are so short, this sometimes occurs for them.
                 #   Don't warn in this scenario.
-                print(f"In channel {ch_ID} the roll shift is {roll_shift_bins} "
-                      f"but the length of the waveform is {len(times)}.")
-                print(f"\tSoftware: {is_software}, Calpulser: {is_calpulser}")
                 warning += 10_00_00_00
             if roll_shift_bins > 0 and abs(roll_shift_bins)<len(times): 
                 # Rolling from front to back, check that signal region isn't in the front
                 if times[0] <= expected_signal_time <= times[roll_shift_bins]: 
-                    print(f"Rolling signal region {expected_signal_time:.2f} in "
-                          f"the region from {times[0]:.2f} to "
-                          f"{times[roll_shift_bins]:.2f} in channel {ch_ID}")
-                    print(f"\tSoftware: {is_software}, Calpulser: {is_calpulser}")
                     warning += 10_00
             elif roll_shift_bins < 0 and abs(roll_shift_bins)<len(times): 
                 # Rolling from back to front, check that signal region isn't in the back
                 if  times[roll_shift_bins]  <= expected_signal_time <= times[-1]: 
-                    print(f"Rolling signal region {expected_signal_time:.2f} in "
-                          f"the region from {times[roll_shift_bins]:.2f} to "
-                          f"{times[-1]:.2f} in channel {ch_ID}")
-                    print(f"\tSoftware: {is_software}, Calpulser: {is_calpulser}")
                     warning += 10_00
             rolled_wf = np.roll( values, -roll_shift_bins )
             rolled_times = np.linspace(
