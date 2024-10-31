@@ -928,7 +928,7 @@ class StandardReco:
         return avg_vpol_corr_snr, avg_hpol_corr_snr  
 
     def get_arrival_delays_reco(
-        self, reco_results, rf_channel_IDs, excluded_channels, reference_ch, 
+        self, reco_results, excluded_channels, reference_ch, 
         which_distance, solution
     ):
         """
@@ -940,8 +940,6 @@ class StandardReco:
         reco_results : dict
             Reco results already with the specific reconstruction reqeusted (so
             the keys of this object include 'theta' and 'phi')
-        rf_channel_IDs : list
-            A list of all channel IDs in this station
         excluded_channels : set
             A set of channels IDs to exclude from arrival time calcualtion
         reference_ch : int
@@ -965,7 +963,8 @@ class StandardReco:
 
         # Get all the arrival times calculated based on the reconstructed
         #   event vertex and the time tables
-        arrival_times = {ch: 0.0 for ch in rf_channel_IDs if ch not in excluded_channels}
+        arrival_times = {
+            ch: 0.0 for ch in const.rf_channels_ids if ch not in excluded_channels}
         for ch_ID in arrival_times.keys():
             arrival_times[ch_ID] = self.lookup_arrival_time(
                 ch_ID, reco_results['theta'], reco_results['phi'], 
@@ -1146,7 +1145,7 @@ class StandardReco:
         reference_ch = -123456
         reference_ch_max_voltage = -1
         for ch_ID in channels_to_csw:
-            this_max_voltage = np.max(wavepacket['waveforms'][ch_ID].GetY())
+            this_max_voltage = np.max(np.asarray(wavepacket['waveforms'][ch_ID].GetY()))
             if this_max_voltage > reference_ch_max_voltage:
                 reference_ch_max_voltage = this_max_voltage
                 reference_ch = ch_ID 
@@ -1154,8 +1153,7 @@ class StandardReco:
         # Get arrival delays relative to the reference channel based on
         #   expected arrival times from reconstruction results
         arrival_delays_reco = self.get_arrival_delays_reco(
-            reco_results, wavepacket['waveforms'].keys(), excluded_channels, 
-            reference_ch, which_distance, solution)
+            reco_results, excluded_channels, reference_ch, which_distance, solution)
         
         # Get arrival delays by zooming in on the cross correlation between
         #   each channel and the reference channel around the expected
@@ -1166,7 +1164,7 @@ class StandardReco:
         
         # Calculate expected signal time as when the reference channel saw 
         #   its maximum signal
-        expected_signal_time = wavepacket['waveforms'][reference_ch].GetX()[
+        expected_signal_time = np.asarray(wavepacket['waveforms'][reference_ch].GetX())[
             np.argmax( np.asarray(wavepacket['waveforms'][reference_ch].GetY()) )
         ]
 
