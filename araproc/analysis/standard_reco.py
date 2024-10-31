@@ -3,11 +3,13 @@ import numpy as np
 import math
 import os
 import ROOT
+from scipy.interpolate import Akima1DInterpolator
 import itertools
 
 from araproc.analysis import interferometry as interf
 from araproc.framework import constants as const
 from araproc.framework import map_utilities as mu
+from araproc.framework import waveform_utilities as wfu
 from araproc.analysis import snr
 
 class StandardReco:
@@ -924,3 +926,364 @@ class StandardReco:
         avg_hpol_corr_snr = np.mean(avg_hpol_corr_snr)
 
         return avg_vpol_corr_snr, avg_hpol_corr_snr  
+
+    def get_arrival_delays_reco(
+        self, reco_results, rf_channel_IDs, excluded_channels, reference_ch, 
+        which_distance, solution
+    ):
+        """
+        Extract the arrival time of the signals from the reconstruction then 
+        calculate the time delays between each channel and the reference channel
+
+        Parameters
+        ----------
+        reco_results : dict
+            Reco results already with the specific reconstruction reqeusted (so
+            the keys of this object include 'theta' and 'phi')
+        rf_channel_IDs : list
+            A list of all channel IDs in this station
+        excluded_channels : set
+            A set of channels IDs to exclude from arrival time calcualtion
+        reference_ch : int
+            Reference channel for use calculating arrival delays
+        which_distance : str
+            The distance of the reconstruction for analysis, following the 
+            convention of other functions in this class. 
+        solution : int
+            0 for direct ray solution. 1 for reflected/refracted ray solution.
+
+        Returns
+        -------
+        arrival_delays : dict
+            Dictionary where keys are channel numbers and values are arrival 
+            delays calculated based on expected arrival times from the 
+            reconstructed event vertex.
+        """
+
+        # Make the excluded_channels object a set to speed up computation
+        excluded_channels = set(excluded_channels)
+
+        # Get all the arrival times calculated based on the reconstructed
+        #   event vertex and the time tables
+        arrival_times = {ch: 0.0 for ch in rf_channel_IDs if ch not in excluded_channels}
+        for ch_ID in arrival_times.keys():
+            arrival_times[ch_ID] = self.lookup_arrival_time(
+                ch_ID, reco_results['theta'], reco_results['phi'], 
+                which_distance=which_distance, solution=solution
+            )
+        
+        # Calculate time difference between each channel's arrival time
+        #   and the reference channel's arrival time
+        reference_arrival_time = arrival_times[reference_ch]
+        arrival_delays = {ch: 0.0 for ch in arrival_times.keys()}
+        for ch_ID in arrival_delays.keys():
+            arrival_delays[ch_ID] = arrival_times[ch_ID] - reference_arrival_time
+
+        return arrival_delays
+
+    def get_arrival_delays_AraRoot_xcorr(
+        self, wavepacket, excluded_channels, reference_ch, reco_delays, 
+        is_software, zoom_window=40
+    ):
+        """
+        Determine the arrival delays from each channel by finding the time of
+        max correlation between each channel and the reference channel in a 
+        `zoom_window` nanosecond window around the expected arrival delay of a 
+        signal given the results from reconstructing the event.
+
+        Parameters
+        ----------
+        wavepacket : dict
+            AraProc wavepacket (keys include waveforms and the event number)
+        excluded_channels : set
+            A set of channels IDs to exclude from arrival time calcualtion
+        reference_ch : int
+            Reference channel for use calculating arrival delays
+        reco_delays : dict
+            Dictionary where keys are channel numbers and values are arrival 
+            delays calculated based on expected arrival times from the 
+            reconstructed event vertex.
+        is_software : bool
+            Boolean if the event is a software trigger or not. 
+        zoom_window : float
+            Total size of the window (in nanoseconds) we will use to find the 
+            maximum cross correlation value around the expected arrival delay 
+            from the reconstructed event vertex.
+        
+        Returns
+        -------
+        delays : dict
+            Dictionary where keys are channel numbers and values are arrival
+            delays calculated from cross correlating each channel with 
+            the reference channel.
+        """
+
+        # Make the excluded_channels object a set to speed up computation
+        excluded_channels = set(excluded_channels)
+
+        # Calculate the time delay between each channel and the reference channel
+        delays = {}
+        for ch_ID in wavepacket['waveforms'].keys():
+
+            # If this channel is to be excluded, skip it.
+            if ch_ID in excluded_channels: 
+                continue
+
+            if ch_ID == reference_ch: 
+                # Delay between the reference channel and itself will be 0
+                delay = 0
+            else: 
+                
+                # Load  the cross correlation for this channel and the reference 
+                xcorr_times, xcorr_volts = wfu.tgraph_to_arrays(
+                    self.__get_correlation_function(
+                        ch_ID, reference_ch, wavepacket, applyHilbert=False
+                    )
+                )
+
+                # Identify the `zoom_window` nanosecond window around the 
+                #   reconstructed delay
+                zoomed_indices = np.where(
+                    (np.abs( xcorr_times - reco_delays[ch_ID] )) < zoom_window // 2
+                )[0]
+
+                # Calculate the time of maximum correlation from this
+                #   window of expected signal delay.
+                if len(zoomed_indices) == 0: 
+
+                    # Software triggers are so short, a channel may not have
+                    #   signal during the time window where signal is expected.
+                    #   As a result, `zoom_indices` will have no entries. 
+                    # Just find the time of peak correlation for the full 
+                    #   waveform in this scenario.
+                    delay = xcorr_times[ np.argmax(xcorr_volts) ]
+
+                    # If the event can't find the time window to zoom in on
+                    #   and its not a software trigger, warn user
+                    if not is_software: 
+                        print(
+                            f"Touble calculating csw for Software event with "
+                            f"channels {ch_ID} and {reference_ch}")
+
+                else: 
+                    delay = xcorr_times[ 
+                        np.argmax(xcorr_volts[zoomed_indices]) # index of max xcorr in zoomed array
+                        + zoomed_indices[0] # Adjusted by first zoomed_index
+                    ]
+
+            # AraRoot always compares channels with smaller IDs to channels with 
+            #   larger IDs but we always want to compare to the reference channel.
+            # Correct for this if the current ch_ID is larger than the reference ch_ID
+            if ch_ID > reference_ch: 
+                delay *= -1
+            
+            # Save the calculated arrival delay
+            delays[ch_ID] = delay
+
+        return delays
+
+    def get_csw(
+        self, wavepacket, is_software, is_calpulser, solution, polarization, reco_results,
+        excluded_channels, which_distance='distant'
+    ):
+        """
+        Build the Coherently Summed Waveform (CSW) for the given `useful_event`
+          by shifting each waveform accoriding to the time delay calculated 
+          after finding the max cross correlation between two channels 
+          in a window around the expected arrival delay. 
+
+        Parameters
+        ----------
+        data : AnalysisDataset
+        wavepacket : dict
+            AraProc wavepacket (keys include waveforms and the event number)
+        is_software : bool
+            Boolean for whether this event is a software trigger or not.
+        solution : int
+            0 for direct ray solution. 1 for reflected/refracted ray solution.
+        polarization : int
+            0 for VPol, 1 for HPol
+        reco_results : dict
+            Reco results already with the specific reconstruction reqeusted (so
+            the keys of this object include 'theta' and 'phi')
+        excluded_channels : set
+            Any channels to exclude that aren't already excluded by 
+            livetime configurations.
+        which_distance : str
+            The distance of the reconstruction for analysis, following the 
+            convention of other functions in this class. 
+
+        Returns
+        -------
+        csw : ROOT.TGraph
+            The coherently summed waveform. Only returned if `return_csw==True`
+        warning : int
+            If non-zero, contains information about something that went wrong
+              in the CSW calculation.
+        """
+
+        # Initialize warning object as 0
+        warning = 0
+
+        # Check that reco_results have been passed in properly
+        if 'theta' not in reco_results.keys():
+            raise ValueError(
+                "reco_result object passed into this function does not appear "
+                "to be for a specific reconstruction. Should have a 'theta' key "
+                "but only has the following:", reco_results.keys())
+
+        # Make the excluded_channels object a set to speed up computation
+        excluded_channels = set(excluded_channels)
+
+        # Determine which channels should be used in the csw
+        channels_to_csw = []
+        for ch_ID in wavepacket['waveforms'].keys(): 
+            if ch_ID not in excluded_channels:
+                channels_to_csw.append(ch_ID)
+
+        # Determine the "reference channel" to base the CSW around as the
+        #   channel with the maximum voltage
+        reference_ch = -123456
+        reference_ch_max_voltage = -1
+        for ch_ID in channels_to_csw:
+            this_max_voltage = np.max(wavepacket['waveforms'][ch_ID].GetY())
+            if this_max_voltage > reference_ch_max_voltage:
+                reference_ch_max_voltage = this_max_voltage
+                reference_ch = ch_ID 
+
+        # Get arrival delays relative to the reference channel based on
+        #   expected arrival times from reconstruction results
+        arrival_delays_reco = self.get_arrival_delays_reco(
+            reco_results, wavepacket['waveforms'].keys(), excluded_channels, 
+            reference_ch, which_distance, solution)
+        
+        # Get arrival delays by zooming in on the cross correlation between
+        #   each channel and the reference channel around the expected
+        #   arrival delay from reconstruction results
+        arrival_delays = self.get_arrival_delays_AraRoot_xcorr(
+            wavepacket, excluded_channels, reference_ch, 
+            arrival_delays_reco, is_software)  
+        
+        # Calculate expected signal time as when the reference channel saw 
+        #   its maximum signal
+        expected_signal_time = wavepacket['waveforms'][reference_ch].GetX()[
+            np.argmax( np.asarray(wavepacket['waveforms'][reference_ch].GetY()) )
+        ]
+
+        # Initialize the final CSW waveform time and voltage arrays using the
+        #   reference channel's time array resized to size of the channel with 
+        #   the shortest waveform's waveform
+        shortest_wf_ch = 123456
+        shortest_wf_length = np.inf
+        for ch_ID in channels_to_csw:
+            if wavepacket['waveforms'][ch_ID].GetN() < shortest_wf_length: 
+                shortest_wf_length = wavepacket['waveforms'][ch_ID].GetN() 
+                shortest_wf_ch = ch_ID
+        csw_values = np.zeros((1, shortest_wf_length))
+        csw_times = np.asarray(
+            wavepacket['waveforms'][reference_ch].GetX())[:shortest_wf_length]
+        csw_dt = csw_times[1] - csw_times[0]
+
+        # Roll the waveform from each channel so the starting time of each
+        #   waveform lines up. Then add the waveform to the CSW.
+        for ch_ID in channels_to_csw: 
+
+            # Load this channel's voltage and time arrays. Shift time by arrival delay
+            values = np.asarray(wavepacket['waveforms'][ch_ID].GetY())
+            times = np.asarray(wavepacket['waveforms'][ch_ID].GetX()) - arrival_delays[ch_ID]
+
+            # Determine if the time binning of this channel matches the time binning
+            #   of the CSW. This assumes all waveforms have the same time
+            #   bin size. Calculating arrival delays via the cross correlation
+            #   should fix this already, so just raise a warning if
+            #   the bins aren't lined up.
+            # Ex: If the CSW has times of [0.9, 1.4, 1.9], waveform 1 has a
+            #   time array of [3.4, 3.9, 4.4 ], waveform 2 has a time array 
+            #   of [1.6, 2.1, 2.6], and waveform 3 has a time array of 
+            #   [0.5, 1.0, 1.5] then waveform 1 doesn't need rebinning since 
+            #   each time step starts and ends on the same fraction of a time 
+            #   bin as the CSW does. However, waveform 2 needs to be shifted back
+            #   by 0.2 nanoseconds to get a fitting time aray of [1.4, 1.9, 2.4]
+            #   and waveform 3 needes to be shifted back by 0.1
+            rebinning_shift = (
+                (csw_times[0] - times[0])
+                % csw_dt
+                # Take the remainder of the start time difference with csw_dt.
+                #   If this is ~0, the waveforms have the same binning 
+                #   otherwise, this reveals how much to shift the waveform by. 
+                # For example, waveform 1 yeilds: (3.4 - 0.9) % 0.5 = 0
+                #   waveform 2 yeilds (1.6 - 1.4) % 0.5 = 0.2 
+                #   and waveform 3 yeilds (0.9 - 0.5) % 0.5 = 0.4 
+            ) 
+            if csw_dt - 0.0001 > abs(rebinning_shift) > 0.0001: 
+                warning += 10_00_00
+
+            # Trim this waveform's length to match the CSW length
+            if len(times) > len(csw_times):
+                trim_ammount = len(times) - len(csw_times)
+                if (times[0]<csw_times[0]) and (times[-1]<=csw_times[-1]): 
+                    # If this wf has an earlier start time and a later or equal 
+                    #   end time, trim from front
+                    times  = times [trim_ammount:]
+                    values = values[trim_ammount:]
+                elif (times[0]>=csw_times[0]) and (times[-1]>csw_times[-1]): 
+                    # If this wf has later or equal start time and a later 
+                    #   end time, trim from back
+                    times  = times [:-trim_ammount]
+                    values = values[:-trim_ammount]
+                elif (times[0]<csw_times[0]) and (times[-1]>csw_times[-1]): 
+                    # If waveform starts earlier and ends later, trim from both ends
+                    leading_trimmable = np.argwhere( times < csw_times[0] )
+                    trailing_trimmable = np.argwhere( times > csw_times[-1] )
+                    times  = times [ len(leading_trimmable) : -len(trailing_trimmable) ] 
+                    values = values[ len(leading_trimmable) : -len(trailing_trimmable) ] 
+                else: 
+                    # This waveform either has the same start and end time and 
+                    #   has no need to be trimmed, or starts and ends within
+                    #   the CSW time array, so it should be the shortest
+                    #   waveform unless the binning changed between waveforms.
+                    raise ValueError(
+                        f"Unexpected trimming request for channel {ch_ID}. "
+                        f"The CSW has a length of {len(csw_times)} and a dt of {csw_dt} "
+                        f"which may be incompatible with channel {ch_ID}s waveform "
+                        f"with a length of {len(times)} and a dt of {times[1]-times[0]}. "
+                        f"The CSW runs from {csw_times[0]} to {csw_times[-1]} and "
+                        f"this waveform runs from {times[0]} to {times[-1]}." 
+                    )
+
+            # Roll the waveform so that the start and end times of the waveform
+            #   line up exactly with the CSW
+            roll_shift_bins = (csw_times[0] - times[0]) / csw_dt
+            roll_shift_time = roll_shift_bins*(times[1] - times[0])
+            if abs(roll_shift_bins) % 1.0 > 0.0001: 
+                # roll_shift is not close to an integer. Add to the warning
+                warning += 10
+            roll_shift_bins = int(roll_shift_bins)
+            if abs(roll_shift_bins)>len(times) and not is_software:
+                # More waveform to roll than there is time in the waveform,
+                #   so add to the warning tracker. 
+                # Software triggers are so short, this sometimes occurs for them.
+                #   Don't warn in this scenario.
+                warning += 10_00_00_00
+            if roll_shift_bins > 0 and abs(roll_shift_bins)<len(times): 
+                # Rolling from front to back, check that signal region isn't in the front
+                if times[0] <= expected_signal_time <= times[roll_shift_bins]: 
+                    warning += 10_00
+            elif roll_shift_bins < 0 and abs(roll_shift_bins)<len(times): 
+                # Rolling from back to front, check that signal region isn't in the back
+                if  times[roll_shift_bins]  <= expected_signal_time <= times[-1]: 
+                    warning += 10_00
+            rolled_wf = np.roll( values, -roll_shift_bins )
+            rolled_times = np.linspace(
+                times[0] + roll_shift_time,
+                times[-1] + roll_shift_time,
+                len(times)
+            )
+
+            # Add this channel's waveform to the CSW
+            csw_values = np.sum( np.dstack( (csw_values[0], rolled_wf) ), axis=2) 
+
+        # Un-nest the csw. csw.shape was (1,len(csw_times)) but is now len(csw_times)
+        csw_values = np.squeeze(csw_values)
+        
+        return wfu.arrays_to_tgraph(csw_times, csw_values), warning

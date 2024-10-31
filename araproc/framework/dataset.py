@@ -606,6 +606,8 @@ class AnalysisDataset:
         self.num_rf_channels = 16 # hard coded, but a variable
         self.rf_channel_indices = const.rf_channels_ids
 
+        self.rf_channel_polarizations = [ ch//8 for ch in self.rf_channel_indices ]
+
         if (interp_tstep < 0) or not np.isfinite(interp_tstep):
             raise ValueError(f"Something is wrong with the requested interpolation time step: {interp_tstep}")
         self.interp_tstep = interp_tstep
