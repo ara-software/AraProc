@@ -1083,7 +1083,7 @@ class StandardReco:
         return delays
 
     def get_csw(
-        self, wavepacket, is_software, solution, polarization, reco_results,
+        self, wavepacket, is_software, is_calpulser, solution, polarization, reco_results,
         excluded_channels, which_distance='distant'
     ):
         """
@@ -1163,6 +1163,12 @@ class StandardReco:
         arrival_delays = self.get_arrival_delays_AraRoot_xcorr(
             wavepacket, excluded_channels, reference_ch, 
             arrival_delays_reco, is_software)  
+        
+        # Calculate expected signal time as when the reference channel saw 
+        #   its maximum signal
+        expected_signal_time = wavepacket['waveforms'][reference_ch].GetX()[
+            np.argmax( np.asarray(wavepacket['waveforms'][reference_ch].GetY()) )
+        ]
 
         # Initialize the final CSW waveform time and voltage arrays using the
         #   reference channel's time array resized to size of the channel with 
@@ -1210,7 +1216,7 @@ class StandardReco:
                 #   and waveform 3 yeilds (0.9 - 0.5) % 0.5 = 0.4 
             ) 
             if csw_dt - 0.0001 > abs(rebinning_shift) > 0.0001: 
-                warning += 10000
+                warning += 10_00_00
 
             # Trim this waveform's length to match the CSW length
             if len(times) > len(csw_times):
@@ -1247,16 +1253,41 @@ class StandardReco:
 
             # Roll the waveform so that the start and end times of the waveform
             #   line up exactly with the CSW
-            roll_shift = (times[0] - csw_times[0]) / csw_dt
-            if abs(roll_shift) % 1.0 > 0.0001: 
+            roll_shift_bins = (csw_times[0] - times[0]) / csw_dt
+            roll_shift_time = roll_shift_bins*(times[1] - times[0])
+            if abs(roll_shift_bins) % 1.0 > 0.0001: 
                 # roll_shift is not close to an integer. Add to the warning
                 warning += 10
-            # TODO Check that the peak of the waveform or the expected signal 
-            #   bin isn't about to get rolled 
-            rolled_wf = np.roll( values, int(roll_shift) )
+            roll_shift_bins = int(roll_shift_bins)
+            if abs(roll_shift_bins)>len(times) and not is_software:
+                # More waveform to roll than there is time in the waveform,
+                #   so add to the warning tracker. 
+                # Software triggers are so short, this sometimes occurs for them.
+                #   Don't warn in this scenario.
+                print(f"In channel {ch_ID} the roll shift is {roll_shift_bins} "
+                      f"but the length of the waveform is {len(times)}.")
+                print(f"\tSoftware: {is_software}, Calpulser: {is_calpulser}")
+                warning += 10_00_00_00
+            if roll_shift_bins > 0 and abs(roll_shift_bins)<len(times): 
+                # Rolling from front to back, check that signal region isn't in the front
+                if times[0] <= expected_signal_time <= times[roll_shift_bins]: 
+                    print(f"Rolling signal region {expected_signal_time:.2f} in "
+                          f"the region from {times[0]:.2f} to "
+                          f"{times[roll_shift_bins]:.2f} in channel {ch_ID}")
+                    print(f"\tSoftware: {is_software}, Calpulser: {is_calpulser}")
+                    warning += 10_00
+            elif roll_shift_bins < 0 and abs(roll_shift_bins)<len(times): 
+                # Rolling from back to front, check that signal region isn't in the back
+                if  times[roll_shift_bins]  <= expected_signal_time <= times[-1]: 
+                    print(f"Rolling signal region {expected_signal_time:.2f} in "
+                          f"the region from {times[roll_shift_bins]:.2f} to "
+                          f"{times[-1]:.2f} in channel {ch_ID}")
+                    print(f"\tSoftware: {is_software}, Calpulser: {is_calpulser}")
+                    warning += 10_00
+            rolled_wf = np.roll( values, -roll_shift_bins )
             rolled_times = np.linspace(
-                times[0] - roll_shift*(times[1] - times[0]),
-                times[-1] - roll_shift*(times[1] - times[0]),
+                times[0] + roll_shift_time,
+                times[-1] + roll_shift_time,
                 len(times)
             )
 
