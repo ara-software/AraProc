@@ -1178,8 +1178,8 @@ class StandardReco:
                 shortest_wf_length = wavepacket['waveforms'][ch_ID].GetN() 
                 shortest_wf_ch = ch_ID
         csw_values = np.zeros((1, shortest_wf_length))
-        csw_times = np.asarray(
-            wavepacket['waveforms'][reference_ch].GetX())[:shortest_wf_length]
+        csw_times = np.round(
+            wavepacket['waveforms'][reference_ch].GetX(), 5)[:shortest_wf_length]
         csw_dt = csw_times[1] - csw_times[0]
 
         # Roll the waveform from each channel so the starting time of each
@@ -1188,7 +1188,7 @@ class StandardReco:
 
             # Load this channel's voltage and time arrays. Shift time by arrival delay
             values = np.asarray(wavepacket['waveforms'][ch_ID].GetY())
-            times = np.asarray(wavepacket['waveforms'][ch_ID].GetX()) - arrival_delays[ch_ID]
+            times = np.round(wavepacket['waveforms'][ch_ID].GetX(), 5) - arrival_delays[ch_ID]
 
             # Determine if the time binning of this channel matches the time binning
             #   of the CSW. This assumes all waveforms have the same time
