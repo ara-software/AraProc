@@ -1087,7 +1087,7 @@ class StandardReco:
                     #   and its not a software trigger, warn user
                     if not is_software: 
                         print(
-                            f"Touble calculating csw for Software event with "
+                            f"Touble calculating csw for non-software event with "
                             f"channels {ch_ID} and {reference_ch}")
 
                 else: 
