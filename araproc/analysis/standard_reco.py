@@ -602,20 +602,20 @@ class StandardReco:
 
         return max_surf_corr, max_theta, max_phi
 
-    def get_surface_corr_max_multiple(self, *maps, z_thresh=-10):
+    def get_surface_corr_max_multiple(self, reco_results, z_thresh=-10, skip_maps={}):
         """
         Applies get_surface_corr_max to multiple maps and identifies the map with
         the highest surface correlation value.
 
         Parameters
         ----------
-        *maps : dict
-            Variable number of dictionaries, each containing:
-            - 'map': ROOT.TH2D histogram with correlation values.
-            - 'corr': Overall peak correlation value.
-            - 'radius': Correlation radius for the station.
+        reco_results : dict
+            Reco results already with the specific reconstruction reqeusted (so
+            the keys of this object include 'theta' and 'phi')
         z_thresh : float, optional
             Depth threshold to define theta range lower bound. Default is -10 m.
+        skip_maps : set
+            Will skip every reconstruction result key listed in this set. 
 
         Returns
         -------
@@ -636,12 +636,18 @@ class StandardReco:
 
         """
         results = []
-        for idx, corr_map in enumerate(maps):
+        skip_maps = set(skip_maps) # make a set to speed up compilation
+        for idx, (name, corr_map) in enumerate(reco_results.items()):
+            if name in skip_maps: 
+                continue
             try:
                 max_corr, theta, phi = self.get_surface_corr_max(corr_map, z_thresh=z_thresh)
-                results.append({'max_corr': max_corr, 'theta': theta, 'phi': phi, 'map index': idx})
+                results.append({
+                    'max_corr': max_corr, 'theta': theta, 'phi': phi, 
+                    'map index': idx, 'name': name
+                })
             except (ValueError, RuntimeError) as e:
-                print(f"Error processing map at index {idx}: {e}")
+                print(f"Error processing {name} map: {e}")
                 results.append(None)
 
         valid_results = [res for res in results if res is not None]
@@ -650,19 +656,19 @@ class StandardReco:
         else:
             raise RuntimeError("No valid results to determine max surface correlation.")
         
-        return results, max_result
+        return {result['name']: result for result in results if result is not None}, max_result
 
-    def find_map_with_max_corr(self, *maps):
+    def find_map_with_max_corr(self, reco_results, skip_maps={}):
         """
         Finds the map with the highest overall 'corr' value.
 
         Parameters
         ----------
-        *maps : dict
-            Variable number of dictionaries, each containing:
-            - 'corr': Peak correlation value.
-            - 'theta': Theta angle for peak correlation.
-            - 'phi': Phi angle for peak correlation.
+        reco_results : dict
+            Reco results already with the specific reconstruction reqeusted (so
+            the keys of this object include 'theta' and 'phi')
+        skip_maps : set
+            Will skip every reconstruction result key listed in this set. 
 
         Returns
         -------
@@ -679,12 +685,18 @@ class StandardReco:
         """
         max_corr_result = {'max_corr': -float('inf'), 'theta': None, 'phi': None, 'map_index': None}
         
-        for idx, corr_map in enumerate(maps):
+        skip_maps = set(skip_maps) # make a set to speed up compilation
+
+        for idx, (name, corr_map) in enumerate(reco_results.items()):
+            if name in skip_maps: 
+                continue
             try:
                 corr = corr_map['corr']
                 if corr > max_corr_result['max_corr']:
-                    max_corr_result.update({'max_corr': corr, 'theta': corr_map['theta'], 
-                                            'phi': corr_map['phi'], 'map_index': idx})
+                    max_corr_result.update({
+                        'max_corr': corr, 'theta': corr_map['theta'], 
+                        'phi': corr_map['phi'], 'map_index': idx, 'name': name
+                    })
             except KeyError as e:
                 print(f"Key error in map at index {idx}: {e}")
             except Exception as e:
@@ -696,19 +708,19 @@ class StandardReco:
         return max_corr_result
 
 
-    def calculate_surface_corr_ratio(self, *maps, z_thresh=-10):
+    def calculate_surface_corr_ratio(self, reco_results, z_thresh=-10, skip_maps={}):
         """
         Calculates surface correlation ratio by comparing max surface correlation with max overall correlation.
 
         Parameters
         ----------
-        *maps : dict
-            Variable number of dictionaries, each containing:
-            - 'map': ROOT.TH2D histogram with correlation values.
-            - 'corr': Overall peak correlation value.
-            - 'radius': Correlation radius for the station (assumed to be in meters).
+        reco_results : dict
+            Reco results already with the specific reconstruction reqeusted (so
+            the keys of this object include 'theta' and 'phi')
         z_thresh : float, optional
             Depth threshold to define theta range lower bound. Default is -10 m.
+        skip_maps : set
+            Will skip every reconstruction result key listed in this set. 
 
         Returns
         -------
@@ -726,8 +738,9 @@ class StandardReco:
         )
         
         """
-        _, max_surf_corr_result = self.get_surface_corr_max_multiple(*maps, z_thresh=z_thresh)
-        max_corr_result = self.find_map_with_max_corr(*maps)
+        _, max_surf_corr_result = self.get_surface_corr_max_multiple(
+            reco_results, z_thresh=z_thresh, skip_maps=skip_maps)
+        max_corr_result = self.find_map_with_max_corr(reco_results, skip_maps=skip_maps)
         
         surf_corr_ratio = max_surf_corr_result['max_corr'] / max_corr_result['max_corr'] if max_corr_result['max_corr'] != 0 else float('inf')
         
@@ -791,7 +804,7 @@ class StandardReco:
         
         return min_depth
 
-    def min_frac_corr_depth_multiple(self, *maps, fraction=0.6, z_thresh=0):
+    def min_frac_corr_depth_multiple(self, reco_results, fraction=0.6, z_thresh=0, skip_maps={}):
         """
         Finds the shallowest depth across multiple correlation maps where correlation meets
         a specified fraction of the maximum correlation. Uses the min_frac_corr_depth function for each map,
@@ -799,14 +812,15 @@ class StandardReco:
 
         Parameters
         ----------
-        *maps : dict
-            A variable number of correlation maps, each containing:
-            - 'map': ROOT.TH2D histogram with correlation values by theta and phi.
-            - 'radius': Correlation radius in meters.
+        reco_results : dict
+            Reco results already with the specific reconstruction reqeusted (so
+            the keys of this object include 'theta' and 'phi')
         fraction : float
             Fraction of the max correlation to set the threshold. Default is 0.6 (60%).
         z_thresh : float
             Maximum allowable depth (relative to the surface). Default is 0 meters.
+        skip_maps : set
+            Will skip every reconstruction result key listed in this set. 
 
         Returns
         -------
@@ -818,8 +832,13 @@ class StandardReco:
         min_depth = -float('inf')  # Initialize to find the shallowest depth (least negative)
         min_depth_index = -1  # Track the index of the map with the minimum depth
 
+        # Make a set to speed up compilation
+        skip_maps = set(skip_maps)
+
         # Iterate over each map and find the shallowest depth using min_frac_corr_depth
-        for idx, corr_map in enumerate(maps):
+        for idx, (name, corr_map) in enumerate(reco_results.items()):
+            if name in skip_maps: 
+                continue
             try:
                 # Use the existing function to find the minimum depth for this map
                 depth = self.min_frac_corr_depth(corr_map, fraction=fraction, z_thresh=z_thresh)
