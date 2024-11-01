@@ -720,7 +720,10 @@ class StandardReco:
         _, max_surf_corr_result = self.get_surface_corr_max_multiple(*maps, z_thresh=z_thresh)
         max_corr_result = self.find_map_with_max_corr(*maps)
         
-        surf_corr_ratio = max_surf_corr_result['max_corr'] / max_corr_result['max_corr'] if max_corr_result['max_corr'] != 0 else float('inf')
+        if max_corr_result['max_corr'] != 0:
+          surf_corr_ratio = max_surf_corr_result['max_corr'] / max_corr_result['max_corr']  
+        else:
+          surf_corr_ratio = np.inf
         
         return surf_corr_ratio, max_surf_corr_result, max_corr_result
 
