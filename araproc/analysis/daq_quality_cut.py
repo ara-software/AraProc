@@ -50,6 +50,9 @@ def process_event_info(useful_event, station_id):
        trig_type = 0
     elif useful_event.isSoftwareTrigger():
        trig_type = 2
+    elif station_id == 5: 
+        # Station 5 force readouts from PA don't have a trigger type. Log them as an RF event
+        trig_type = 1
     else:
        logger.error("__________________ Unknown trigger type for the event _______________________")  # error message
     num_ddas = constants.num_dda 
