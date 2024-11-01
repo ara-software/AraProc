@@ -559,7 +559,7 @@ class StandardReco:
 
         # Check if surface is visible at the given radius
         if radius < (abs(avg_z) + z_thresh):
-            raise RuntimeError("Surface not visible: radius is smaller than average antenna z-coordinate.")
+            return -np.inf, 0, 0 # surface not visible, this map has no surface corr max
 
         # Define theta range
         theta_surface = math.degrees(math.asin(abs(avg_z) / radius))
@@ -637,12 +637,8 @@ class StandardReco:
         """
         results = []
         for idx, corr_map in enumerate(maps):
-            try:
-                max_corr, theta, phi = self.get_surface_corr_max(corr_map, z_thresh=z_thresh)
-                results.append({'max_corr': max_corr, 'theta': theta, 'phi': phi, 'map index': idx})
-            except (ValueError, RuntimeError) as e:
-                print(f"Error processing map at index {idx}: {e}")
-                results.append(None)
+            max_corr, theta, phi = self.get_surface_corr_max(corr_map, z_thresh=z_thresh)
+            results.append({'max_corr': max_corr, 'theta': theta, 'phi': phi, 'map index': idx})
 
         valid_results = [res for res in results if res is not None]
         if valid_results:
@@ -680,15 +676,10 @@ class StandardReco:
         max_corr_result = {'max_corr': -float('inf'), 'theta': None, 'phi': None, 'map_index': None}
         
         for idx, corr_map in enumerate(maps):
-            try:
-                corr = corr_map['corr']
-                if corr > max_corr_result['max_corr']:
-                    max_corr_result.update({'max_corr': corr, 'theta': corr_map['theta'], 
-                                            'phi': corr_map['phi'], 'map_index': idx})
-            except KeyError as e:
-                print(f"Key error in map at index {idx}: {e}")
-            except Exception as e:
-                print(f"Error processing map at index {idx}: {e}")
+            corr = corr_map['corr']
+            if corr > max_corr_result['max_corr']:
+                max_corr_result.update({'max_corr': corr, 'theta': corr_map['theta'], 
+                                        'phi': corr_map['phi'], 'map_index': idx})
         
         if max_corr_result['max_corr'] == -float('inf'):
             raise RuntimeError("No valid correlation values found.")
@@ -820,17 +811,13 @@ class StandardReco:
 
         # Iterate over each map and find the shallowest depth using min_frac_corr_depth
         for idx, corr_map in enumerate(maps):
-            try:
-                # Use the existing function to find the minimum depth for this map
-                depth = self.min_frac_corr_depth(corr_map, fraction=fraction, z_thresh=z_thresh)
+            # Use the existing function to find the minimum depth for this map
+            depth = self.min_frac_corr_depth(corr_map, fraction=fraction, z_thresh=z_thresh)
 
-                # Update min_depth if the current depth is shallower (closer to the surface)
-                if depth > min_depth:
-                    min_depth = depth
-                    min_depth_index = idx
-
-            except RuntimeError as e:
-                print(f"Map {idx} did not meet the threshold: {e}")
+            # Update min_depth if the current depth is shallower (closer to the surface)
+            if depth > min_depth:
+                min_depth = depth
+                min_depth_index = idx
 
         if min_depth == -float('inf'):
             raise RuntimeError("No maps meet the fractional correlation threshold within the z_thresh.")
@@ -1285,3 +1272,6 @@ class StandardReco:
         csw_values = np.squeeze(csw_values)
         
         return wfu.arrays_to_tgraph(csw_times, csw_values), warning
+
+
+
