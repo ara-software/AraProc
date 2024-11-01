@@ -260,10 +260,18 @@ class StandardReco:
             (Dicts of dicts!)
             
             reco_results = {
-                "pulser_v" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D}
-                "pulser_h" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D}
-                "distant_v" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D}
-                "distant_h" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D}
+                "pulser_v" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D, 
+                              "which_distance": which_distance, "solution": solution, "polarization": polarization}
+                "pulser_h" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D, 
+                              "which_distance": which_distance, "solution": solution, "polarization": polarization}
+                "distant_v_dir" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D, 
+                                   "which_distance": which_distance, "solution": solution, "polarization": polarization}
+                "distant_v_ref" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D, 
+                                   "which_distance": which_distance, "solution": solution, "polarization": polarization}
+                "distant_h_dir" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D, 
+                                   "which_distance": which_distance, "solution": solution, "polarization": polarization}
+                "distant_h_ref" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D, 
+                                   "which_distance": which_distance, "solution": solution, "polarization": polarization}
             }
 
             So for example, if you want to find the peak theta value for the map
@@ -310,6 +318,7 @@ class StandardReco:
         reco_results["pulser_v"] = {
             "corr" : corr_pulser_v,  "theta" : theta_pulser_v, "phi" : phi_pulser_v,
             "map" : pulser_map_v, "radius" : self.rtc_wrapper.correlators["nearby"].GetRadius(),
+            'which_distance': 'nearby', 'solution': 0, 'polarization': 0,
         }
 
         ############################
@@ -332,12 +341,14 @@ class StandardReco:
         reco_results["distant_v_dir"] = {
             "corr": corr_distant_v_dir,  "theta": theta_distant_v_dir, "phi": phi_distant_v_dir,
             "map": distant_map_v_dir, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
+            'which_distance': 'distant', 'solution': 0, 'polarization': 0,
         }
 
         # Store the refracted/reflected rays results
         reco_results["distant_v_ref"] = {
             "corr": corr_distant_v_ref,  "theta": theta_distant_v_ref, "phi": phi_distant_v_ref,
             "map": distant_map_v_ref, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
+            'which_distance': 'distant', 'solution': 1, 'polarization': 0,
         }
 
         ############################
@@ -360,12 +371,14 @@ class StandardReco:
         reco_results["distant_h_dir"] = {
             "corr": corr_distant_h_dir,  "theta": theta_distant_h_dir, "phi": phi_distant_h_dir,
             "map": distant_map_v_dir, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
+            'which_distance': 'distant', 'solution': 0, 'polarization': 1,
         }
 
         # Store the refracted/reflected rays results in a separate dictionary
         reco_results["distant_h_ref"] = {
             "corr": corr_distant_h_ref,  "theta": theta_distant_h_ref, "phi": phi_distant_h_ref,
             "map": distant_map_v_ref, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
+            'which_distance': 'distant', 'solution': 1, 'polarization': 1,
         }
 
         return reco_results
@@ -638,13 +651,15 @@ class StandardReco:
         results = []
         
         skip_maps = set(skip_maps) # make a set to speed up compilation
-        
+
         for idx, (name, corr_map) in enumerate(reco_results.items()):
             if name in skip_maps: 
                 continue
             max_corr, theta, phi = self.get_surface_corr_max(corr_map, z_thresh=z_thresh)
             results.append({
-                'max_corr': max_corr, 'theta': theta, 'phi': phi, 'map index': idx, 'name': name})
+                'max_corr': max_corr, 'theta': theta, 'phi': phi, 'map index': idx, 
+                'name': name, 'which_distance': corr_map['which_distance'],
+                'solution': corr_map['solution'], 'polarization': corr_map['polarization']})
 
         valid_results = [res for res in results if res is not None]
         if valid_results:
@@ -679,7 +694,7 @@ class StandardReco:
         )
 
         """
-        max_corr_result = {'max_corr': -float('inf'), 'theta': None, 'phi': None, 'map_index': None}
+        max_corr_result = {'max_corr': -float('inf')}
         
         skip_maps = set(skip_maps) # make a set to speed up compilation
 
@@ -689,8 +704,11 @@ class StandardReco:
 
             corr = corr_map['corr']
             if corr > max_corr_result['max_corr']:
-                max_corr_result.update({'max_corr': corr, 'theta': corr_map['theta'], 
-                                        'phi': corr_map['phi'], 'map_index': idx, 'name': name})
+                max_corr_result.update({
+                    'max_corr': corr, 'theta': corr_map['theta'], 'phi': corr_map['phi'], 
+                    'map_index': idx, 'name': name, 'which_distance': corr_map['which_distance'],
+                    'solution': corr_map['solution'], 'polarization': corr_map['polarization']})
+                    
         if max_corr_result['max_corr'] == -float('inf'):
             raise RuntimeError("No valid correlation values found.")
         
