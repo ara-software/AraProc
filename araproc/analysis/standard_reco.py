@@ -1083,7 +1083,7 @@ class StandardReco:
 
     def get_csw(
         self, wavepacket, is_software, is_calpulser, solution, polarization, reco_results,
-        excluded_channels, which_distance='distant'
+        excluded_channels, which_distance='distant', return_rolled_wfs=False,
     ):
         """
         Build the Coherently Summed Waveform (CSW) for the given `useful_event`
@@ -1111,6 +1111,9 @@ class StandardReco:
         which_distance : str
             The distance of the reconstruction for analysis, following the 
             convention of other functions in this class. 
+        return_rolled_wfs : bool
+            If True, will return a dictionary where keys are channel IDs and 
+            values are the TGraphs of the waveforms that contributed to the CSW.
 
         Returns
         -------
@@ -1119,6 +1122,9 @@ class StandardReco:
         warning : int
             If non-zero, contains information about something that went wrong
               in the CSW calculation.
+        rolled_wfs : dict
+            Dictionary where keys are channel IDs and values are the TGraphs 
+            of the waveforms that contributed to the CSW.
         """
 
         # Initialize warning object as 0
@@ -1184,7 +1190,8 @@ class StandardReco:
 
         # Roll the waveform from each channel so the starting time of each
         #   waveform lines up. Then add the waveform to the CSW.
-        for ch_ID in channels_to_csw: 
+        rolled_wfs = np.zeros((len(channels_to_csw), len(csw_times)))
+        for c, ch_ID in enumerate(channels_to_csw): 
 
             # Load this channel's voltage and time arrays. Shift time by arrival delay
             values = np.asarray(wavepacket['waveforms'][ch_ID].GetY())
@@ -1272,6 +1279,7 @@ class StandardReco:
                 if  times[roll_shift_bins]  <= expected_signal_time <= times[-1]: 
                     warning += 10_00
             rolled_wf = np.roll( values, -roll_shift_bins )
+            rolled_wfs[c] = rolled_wf
             rolled_times = np.linspace(
                 times[0] + roll_shift_time,
                 times[-1] + roll_shift_time,
@@ -1283,5 +1291,13 @@ class StandardReco:
 
         # Un-nest the csw. csw.shape was (1,len(csw_times)) but is now len(csw_times)
         csw_values = np.squeeze(csw_values)
-        
-        return wfu.arrays_to_tgraph(csw_times, csw_values), warning
+
+        if return_rolled_wfs:
+            # Convert the rolled_wfs object from a numpy array to a dictionary of TGraphs
+            rolled_wfs = {
+                ch_ID: wfu.arrays_to_tgraph(csw_times, rolled_wfs[c])
+                for c, ch_ID in enumerate(channels_to_csw)
+            }
+            return wfu.arrays_to_tgraph(csw_times, csw_values), warning, rolled_wfs
+        else: 
+            return wfu.arrays_to_tgraph(csw_times, csw_values), warning
