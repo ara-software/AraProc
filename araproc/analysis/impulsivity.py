@@ -5,6 +5,7 @@ from scipy.stats import linregress
 from scipy.optimize import curve_fit
 from scipy.special import erf
 from scipy.stats import chi2
+import ROOT
 from araproc.framework import waveform_utilities as wfu
 
 # Define the erf-linear model for curve fitting
@@ -26,7 +27,8 @@ def erf_linear(x, A, B):
     np.ndarray
         The result of applying the erf-linear model to `x`.
     """
-    return (A * erf(x / B) + x) / (A * erf(1 / B) + 1)
+   
+    return (A * erf(x / B) + x) / (A * erf(1. / B) + 1)
 
 
 # Function to calculate impulsivity-related variables
@@ -90,16 +92,30 @@ def calculate_impulsivity_measures(channel_wf,channel_time):
     cdf /= np.max(cdf)
 
     # Linear regression to get slope, intercept, and other statistics
-    slope, intercept, r_value, p_value, std_err = linregress(np.arange(len(cdf)), cdf)
-    cdf_fit = slope * np.arange(len(cdf)) + intercept
     t_frac = np.linspace(0, 1, len(cdf))
+    slope, intercept, r_value, p_value, std_err = linregress(t_frac, cdf)
+    cdf_fit = slope * t_frac + intercept
 
     # Calculate Kolmogorov-Smirnov statistic
     ks = np.max(np.abs(cdf_fit - cdf))
 
     # Perform erf-linear fit on the CDF
-    popt, _ = curve_fit(erf_linear, t_frac, cdf, p0=[intercept / slope, 1e-2], bounds=([0, 1e-6], [3 * intercept / slope, 0.5]))
-    A_fit, B_fit = popt
+    if(intercept <= 0):
+      A0 = 1e-6
+    else:
+      A0 = intercept/slope
+   
+    # using ROOT fitter seems to be more robust 
+    fErfLinear = ROOT.TF1("fErfLinear", "([0]*erf(x/[1]) + x)/([0]*erf(1/[1])+1)", 0, 1) # define erf_linear in ROOT
+    fErfLinear.SetParameters(A0, 1e-2) # set initial guess for parameters [0] and [1]
+    fErfLinear.SetParLimits(0, 0, 3*A0) # set bounds on parameter [0]
+    fErfLinear.SetParLimits(1, 1e-6, 0.5) # set bound on parameter [1]
+    gr = ROOT.TGraph(len(t_frac), t_frac, cdf) # put the data into a TGraph
+    gr.Fit(fErfLinear, "SQFM") # perform fit
+    A_fit = fErfLinear.GetParameter(0) # get best-fit value on parameter [0] 
+    B_fit = fErfLinear.GetParameter(1) # get best-fit value on parameter [1]
+    
+    # evaluate function with best-fit parameters
     cdf_erf_fit = erf_linear(t_frac, A_fit, B_fit)
 
     # Calculate impulsivity
