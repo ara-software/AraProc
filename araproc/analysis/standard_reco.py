@@ -1083,7 +1083,7 @@ class StandardReco:
 
     def get_csw(
         self, wavepacket, is_software, is_calpulser, solution, polarization, reco_results,
-        excluded_channels, which_distance='distant', return_rolled_wfs=False,
+        excluded_channels, which_distance='distant', return_csw_comps=False,
     ):
         """
         Build the Coherently Summed Waveform (CSW) for the given `useful_event`
@@ -1111,7 +1111,7 @@ class StandardReco:
         which_distance : str
             The distance of the reconstruction for analysis, following the 
             convention of other functions in this class. 
-        return_rolled_wfs : bool
+        return_csw_comps : bool
             If True, will return a dictionary where keys are channel IDs and 
             values are the TGraphs of the waveforms that contributed to the CSW.
 
@@ -1122,7 +1122,7 @@ class StandardReco:
         warning : int
             If non-zero, contains information about something that went wrong
               in the CSW calculation.
-        rolled_wfs : dict
+        csw_comps : dict
             Dictionary where keys are channel IDs and values are the TGraphs 
             of the waveforms that contributed to the CSW.
         """
@@ -1190,7 +1190,7 @@ class StandardReco:
 
         # Roll the waveform from each channel so the starting time of each
         #   waveform lines up. Then add the waveform to the CSW.
-        rolled_wfs = np.zeros((len(channels_to_csw), len(csw_times)))
+        csw_comps = np.zeros((len(channels_to_csw), len(csw_times)))
         for c, ch_ID in enumerate(channels_to_csw): 
 
             # Load this channel's voltage and time arrays. Shift time by arrival delay
@@ -1279,7 +1279,7 @@ class StandardReco:
                 if  times[roll_shift_bins]  <= expected_signal_time <= times[-1]: 
                     warning += 10_00
             rolled_wf = np.roll( values, -roll_shift_bins )
-            rolled_wfs[c] = rolled_wf
+            csw_comps[c] = rolled_wf
             rolled_times = np.linspace(
                 times[0] + roll_shift_time,
                 times[-1] + roll_shift_time,
@@ -1292,12 +1292,80 @@ class StandardReco:
         # Un-nest the csw. csw.shape was (1,len(csw_times)) but is now len(csw_times)
         csw_values = np.squeeze(csw_values)
 
-        if return_rolled_wfs:
-            # Convert the rolled_wfs object from a numpy array to a dictionary of TGraphs
-            rolled_wfs = {
-                ch_ID: wfu.arrays_to_tgraph(csw_times, rolled_wfs[c])
+        if return_csw_comps:
+            # Convert the csw_comps object from a numpy array to a dictionary of TGraphs
+            csw_comps = {
+                ch_ID: wfu.arrays_to_tgraph(csw_times, csw_comps[c])
                 for c, ch_ID in enumerate(channels_to_csw)
             }
-            return wfu.arrays_to_tgraph(csw_times, csw_values), warning, rolled_wfs
+            return wfu.arrays_to_tgraph(csw_times, csw_values), warning, csw_comps
         else: 
             return wfu.arrays_to_tgraph(csw_times, csw_values), warning
+        
+
+    def plot_csw(
+        self, csw, csw_comps, save_name, xlims=None, ylims=None, title=None):
+        """
+        Take the CSW and rolled waveforms and plot them all together. 
+
+        Parameters
+        ----------
+        csw : TGraph
+            The Coherently Summed Waveform.
+        csw_comps : dict
+            Dictionary where keys are channel IDs and values are the TGraphs
+            corresponding to each channel's WF as it was added to the CSW.
+        save_name : str
+            Full path and file name where you'd like to save this plot.
+        xlims : tuple or None
+            If not `None`, specifies the lower and upper bounds of the X Axis.
+        ylims : tuple or None
+            If not `None`, specifies the lower and upper bounds of the Y Axis.
+        title : str or None
+            If not `None`, specifies the title to be added to the plot.
+        
+        """
+
+        # If already loaded into python, this won't reload it
+        import matplotlib.pyplot as plt
+
+        # Initialize Plot
+        fig, ax = plt.subplots()
+        ax.set_xlabel("Time [ns]", size=14)
+        ax.set_ylabel("Voltage [mV]", size=14)
+
+        # Plot CSW
+        ax.fill_between(
+            np.asarray(csw.GetX()), np.zeros(csw.GetN()), np.asarray(csw.GetY()), 
+            label='CSW', color='k', alpha=0.05) 
+
+        cmap = plt.get_cmap('gist_rainbow')
+
+        # Loop over channels
+        for i, (channel, wf) in enumerate(csw_comps.items()): 
+            # Plot waveform
+            ax.plot(
+                np.asarray(wf.GetX()), np.asarray(wf.GetY()),
+                label=f"Channel {channel}", alpha=0.4, color=cmap( i/len(csw_comps) )
+            )
+            # Plot the location of the WF with the maximum value
+            wf_max_idx = np.argmax( np.asarray(wf.GetY()) )
+            ax.scatter(
+                np.asarray(wf.GetX())[wf_max_idx], 
+                np.asarray(wf.GetY())[wf_max_idx], 
+                color=cmap( i/len(csw_comps) ), s=15, zorder=5)
+            
+        # Adjust plot per user request
+        if xlims is not None: 
+            ax.set_xlim(xlims)
+        if ylims is not None: 
+            ax.set_ylim(ylims)
+        if title is not None:
+            ax.set_title(title)
+                
+        # Finish formatting and save plot
+        ax.legend(loc=1)
+        plt.tight_layout()
+        plt.savefig(save_name, dpi=400)
+
+        return
