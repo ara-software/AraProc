@@ -435,15 +435,9 @@ class StandardReco:
         if solution not in [0, 1]:
             raise ValueError(f"Solution requested requested ({solution}) is not loaded.")
 
-        theta_bin = ctypes.c_int()
-        phi_bin = ctypes.c_int()
-        self.rtc_wrapper.correlators[which_distance].ConvertAngleToBins(theta, phi,
-                                                                        theta_bin, phi_bin)
-        arrival_time = self.rtc_wrapper.correlators[which_distance].LookupArrivalTimes(channel,
-                                                                                       solution,
-                                                                                       theta_bin.value,
-                                                                                       phi_bin.value
-                                                                                       )
+        arrival_time = self.rtc_wrapper.correlators[which_distance].LookupArrivalTime(
+            channel, solution, theta, phi)
+
         return arrival_time
 
     def __get_correlation_function(self, ch1, ch2, wavepacket, applyHilbert):
