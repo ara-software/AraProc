@@ -96,7 +96,7 @@ class StandardReco:
         # so look that up
 
         self.calpulser_r_library = {
-            100 : "48.02",
+            100 : "49.48",
             2 : "42.86",
             3 : "41.08",
             4 : "52.60",
