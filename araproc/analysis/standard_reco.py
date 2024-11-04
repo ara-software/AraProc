@@ -114,12 +114,16 @@ class StandardReco:
         self.rtc_wrapper = interf.RayTraceCorrelatorWrapper(self.station_id)
 
         # always add a "nearby" correlator for 41m away
-        dir_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
-                                "PUBLIC/groups/arasoft/raytrace_timing_tables",
+        #dir_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
+        #                        "PUBLIC/groups/arasoft/raytrace_timing_tables",
+        dir_path = os.path.join("/mnt/stashcache/icecube",
+                                "PUBLIC/groups/arasoft/raytrace_timing_tables/Updated_Tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{self.calpulser_r_library[station_id]}_angle_1.00_solution_0.root"
                                 )
-        ref_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
-                                "PUBLIC/groups/arasoft/raytrace_timing_tables",
+        #ref_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
+        #                        "PUBLIC/groups/arasoft/raytrace_timing_tables",
+        ref_path = os.path.join("/mnt/stashcache/icecube",
+                                "PUBLIC/groups/arasoft/raytrace_timing_tables/Updated_Tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{self.calpulser_r_library[station_id]}_angle_1.00_solution_1.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "nearby",
@@ -129,12 +133,16 @@ class StandardReco:
                 )
 
         # always add a "distant" correlator for 300m away
-        dir_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
-                                "PUBLIC/groups/arasoft/raytrace_timing_tables",
+        #dir_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
+        #                        "PUBLIC/groups/arasoft/raytrace_timing_tables",
+        dir_path = os.path.join("/mnt/stashcache/icecube",
+                                "PUBLIC/groups/arasoft/raytrace_timing_tables/Updated_Tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_300.00_angle_1.00_solution_0.root"
                                 )
-        ref_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
-                                "PUBLIC/groups/arasoft/raytrace_timing_tables",
+        #ref_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
+        #                        "PUBLIC/groups/arasoft/raytrace_timing_tables",
+        ref_path = os.path.join("/mnt/stashcache/icecube",
+                                "PUBLIC/groups/arasoft/raytrace_timing_tables/Updated_Tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_300.00_angle_1.00_solution_1.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "distant",
@@ -260,10 +268,18 @@ class StandardReco:
             (Dicts of dicts!)
             
             reco_results = {
-                "pulser_v" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D}
-                "pulser_h" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D}
-                "distant_v" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D}
-                "distant_h" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D}
+                "pulser_v" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D, 
+                              "which_distance": which_distance, "solution": solution, "polarization": polarization}
+                "pulser_h" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D, 
+                              "which_distance": which_distance, "solution": solution, "polarization": polarization}
+                "distant_v_dir" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D, 
+                                   "which_distance": which_distance, "solution": solution, "polarization": polarization}
+                "distant_v_ref" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D, 
+                                   "which_distance": which_distance, "solution": solution, "polarization": polarization}
+                "distant_h_dir" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D, 
+                                   "which_distance": which_distance, "solution": solution, "polarization": polarization}
+                "distant_h_ref" : {"corr" : peak_corr, "theta" : peak_theta, "phi" : peak_phi, "map" : ROOT.TH2D, 
+                                   "which_distance": which_distance, "solution": solution, "polarization": polarization}
             }
 
             So for example, if you want to find the peak theta value for the map
@@ -310,6 +326,7 @@ class StandardReco:
         reco_results["pulser_v"] = {
             "corr" : corr_pulser_v,  "theta" : theta_pulser_v, "phi" : phi_pulser_v,
             "map" : pulser_map_v, "radius" : self.rtc_wrapper.correlators["nearby"].GetRadius(),
+            'which_distance': 'nearby', 'solution': 0, 'polarization': 0,
         }
 
         ############################
@@ -332,12 +349,14 @@ class StandardReco:
         reco_results["distant_v_dir"] = {
             "corr": corr_distant_v_dir,  "theta": theta_distant_v_dir, "phi": phi_distant_v_dir,
             "map": distant_map_v_dir, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
+            'which_distance': 'distant', 'solution': 0, 'polarization': 0,
         }
 
         # Store the refracted/reflected rays results
         reco_results["distant_v_ref"] = {
             "corr": corr_distant_v_ref,  "theta": theta_distant_v_ref, "phi": phi_distant_v_ref,
             "map": distant_map_v_ref, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
+            'which_distance': 'distant', 'solution': 1, 'polarization': 0,
         }
 
         ############################
@@ -360,12 +379,14 @@ class StandardReco:
         reco_results["distant_h_dir"] = {
             "corr": corr_distant_h_dir,  "theta": theta_distant_h_dir, "phi": phi_distant_h_dir,
             "map": distant_map_v_dir, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
+            'which_distance': 'distant', 'solution': 0, 'polarization': 1,
         }
 
         # Store the refracted/reflected rays results in a separate dictionary
         reco_results["distant_h_ref"] = {
             "corr": corr_distant_h_ref,  "theta": theta_distant_h_ref, "phi": phi_distant_h_ref,
             "map": distant_map_v_ref, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
+            'which_distance': 'distant', 'solution': 1, 'polarization': 1,
         }
 
         return reco_results
@@ -422,15 +443,9 @@ class StandardReco:
         if solution not in [0, 1]:
             raise ValueError(f"Solution requested requested ({solution}) is not loaded.")
 
-        theta_bin = ctypes.c_int()
-        phi_bin = ctypes.c_int()
-        self.rtc_wrapper.correlators[which_distance].ConvertAngleToBins(theta, phi,
-                                                                        theta_bin, phi_bin)
-        arrival_time = self.rtc_wrapper.correlators[which_distance].LookupArrivalTimes(channel,
-                                                                                       solution,
-                                                                                       theta_bin.value,
-                                                                                       phi_bin.value
-                                                                                       )
+        arrival_time = self.rtc_wrapper.correlators[which_distance].LookupArrivalTime(
+            channel, solution, theta, phi)
+
         return arrival_time
 
     def __get_correlation_function(self, ch1, ch2, wavepacket, applyHilbert):
@@ -559,7 +574,7 @@ class StandardReco:
 
         # Check if surface is visible at the given radius
         if radius < (abs(avg_z) + z_thresh):
-            raise RuntimeError("Surface not visible: radius is smaller than average antenna z-coordinate.")
+            return -np.inf, 0, 0 # surface not visible, this map has no surface corr max
 
         # Define theta range
         theta_surface = math.degrees(math.asin(abs(avg_z) / radius))
@@ -602,20 +617,20 @@ class StandardReco:
 
         return max_surf_corr, max_theta, max_phi
 
-    def get_surface_corr_max_multiple(self, *maps, z_thresh=-10):
+    def get_surface_corr_max_multiple(self, reco_results, z_thresh=-10, skip_maps={}):
         """
         Applies get_surface_corr_max to multiple maps and identifies the map with
         the highest surface correlation value.
 
         Parameters
         ----------
-        *maps : dict
-            Variable number of dictionaries, each containing:
-            - 'map': ROOT.TH2D histogram with correlation values.
-            - 'corr': Overall peak correlation value.
-            - 'radius': Correlation radius for the station.
+        reco_results : dict
+            Reco results already with the specific reconstruction reqeusted (so
+            the keys of this object include 'theta' and 'phi')
         z_thresh : float, optional
             Depth threshold to define theta range lower bound. Default is -10 m.
+        skip_maps : set
+            Will skip every reconstruction result key listed in this set. 
 
         Returns
         -------
@@ -636,13 +651,17 @@ class StandardReco:
 
         """
         results = []
-        for idx, corr_map in enumerate(maps):
-            try:
-                max_corr, theta, phi = self.get_surface_corr_max(corr_map, z_thresh=z_thresh)
-                results.append({'max_corr': max_corr, 'theta': theta, 'phi': phi, 'map index': idx})
-            except (ValueError, RuntimeError) as e:
-                print(f"Error processing map at index {idx}: {e}")
-                results.append(None)
+        
+        skip_maps = set(skip_maps) # make a set to speed up compilation
+
+        for idx, (name, corr_map) in enumerate(reco_results.items()):
+            if name in skip_maps: 
+                continue
+            max_corr, theta, phi = self.get_surface_corr_max(corr_map, z_thresh=z_thresh)
+            results.append({
+                'max_corr': max_corr, 'theta': theta, 'phi': phi, 'map index': idx, 
+                'name': name, 'which_distance': corr_map['which_distance'],
+                'solution': corr_map['solution'], 'polarization': corr_map['polarization']})
 
         valid_results = [res for res in results if res is not None]
         if valid_results:
@@ -650,19 +669,19 @@ class StandardReco:
         else:
             raise RuntimeError("No valid results to determine max surface correlation.")
         
-        return results, max_result
+        return {result['name']: result for result in results if result is not None}, max_result
 
-    def find_map_with_max_corr(self, *maps):
+    def find_map_with_max_corr(self, reco_results, skip_maps={}):
         """
         Finds the map with the highest overall 'corr' value.
 
         Parameters
         ----------
-        *maps : dict
-            Variable number of dictionaries, each containing:
-            - 'corr': Peak correlation value.
-            - 'theta': Theta angle for peak correlation.
-            - 'phi': Phi angle for peak correlation.
+        reco_results : dict
+            Reco results already with the specific reconstruction reqeusted (so
+            the keys of this object include 'theta' and 'phi')
+        skip_maps : set
+            Will skip every reconstruction result key listed in this set. 
 
         Returns
         -------
@@ -677,38 +696,40 @@ class StandardReco:
         )
 
         """
-        max_corr_result = {'max_corr': -float('inf'), 'theta': None, 'phi': None, 'map_index': None}
+        max_corr_result = {'max_corr': -float('inf')}
         
-        for idx, corr_map in enumerate(maps):
-            try:
-                corr = corr_map['corr']
-                if corr > max_corr_result['max_corr']:
-                    max_corr_result.update({'max_corr': corr, 'theta': corr_map['theta'], 
-                                            'phi': corr_map['phi'], 'map_index': idx})
-            except KeyError as e:
-                print(f"Key error in map at index {idx}: {e}")
-            except Exception as e:
-                print(f"Error processing map at index {idx}: {e}")
-        
+        skip_maps = set(skip_maps) # make a set to speed up compilation
+
+        for idx, (name, corr_map) in enumerate(reco_results.items()):
+            if name in skip_maps: 
+                continue
+
+            corr = corr_map['corr']
+            if corr > max_corr_result['max_corr']:
+                max_corr_result.update({
+                    'max_corr': corr, 'theta': corr_map['theta'], 'phi': corr_map['phi'], 
+                    'map_index': idx, 'name': name, 'which_distance': corr_map['which_distance'],
+                    'solution': corr_map['solution'], 'polarization': corr_map['polarization']})
+                    
         if max_corr_result['max_corr'] == -float('inf'):
             raise RuntimeError("No valid correlation values found.")
         
         return max_corr_result
 
 
-    def calculate_surface_corr_ratio(self, *maps, z_thresh=-10):
+    def calculate_surface_corr_ratio(self, reco_results, z_thresh=-10, skip_maps={}):
         """
         Calculates surface correlation ratio by comparing max surface correlation with max overall correlation.
 
         Parameters
         ----------
-        *maps : dict
-            Variable number of dictionaries, each containing:
-            - 'map': ROOT.TH2D histogram with correlation values.
-            - 'corr': Overall peak correlation value.
-            - 'radius': Correlation radius for the station (assumed to be in meters).
+        reco_results : dict
+            Reco results already with the specific reconstruction reqeusted (so
+            the keys of this object include 'theta' and 'phi')
         z_thresh : float, optional
             Depth threshold to define theta range lower bound. Default is -10 m.
+        skip_maps : set
+            Will skip every reconstruction result key listed in this set. 
 
         Returns
         -------
@@ -726,10 +747,14 @@ class StandardReco:
         )
         
         """
-        _, max_surf_corr_result = self.get_surface_corr_max_multiple(*maps, z_thresh=z_thresh)
-        max_corr_result = self.find_map_with_max_corr(*maps)
+        _, max_surf_corr_result = self.get_surface_corr_max_multiple(
+            reco_results, z_thresh=z_thresh, skip_maps=skip_maps)
+        max_corr_result = self.find_map_with_max_corr(reco_results, skip_maps=skip_maps)
         
-        surf_corr_ratio = max_surf_corr_result['max_corr'] / max_corr_result['max_corr'] if max_corr_result['max_corr'] != 0 else float('inf')
+        if max_corr_result['max_corr'] != 0:
+          surf_corr_ratio = max_surf_corr_result['max_corr'] / max_corr_result['max_corr']  
+        else:
+          surf_corr_ratio = np.inf
         
         return surf_corr_ratio, max_surf_corr_result, max_corr_result
 
@@ -791,7 +816,7 @@ class StandardReco:
         
         return min_depth
 
-    def min_frac_corr_depth_multiple(self, *maps, fraction=0.6, z_thresh=0):
+    def min_frac_corr_depth_multiple(self, reco_results, fraction=0.6, z_thresh=0, skip_maps={}):
         """
         Finds the shallowest depth across multiple correlation maps where correlation meets
         a specified fraction of the maximum correlation. Uses the min_frac_corr_depth function for each map,
@@ -799,14 +824,15 @@ class StandardReco:
 
         Parameters
         ----------
-        *maps : dict
-            A variable number of correlation maps, each containing:
-            - 'map': ROOT.TH2D histogram with correlation values by theta and phi.
-            - 'radius': Correlation radius in meters.
+        reco_results : dict
+            Reco results already with the specific reconstruction reqeusted (so
+            the keys of this object include 'theta' and 'phi')
         fraction : float
             Fraction of the max correlation to set the threshold. Default is 0.6 (60%).
         z_thresh : float
             Maximum allowable depth (relative to the surface). Default is 0 meters.
+        skip_maps : set
+            Will skip every reconstruction result key listed in this set. 
 
         Returns
         -------
@@ -818,19 +844,21 @@ class StandardReco:
         min_depth = -float('inf')  # Initialize to find the shallowest depth (least negative)
         min_depth_index = -1  # Track the index of the map with the minimum depth
 
+        # Make a set to speed up compilation
+        skip_maps = set(skip_maps)
+
         # Iterate over each map and find the shallowest depth using min_frac_corr_depth
-        for idx, corr_map in enumerate(maps):
-            try:
-                # Use the existing function to find the minimum depth for this map
-                depth = self.min_frac_corr_depth(corr_map, fraction=fraction, z_thresh=z_thresh)
+        for idx, (name, corr_map) in enumerate(reco_results.items()):
+            if name in skip_maps: 
+                continue
+            # Use the existing function to find the minimum depth for this map
+            depth = self.min_frac_corr_depth(corr_map, fraction=fraction, z_thresh=z_thresh)
 
-                # Update min_depth if the current depth is shallower (closer to the surface)
-                if depth > min_depth:
-                    min_depth = depth
-                    min_depth_index = idx
 
-            except RuntimeError as e:
-                print(f"Map {idx} did not meet the threshold: {e}")
+            # Update min_depth if the current depth is shallower (closer to the surface)
+            if depth > min_depth:
+                min_depth = depth
+                min_depth_index = idx
 
         if min_depth == -float('inf'):
             raise RuntimeError("No maps meet the fractional correlation threshold within the z_thresh.")
@@ -1061,7 +1089,7 @@ class StandardReco:
                     #   and its not a software trigger, warn user
                     if not is_software: 
                         print(
-                            f"Touble calculating csw for Software event with "
+                            f"Touble calculating csw for non-software event with "
                             f"channels {ch_ID} and {reference_ch}")
 
                 else: 
@@ -1184,8 +1212,8 @@ class StandardReco:
                 shortest_wf_length = wavepacket['waveforms'][ch_ID].GetN() 
                 shortest_wf_ch = ch_ID
         csw_values = np.zeros((1, shortest_wf_length))
-        csw_times = np.asarray(
-            wavepacket['waveforms'][reference_ch].GetX())[:shortest_wf_length]
+        csw_times = np.round(
+            wavepacket['waveforms'][reference_ch].GetX(), 5)[:shortest_wf_length]
         csw_dt = csw_times[1] - csw_times[0]
 
         # Roll the waveform from each channel so the starting time of each
@@ -1195,7 +1223,7 @@ class StandardReco:
 
             # Load this channel's voltage and time arrays. Shift time by arrival delay
             values = np.asarray(wavepacket['waveforms'][ch_ID].GetY())
-            times = np.asarray(wavepacket['waveforms'][ch_ID].GetX()) - arrival_delays[ch_ID]
+            times = np.round(wavepacket['waveforms'][ch_ID].GetX(), 5) - arrival_delays[ch_ID]
 
             # Determine if the time binning of this channel matches the time binning
             #   of the CSW. This assumes all waveforms have the same time
