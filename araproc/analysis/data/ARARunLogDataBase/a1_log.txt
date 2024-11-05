@@ -1,0 +1,60 @@
+10166	brianclark	spicecore	See DocDB 1589 for depth vs time data
+10167	brianclark	spicecore	See DocDB 1589 for depth vs time data
+10169	brianclark	spicecore	See DocDB 1589 for depth vs time data
+10170	brianclark	spicecore	See DocDB 1589 for depth vs time data
+10171	brianclark	spicecore	See DocDB 1589 for depth vs time data
+10172	brianclark	spicecore	See DocDB 1589 for depth vs time data
+10173	brianclark	spicecore	See DocDB 1589 for depth vs time data
+10174	brianclark	spicecore	See DocDB 1589 for depth vs time data
+10175	brianclark	spicecore	See DocDB 1589 for depth vs time data
+10176	brianclark	spicecore	See DocDB 1589 for depth vs time data
+10273	brianclark	surfpulse	Vpol, 30 dB att
+10274	brianclark	surfpulse	Vpol, 30 dB att
+10275	brianclark	surfpulse	Vpol, 15 dB att
+10276	brianclark	surfpulse	Hpol, 15 dB at
+10277	brianclark	surfpulse	Hpol, 6 dB att
+10278	brianclark	surfpulse	Hpol, 6 dB at
+10288	brianclark	deeppulse	Hole 1 Shallow, 8:44:26 to 9:07 AM NZT
+10289	brianclark	deeppulse	Hole 1 Shallow, 9:15:21 to ~9:35 AM NZT
+10290	brianclark	deeppulse	Hole 22 Shallow, ~10:00  to ~10:18:54 AM NZT
+10291	brianclark	deeppulse	Hole 1 Deep, 10:21:29 to 10:28:30 AM NZT
+10292	brianclark	deeppulse	Hole 1 Deep, ~10:20 to 10:32 AM NZT
+10298	brianclark	roofpulse	Vpol, ICL pulser, pointed at WT3
+10299	brianclark	roofpulse	Vpol, ICL pulser, pointed at WT3
+10300	brianclark	roofpulse	Hpol, ICL pulser, pulser on 22:45:46 Jan 21 UTC, pointed at WT3
+10301	brianclark	roofpulse	Vpol, ICL pulser, pulser on 23:00:40 Jan 21 UTC, pointed at A2/A5
+10302	brianclark	roofpulse	Hpol, ICL pulser, pointed at A2/A5
+10303	brianclark	roofpulse	Hpol, ICL pulser, pulser on 23:20:37 Jan 21 UTC, pointed at A2/A5
+11535	brianclark	deeppulse	See DocDB 1667; pulse date is June 25 2018; hole 22 shallow 21:28:00-21:43:00 UTC; hole shallow 22 22:03:00-21:18:00 UTC; hole 1 shallow 22:23:42-22:53:42 UTC
+12816	myoungchulkim	deeppulse	See DocDB 1731 and 1738, presented by BK Shin
+13221	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13222	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13223	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13229	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13230	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13231	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13241	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13242	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13248	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13249	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13250	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13258	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13259	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13260	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13261	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13262	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13263	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13264	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13265	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13266	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13267	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13268	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13275	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13276	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13285	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13286	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13302	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13303	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13304	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+13305	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+14256	yuepan	incomplete	may be incomplete

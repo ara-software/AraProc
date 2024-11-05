@@ -1,0 +1,679 @@
+3	brianclark	bad	D1 Glitches after long periods of downtime
+11	brianclark	bad	D1 Glitches after long periods of downtime
+50	brianclark	bad	D1 Glitches after long periods of downtime
+59	brianclark	bad	D1 Glitches after long periods of downtime
+60	brianclark	bad	D1 Glitches after long periods of downtime
+71	brianclark	bad	D1 Glitches after long periods of downtime
+1918	myoungchulkim	bad	burn sample is made by first 10% of data
+2884	mikerichman	surfpulser	Surface pulsing (jan 14 2014)
+2885	mikerichman	surfpulser	Surface pulsing (excluded by proximity to 2884)
+2889	mikerichman	surfpulser	Surface pulsing (excluded by proximity to 2884)
+2890	mikerichman	surfpulser	Surface pulsing (excluded by proximity to 2884)
+2891	mikerichman	surfpulser	Surface pulsing (excluded by proximity to 2884)
+2893	mikerichman	surfpulser	Surface pulsing (excluded by proximity to 2884)
+2895	mikerichman	surfpulser	Surface pulsing (jan 16 2014)
+2898	mikerichman	surfpulser	Surface pulsing (excluded by proximity to 2895)
+2900	mikerichman	surfpulser	Surface pulsing (excluded by proximity to 2895)
+2901	mikerichman	surfpulser	Surface pulsing (excluded by proximity to 2895)
+2902	mikerichman	surfpulser	Surface pulsing (excluded by proximity to 2895)
+2903	mikerichman	surfpulser	Surface pulsing (jan 18 2014)
+2905	mikerichman	surfpulser	Surface pulsing (excluded by proximity to 2903(
+2906	mikerichman	surfpulser	Surface pulsing (excluded by proximity to 2903(
+2907	mikerichman	surfpulser	Surface pulsing (excluded by proximity to 2903(
+2912	mikerichman	surfpulser	Surface pulsing (jan 19 2014)
+2915	mikerichman	surfpulser	Surface pulsing (excluded by proximity o 2912)
+2916	mikerichman	surfpulser	Surface pulsing (jan 20 2014)
+2918	mikerichman	surfpulser	Surface pulsing (excluded by proximity to 2916)
+2938	mingyuanlu	surfpulser	Surface pulsing (identified by MYL http://ara.physics.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1889 slide 14
+2939	mingyuanlu	surfpulser	Surface pulsing (identified by MYL http://ara.physics.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1889 slide 14
+3120	mikeduvernois	roofpulse	Rooftop pulsing (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3139	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3140	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3141	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3142	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3143	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3144	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3145	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3146	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3147	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3148	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3149	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3150	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3151	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3152	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3153	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3154	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3155	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3156	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3157	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3158	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3159	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3160	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3161	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3162	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3164	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3165	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3166	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3167	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3168	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3169	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3170	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3171	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3172	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3173	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3174	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3175	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3176	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3177	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3178	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3179	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3180	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3181	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3182	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3183	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3184	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3185	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3186	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3187	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3242	mikeduvernois	roofpulse	Rooftop pulsing (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3289	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3290	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3291	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3292	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3293	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3294	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3295	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3296	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3297	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3298	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3299	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3300	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3301	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3302	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3303	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3304	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3305	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3306	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3307	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3308	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3309	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3310	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3311	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3312	thomasmueres	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3464	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3465	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3466	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3467	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3468	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3469	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3470	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3471	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3472	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3473	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3474	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3475	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3476	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3477	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3478	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3479	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3480	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3481	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3482	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3483	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3484	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3485	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3486	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3487	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3488	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3489	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3490	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3491	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3492	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3493	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3494	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3495	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3496	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3497	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3498	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3499	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3500	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3501	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3502	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3503	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3504	mingyuanlu	bad	"L2 Scaler Mask Issue (rate < 1 Hz, poor reco)"
+3578	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3579	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3580	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3581	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3582	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3583	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3584	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3585	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3586	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3587	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3588	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3589	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3590	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3591	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3592	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3593	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3594	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3595	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3596	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3597	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+3598	thomasmueres	bad	Trigger Length Window Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2014)
+4004	brianclark	other	
+4785	mingyuanlu	deeppulse	"Deep Pulser (accidental deep pulser run (http://ara.physics.wisc.edu/docs/0017/001719/003/181001_ARA02AnalysisUpdate.pdf, slide 38))"
+4787	mingyuanlu	deeppulse	"Deep Pulser (accidental deep pulser run (http://ara.physics.wisc.edu/docs/0017/001719/003/181001_ARA02AnalysisUpdate.pdf, slide 38))"
+4795	mingyuanlu	deeppulse	Deep Pulser (excluded by proximity to 4787)
+4796	mingyuanlu	deeppulse	Deep Pulser (excluded by proximity to 4787)
+4797	mingyuanlu	deeppulse	Deep Pulser (excluded by proximity to 4787)
+4798	mingyuanlu	deeppulse	Deep Pulser (excluded by proximity to 4787)
+4799	mingyuanlu	deeppulse	Deep Pulser (excluded by proximity to 4787)
+4800	mingyuanlu	deeppulse	Deep Pulser (excluded by proximity to 4787)
+4820	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4821	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4822	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4823	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4824	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4825	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4850	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4851	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4852	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4853	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4854	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4872	andrewshultz	surfpulser	Surface Pulsing (http://ara.physics.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1339 (slide 5))
+4873	andrewshultz	surfpulser	Surace Pulsing (http://ara.physics.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1339 (slide 5))
+4876	mingyuanlu	surfpulser	Surface Pulsing (Identified by MYL http://ara.physics.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1889 slide 14)
+4879	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4880	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4881	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4882	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4883	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4884	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4885	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4886	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4887	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4888	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4889	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4890	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4891	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4892	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4893	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4894	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4895	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4896	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4897	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4898	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4899	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4900	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4901	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4902	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4903	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4904	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4905	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4906	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4907	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4908	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4909	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4910	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4911	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4912	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4913	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4914	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4915	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4916	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4917	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4918	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4919	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4920	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4921	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4922	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4923	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4924	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4925	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4926	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4927	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4928	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4929	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4930	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4931	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4932	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4933	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4934	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4935	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+4936	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5210	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5211	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5212	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5213	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5214	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5215	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5216	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5217	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5218	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5219	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5220	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5221	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5222	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5223	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5224	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5225	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5226	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5227	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5228	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5229	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5230	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5231	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5232	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5233	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5234	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5235	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5236	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5237	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5238	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5239	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5240	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5241	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5242	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5243	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5244	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5245	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5246	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5247	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5248	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5249	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5250	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5251	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5252	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5253	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5254	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5255	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5256	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5257	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5258	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5259	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5260	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5261	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5262	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5263	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5264	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5265	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5266	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5267	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5268	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5269	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5270	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5271	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5272	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5273	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5274	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5275	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5276	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+5277	thomasmueres	other	Noise Source Tests (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2015)
+6513	thomasmueres	other	"Cal Pulser Vertical Lift (http://ara.physics.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1269 (page 2), run no from J. Kelley)"
+6527	aongusomurchadha	roofpulse	Rooftop Pulsing (http://ara.physics.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1269 (page 7))
+7625	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7626	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7627	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7628	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7629	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7630	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7631	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7632	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7633	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7634	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7635	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7636	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7637	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7638	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7639	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7640	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7641	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7642	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7643	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7644	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7645	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7646	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7647	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7648	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7649	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7650	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7651	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7652	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7653	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7654	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7655	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7656	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7657	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7658	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7659	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7660	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7661	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7662	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7663	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7664	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7665	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7666	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7667	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7668	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7669	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7670	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7671	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7672	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7673	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7674	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7675	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7676	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7677	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7678	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7679	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7680	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7681	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7682	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7683	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7684	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7685	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+7686	mingyuanlu	calpulse_sweep	Cal Pulser Sweep (http://ara.icecube.wisc.edu/wiki/index.php/Run_Log_2016)
+8100	brianclark	other	Badly misreconstructing events
+8101	brianclark	other	Badly misreconstructing events
+8102	brianclark	other	Badly misreconstructing events
+8103	brianclark	other	Badly misreconstructing events
+8104	brianclark	other	Badly misreconstructing events
+8105	brianclark	other	Badly misreconstructing events
+8106	brianclark	other	Badly misreconstructing events
+8107	brianclark	other	Badly misreconstructing events
+8108	brianclark	other	Badly misreconstructing events
+8109	brianclark	other	Badly misreconstructing events
+8110	brianclark	other	Badly misreconstructing events
+8111	brianclark	other	Badly misreconstructing events
+8112	brianclark	other	Badly misreconstructing events
+8113	brianclark	other	Badly misreconstructing events
+8114	brianclark	other	Badly misreconstructing events
+8115	brianclark	other	Badly misreconstructing events
+8116	brianclark	other	Badly misreconstructing events
+8117	brianclark	other	Badly misreconstructing events
+8118	brianclark	other	Badly misreconstructing events
+8119	brianclark	other	Badly misreconstructing events
+8120	brianclark	other	Badly misreconstructing events
+8121	brianclark	other	Badly misreconstructing events
+8122	brianclark	other	Badly misreconstructing events
+8123	brianclark	other	Badly misreconstructing events
+8124	brianclark	other	Badly misreconstructing events
+8125	brianclark	other	Badly misreconstructing events
+8126	brianclark	other	Badly misreconstructing events
+8127	brianclark	other	Badly misreconstructing events
+8128	brianclark	other	Badly misreconstructing events
+8129	brianclark	other	Badly misreconstructing events
+8130	brianclark	other	Badly misreconstructing events
+8131	brianclark	other	Badly misreconstructing events
+8132	brianclark	other	Badly misreconstructing events
+8133	brianclark	other	Badly misreconstructing events
+8134	brianclark	other	Badly misreconstructing events
+8135	brianclark	other	Badly misreconstructing events
+8136	brianclark	other	Badly misreconstructing events
+8137	brianclark	other	Badly misreconstructing events
+8138	brianclark	other	Badly misreconstructing events
+8139	brianclark	other	Badly misreconstructing events
+8140	brianclark	other	Badly misreconstructing events
+8141	brianclark	other	Badly misreconstructing events
+8142	brianclark	other	Badly misreconstructing events
+8143	brianclark	other	Badly misreconstructing events
+8144	brianclark	other	Badly misreconstructing events
+8145	brianclark	other	Badly misreconstructing events
+8146	brianclark	other	Badly misreconstructing events
+8147	brianclark	other	Badly misreconstructing events
+8148	brianclark	other	Badly misreconstructing events
+8149	brianclark	other	Badly misreconstructing events
+8150	brianclark	other	Badly misreconstructing events
+8151	brianclark	other	Badly misreconstructing events
+8152	brianclark	other	Badly misreconstructing events
+8153	brianclark	other	Badly misreconstructing events
+8154	brianclark	other	Badly misreconstructing events
+8155	brianclark	other	Badly misreconstructing events
+8156	brianclark	other	Badly misreconstructing events
+8157	brianclark	other	Badly misreconstructing events
+8158	brianclark	other	Badly misreconstructing events
+8159	brianclark	other	Badly misreconstructing events
+8160	brianclark	other	Badly misreconstructing events
+8161	brianclark	other	Badly misreconstructing events
+8162	brianclark	other	Badly misreconstructing events
+8163	brianclark	other	Badly misreconstructing events
+8164	brianclark	other	Badly misreconstructing events
+8165	brianclark	other	Badly misreconstructing events
+8166	brianclark	other	Badly misreconstructing events
+8167	brianclark	other	Badly misreconstructing events
+8168	brianclark	other	Badly misreconstructing events
+8169	brianclark	other	Badly misreconstructing events
+8170	brianclark	other	Badly misreconstructing events
+8171	brianclark	other	Badly misreconstructing events
+8172	brianclark	other	Badly misreconstructing events
+8173	brianclark	other	Badly misreconstructing events
+8174	brianclark	other	Badly misreconstructing events
+8175	brianclark	other	Badly misreconstructing events
+8176	brianclark	other	Badly misreconstructing events
+8177	brianclark	other	Badly misreconstructing events
+8178	brianclark	other	Badly misreconstructing events
+8179	brianclark	other	Badly misreconstructing events
+8180	brianclark	other	Badly misreconstructing events
+8181	brianclark	other	Badly misreconstructing events
+8182	brianclark	other	Badly misreconstructing events
+8183	brianclark	other	Badly misreconstructing events
+8184	brianclark	other	Badly misreconstructing events
+8185	brianclark	other	Badly misreconstructing events
+8186	brianclark	other	Badly misreconstructing events
+8187	brianclark	other	Badly misreconstructing events
+8188	brianclark	other	Badly misreconstructing events
+8189	brianclark	other	Badly misreconstructing events
+8190	brianclark	other	Badly misreconstructing events
+8191	brianclark	other	Badly misreconstructing events
+8192	brianclark	other	Badly misreconstructing events
+8193	brianclark	other	Badly misreconstructing events
+8194	brianclark	other	Badly misreconstructing events
+8195	brianclark	other	Badly misreconstructing events
+8196	brianclark	other	Badly misreconstructing events
+8197	brianclark	other	Badly misreconstructing events
+8198	brianclark	other	Badly misreconstructing events
+8199	brianclark	other	Badly misreconstructing events
+8200	brianclark	other	Badly misreconstructing events
+8201	brianclark	other	Badly misreconstructing events
+8202	brianclark	other	Badly misreconstructing events
+8203	brianclark	other	Badly misreconstructing events
+8204	brianclark	other	Badly misreconstructing events
+8205	brianclark	other	Badly misreconstructing events
+8206	brianclark	other	Badly misreconstructing events
+8207	brianclark	other	Badly misreconstructing events
+8208	brianclark	other	Badly misreconstructing events
+8209	brianclark	other	Badly misreconstructing events
+8210	brianclark	other	Badly misreconstructing events
+8211	brianclark	other	Badly misreconstructing events
+8212	brianclark	other	Badly misreconstructing events
+8213	brianclark	other	Badly misreconstructing events
+8214	brianclark	other	Badly misreconstructing events
+8215	brianclark	other	Badly misreconstructing events
+8216	brianclark	other	Badly misreconstructing events
+8217	brianclark	other	Badly misreconstructing events
+8218	brianclark	other	Badly misreconstructing events
+8219	brianclark	other	Badly misreconstructing events
+8220	brianclark	other	Badly misreconstructing events
+8221	brianclark	other	Badly misreconstructing events
+8222	brianclark	other	Badly misreconstructing events
+8223	brianclark	other	Badly misreconstructing events
+8224	brianclark	other	Badly misreconstructing events
+8225	brianclark	other	Badly misreconstructing events
+8226	brianclark	other	Badly misreconstructing events
+8227	brianclark	other	Badly misreconstructing events
+8228	brianclark	other	Badly misreconstructing events
+8229	brianclark	other	Badly misreconstructing events
+8230	brianclark	other	Badly misreconstructing events
+8231	brianclark	other	Badly misreconstructing events
+8232	brianclark	other	Badly misreconstructing events
+8233	brianclark	other	Badly misreconstructing events
+8234	brianclark	other	Badly misreconstructing events
+8235	brianclark	other	Badly misreconstructing events
+8236	brianclark	other	Badly misreconstructing events
+8237	brianclark	other	Badly misreconstructing events
+8238	brianclark	other	Badly misreconstructing events
+8239	brianclark	other	Badly misreconstructing events
+8240	brianclark	other	Badly misreconstructing events
+8241	brianclark	other	Badly misreconstructing events
+8242	brianclark	other	Badly misreconstructing events
+8243	brianclark	other	Badly misreconstructing events
+8244	brianclark	other	Badly misreconstructing events
+8245	brianclark	other	Badly misreconstructing events
+8246	brianclark	other	Badly misreconstructing events
+9562	brianclark	spicecore	See DocDB 1589 for depth vs time data
+9563	brianclark	spicecore	See DocDB 1589 for depth vs time data
+9564	brianclark	spicecore	See DocDB 1589 for depth vs time data
+9565	brianclark	spicecore	See DocDB 1589 for depth vs time data
+9566	brianclark	spicecore	See DocDB 1589 for depth vs time data
+9567	brianclark	spicecore	See DocDB 1589 for depth vs time data
+9568	brianclark	spicecore	See DocDB 1589 for depth vs time data
+9569	brianclark	spicecore	See DocDB 1589 for depth vs time data
+9570	brianclark	spicecore	See DocDB 1589 for depth vs time data
+9571	brianclark	spicecore	See DocDB 1589 for depth vs time data
+9810	brianclark	surfpulse	Hpol, 6 dB att
+9812	brianclark	surfpulse	Hpol, 15 dB att
+9815	brianclark	surfpulse	Vpol, 6 dB att
+9816	brianclark	surfpulse	Hpol, 6 dB att
+9832	brianclark	deeppulse	Hole 1 Shallow, 8:44:26 to 9:07 AM NZT
+9833	brianclark	deeppulse	Hole 1 Shallow, 9:15:21 to ~9:35 AM NZT
+9834	brianclark	deeppulse	Hole 22 Shallow, ~10:00  to ~10:18:54 AM NZT
+9835	brianclark	deeppulse	Hole 1 Deep, 10:21:29 to 10:28:30 AM NZT
+9836	brianclark	deeppulse	Hole 1 Deep, ~10:20 to 10:32 AM NZT
+9842	brianclark	roofpulse	Vpol, ICL pulser, pointed at WT3
+9844	brianclark	roofpulse	Hpol, 15 dB att
+9845	brianclark	roofpulse	Hpol, ICL pulser, pulser on 22:45:46 Jan 21 UTC, pointed at WT3
+9846	brianclark	roofpulse	Vpol, ICL pulser, pulser on 23:00:40 Jan 21 UTC, pointed at A2/A5
+9847	brianclark	roofpulse	Hpol, ICL pulser, pointed at A2/A5
+9848	brianclark	roofpulse	Hpol, ICL pulser, pulser on 23:20:37 Jan 21 UTC, pointed at A2/A5
+11076	brianclark	deeppulse	See DocDB 1667; pulse date is June 25 2018; hole 22 shallow 21:28:00-21:43:00 UTC; hole shallow 22 22:03:00-21:18:00 UTC; hole 1 shallow 22:23:42-22:53:42 UTC
+12189   myoungchulkim   deeppulse   See DocDB 1731 and 1738, presented by BK Shin ( (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1731, https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1738))
+12446   myoungchulkim   deeppulse   Don't have a related slide in DocDB (https://mediawiki.icecube.wisc.edu/ara/index.php/Run_Log_2018)
+12549   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12550   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12551   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12557   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12558   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12559   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12568   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12569   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12575   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12576   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12577   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12585   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12586   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12587   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12588   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12589   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12590   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12591   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12592   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12599   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12600   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12601   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12609   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12610   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12611   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12626   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12627   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12628   myoungchulkim   spicecore   See DocDB 1784, 2018-12-23 to 2018-12-31 (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=1784)
+12842	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12843	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12844	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12845	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12846	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12847	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12848	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12849	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12850	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12851	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12852	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12853	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12854	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12855	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12856	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12857	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12858	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12859	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12860	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12861	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12862	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12863	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12864	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12865	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12866	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12867	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12868	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12869	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12870	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12871	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12872	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+12873	yuepan	trigger delay study	D5 Vpol attenuation sweep 0 to 31 dB with a step of 1 dB.
+17031   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17032   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17033   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17034   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17035   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17036   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17037   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17038   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17039   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17040   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17041   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17042   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17043   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17044   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17045   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17046   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17047   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17048   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17049   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17050   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17052   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17053   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17054   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17055   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17056   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17057   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17058   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17059   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17060   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17061   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17062   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17063   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17064   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17065   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17066   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17067   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17068   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17069   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17070   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17071   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17073   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17075   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17076   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17077   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17079   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17081   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17083   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17085   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17089   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17090   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17093   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17094   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17098   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17102   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17103   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17104   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17105   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17109   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17113   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17117   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17125   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17134   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17135   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+17137   myounghculkim  bad  detector was not responsive (https://aradocs.wipac.wisc.edu/cgi-bin/DocDB/ShowDocument?docid=2153)
+18818	anozdrina	incomplete	may be incomplete; firmware were reloaded, the station was restarted
+18819	anozdrina	incomplete	may be incomplete; firmware were reloaded, the station was restarted
+14564	anozdrina	other	trigger tests for ARA02. Only bv3 tv3 bv4 channels were unmasked. Individual trigger delays adjusted to see signal from d6 calpulser simultaneously. d5 calpulser turned off. 

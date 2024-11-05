@@ -1,0 +1,83 @@
+1939	brianclark	other	Att Scan 1, Att 0; Old channel mapping
+1940	brianclark	other	Att Scan 1, Att 4; Old channel mapping
+1941	brianclark	other	Att Scan 1, Att 8; Old channel mapping
+1942	brianclark	other	Att Scan 1, Att 12; Old channel mapping
+1943	brianclark	other	Att Scan 1, Att 16; Old channel mapping
+1944	brianclark	other	Att Scan 1, Att 20; Old channel mapping
+1945	brianclark	other	Att Scan 1, Att 24; Old channel mapping
+1946	brianclark	other	Att Scan 1, Att 28; Old channel mapping
+1947	brianclark	other	Att Scan 1, Att 32; Old channel mapping
+1948	brianclark	other	Att Scan 1, Att 36; Old channel mapping
+1949	brianclark	other	Att Scan 1, Att 40; Old channel mapping
+1950	brianclark	other	Att Scan 1, Att 44; Result [19,23,22,16,18,22,17,18,28,29,21,27,22,26,17,17]
+1958	brianclark	other	Att Scan 2, Att 0; Old channel mapping
+1959	brianclark	other	Att Scan 2, Att 4; Old channel mapping
+1960	brianclark	other	Att Scan 2, Att 8; Old channel mapping
+1961	brianclark	other	Att Scan 2, Att 12; Old channel mapping
+1962	brianclark	other	Att Scan 2, Att 16; Old channel mapping
+1963	brianclark	other	Att Scan 2, Att 20; Old channel mapping
+1964	brianclark	other	Att Scan 2, Att 24; Old channel mapping
+1965	brianclark	other	Att Scan 2, Att 28; Old channel mapping
+1966	brianclark	other	Att Scan 2, Att 32; Old channel mapping
+1967	brianclark	other	Att Scan 2, Att 36; Old channel mapping
+1968	brianclark	other	Att Scan 2, Att 40; Old channel mapping
+1969	brianclark	other	Att Scan 2, Att 44; Result [19,23,22,16,18,24,17,18,28,29,21,27,23,26,16,16]
+2382	brianclark	other	Att Scan 3, Att 0; New channel mapping
+2383	brianclark	other	Att Scan 3, Att 4; New channel mapping
+2384	brianclark	other	Att Scan 3, Att 8; New channel mapping
+2385	brianclark	other	Att Scan 3, Att 12; New channel mapping
+2386	brianclark	other	Att Scan 3, Att 16; New channel mapping
+2387	brianclark	other	Att Scan 3, Att 20; New channel mapping
+2388	brianclark	other	Att Scan 3, Att 24; New channel mapping
+2389	brianclark	other	Att Scan 3, Att 28; New channel mapping
+2390	brianclark	other	Att Scan 3, Att 32; New channel mapping
+2391	brianclark	other	Att Scan 3, Att 36; New channel mapping
+2392	brianclark	other	Att Scan 3, Att 40; New channel mapping
+2393	brianclark	other	Att Scan 3, Att 44; Result [19,23,17,20,18,24,17,17,21,29,24,33,23,26,12,19]
+2055	brianclark	calpulse_sweep	Scan starts at ~8:52 PM NZT
+2056	brianclark	calpulse_sweep	Scan starts at ~8:52 PM NZT
+2168	brianclark	calpulse_sweep	Needs comment
+2298	brianclark	calpulse_sweep	Scan starts at ~7:03 PM NZT
+2317	brianclark	calpulse_sweep	Scan starts at ~8:21 PM NZT
+2327	brianclark	calpulse_sweep	Scan starts at ~7:32 PM NZT
+2343	brianclark	calpulse_sweep	Scan starts at ~8:28 PM NZT
+2347	brianclark	calpulse_sweep	Scan starts at ~8:48 PM NZT
+2396	brianclark	calpulse_sweep	Scan starts at ~9:05 UTC
+2052	brianclark	other	Cal pulser Z scan, 3 dB attenuation, the A5 clock is four minutes and fifteen seconds behind UTC, see DocDB 1589 for depth vs time data
+2053	brianclark	other	Cal pulser Z scan, 3 dB attenuation, the A5 clock is four minutes and fifteen seconds behind UTC, see DocDB 1589 for depth vs time data
+2062	brianclark	other	Cal pulser Z scan, 19 dB attenuation, clock offset likely persists, see DocDB 1589 for depth vs time data
+2063	brianclark	other	Cal pulser Z scan, 19 dB attenuation, clock offset likely persists, see DocDB 1589 for depth vs time data
+2399	brianclark	roofpulse	Vpol, ICL pulser, pointed at WT3
+2400	brianclark	roofpulse	Vpol, ICL pulser
+2401	brianclark	roofpulse	Hpol, ICL pulser, pulser on 22:45:46 Jan 21 UTC, pointed at WT3
+2402	brianclark	roofpulse	Vpol, ICL pulser, pulser on 23:00:40 Jan 21 UTC, pointed at A2/A5
+2403	brianclark	roofpulse	Hpol, ICL pulser, pointed at A2/A5
+2404	brianclark	roofpulse	Hpol, ICL pulser, pulser on 23:20:37 Jan 21 UTC, pointed at A2/A5
+2350	brianclark	deeppulse	Hole 1 Shallow, 8:44:26 to 9:07 AM NZT; Att [19,23,22,16,18,24,17,18,28,29,21,27,23,26,16,16]
+2351	brianclark	deeppulse	Hole 1 Shallow, 9:15:21 to ~9:35 AM NZT; Att [19,23,22,16,18,24,17,18,28,29,21,27,23,26,16,16]
+2354	brianclark	deeppulse	Hole 22 Shallow, ~10:00  to ~10:18:54 AM NZT; Att [19,23,22,16,18,24,17,18,28,29,21,27,23,26,16,16]
+2355	brianclark	deeppulse	Hole 1 Deep, 10:21:29 to 10:28:30 AM NZT; Att [19,23,22,16,18,24,17,18,28,29,21,27,23,26,16,16]
+2356	brianclark	deeppulse	Hole 1 Deep, ~10:20 to 10:32 AM NZT; Att [19,23,22,16,18,24,17,18,28,29,21,27,23,26,16,16]
+3629	brianclark	deeppulse	See DocDB 1667; pulse date is June 25 2018; hole 22 shallow 21:28:00-21:43:00 UTC; hole shallow 22 22:03:00-21:18:00 UTC; hole 1 shallow 22:23:42-22:53:42 UTC. Nominal attenuation.
+3963	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+3964	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+3965	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+3971	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+3972	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+3973	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+3982	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+3983	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+3988	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+3989	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+3990	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+4009	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+4010	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+4018	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+4019	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+4020	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+4021	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+4036	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+4037	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+4038	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+4039	myoungchulkim	spicecore	See DocDB 1784, 2018-12-23 to 2018-12-31
+4456	lizFriedman	bad	soft and cal rate dropped because of overlapping of cal and soft events
