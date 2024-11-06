@@ -1198,8 +1198,8 @@ class StandardReco:
                 shortest_wf_length = wavepacket['waveforms'][ch_ID].GetN() 
                 shortest_wf_ch = ch_ID
         csw_values = np.zeros((1, shortest_wf_length))
-        csw_times = np.round(
-            wavepacket['waveforms'][reference_ch].GetX(), 5)[:shortest_wf_length]
+        csw_times = np.asarray(
+            wavepacket['waveforms'][reference_ch].GetX())[:shortest_wf_length]
         csw_dt = csw_times[1] - csw_times[0]
 
         # Roll the waveform from each channel so the starting time of each
@@ -1208,7 +1208,7 @@ class StandardReco:
 
             # Load this channel's voltage and time arrays. Shift time by arrival delay
             values = np.asarray(wavepacket['waveforms'][ch_ID].GetY())
-            times = np.round(wavepacket['waveforms'][ch_ID].GetX(), 5) - arrival_delays[ch_ID]
+            times = np.asarray(wavepacket['waveforms'][ch_ID].GetX()) - arrival_delays[ch_ID]
 
             # Determine if the time binning of this channel matches the time binning
             #   of the CSW. This assumes all waveforms have the same time
@@ -1239,20 +1239,26 @@ class StandardReco:
             # Trim this waveform's length to match the CSW length
             if len(times) > len(csw_times):
                 trim_ammount = len(times) - len(csw_times)
-                if (times[0]<csw_times[0]) and (times[-1]<=csw_times[-1]): 
-                    # If this wf has an earlier start time and a later or equal 
-                    #   end time, trim from front
+                if (
+                    ( times[0] - csw_times[0] < 0 ) # this wf has an earlier start time than the CSW
+                    and ( times[-1] - csw_times[-1] <= csw_dt/2) # this wf has a earlier or equal end time than the CSW
+                ): # We need to trim from the beginning of the waveform
                     times  = times [trim_ammount:]
                     values = values[trim_ammount:]
-                elif (times[0]>=csw_times[0]) and (times[-1]>csw_times[-1]): 
-                    # If this wf has later or equal start time and a later 
-                    #   end time, trim from back
+                elif (
+                    ( times[0] - csw_times[0] > -csw_dt/2) # this wf has a later or equal start time than the CSW
+                    and (times[-1] - csw_times[-1] > 0) # this wf has a later end time than the CSW
+                ): # we need to trim from the end of the waveform
                     times  = times [:-trim_ammount]
                     values = values[:-trim_ammount]
-                elif (times[0]<csw_times[0]) and (times[-1]>csw_times[-1]): 
-                    # If waveform starts earlier and ends later, trim from both ends
-                    leading_trimmable = np.argwhere( times < csw_times[0] )
-                    trailing_trimmable = np.argwhere( times > csw_times[-1] )
+                elif (
+                    ( times[0] - csw_times[0] < 0 ) # this wf starts earlier than the CSW 
+                    and ( times[-1] - csw_times[-1] > 0 ) # this wf ends later than the CSW
+                ): # we need to trim from both ends of the waveform
+                    leading_trimmable = np.argwhere( 
+                        np.round(times,5) < np.round(csw_times[0], 5) )
+                    trailing_trimmable = np.argwhere( 
+                        np.round(times, 5) > np.round(csw_times[-1], 5) )
                     times  = times [ len(leading_trimmable) : -len(trailing_trimmable) ] 
                     values = values[ len(leading_trimmable) : -len(trailing_trimmable) ] 
                 else: 
