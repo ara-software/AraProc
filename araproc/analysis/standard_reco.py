@@ -1249,20 +1249,20 @@ class StandardReco:
                 trim_ammount = len(times) - len(csw_times)
                 if (
                     ( times[0] - csw_times[0] < 0 ) # this wf has an earlier start time than the CSW
-                    and ( times[-1] - csw_times[-1] <= csw_dt/2) # this wf has a later or equal end time than the CSW
-                ): # We need to trim from the front
+                    and ( times[-1] - csw_times[-1] <= csw_dt/2) # this wf has a earlier or equal end time than the CSW
+                ): # We need to trim from the beginning of the waveform
                     times  = times [trim_ammount:]
                     values = values[trim_ammount:]
                 elif (
                     ( times[0] - csw_times[0] > -csw_dt/2) # this wf has a later or equal start time than the CSW
                     and (times[-1] - csw_times[-1] > 0) # this wf has a later end time than the CSW
-                ): # we need to trim from the back
+                ): # we need to trim from the end of the waveform
                     times  = times [:-trim_ammount]
                     values = values[:-trim_ammount]
                 elif (
                     ( times[0] - csw_times[0] < 0 ) # this wf starts earlier than the CSW 
                     and ( times[-1] - csw_times[-1] > 0 ) # this wf ends later than the CSW
-                ): # we need to trim from both ends
+                ): # we need to trim from both ends of the waveform
                     leading_trimmable = np.argwhere( 
                         np.round(times,5) < np.round(csw_times[0], 5) )
                     trailing_trimmable = np.argwhere( 
