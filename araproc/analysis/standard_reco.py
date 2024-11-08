@@ -572,44 +572,30 @@ class StandardReco:
         if radius < (abs(avg_z) + z_thresh):
             return -np.inf, 0, 0 # surface not visible, this map has no surface corr max
 
-        # Define theta range
-        theta_surface = math.degrees(math.asin(abs(avg_z) / radius))
+        # Define theta range -- interested in theta values above z_thresh, so values >= theta_thresh (using elevation angle!)
         theta_thresh = math.degrees(math.asin((abs(avg_z) + z_thresh) / radius))
-        theta_min, theta_max = min(theta_surface, theta_thresh), max(theta_surface, theta_thresh)
 
         # Access correlation map and filter values within the theta range
         hist = corr_map.get("map", None)
         if hist is None:
             raise ValueError("The 'map' key was not found in corr_map.")
         
-        surf_corr_values = []
-        corr_bins = []
-
-        # Loop through the bins and store values within theta range
-        for x_bin in range(1, hist.GetNbinsX() + 1):
-            for y_bin in range(1, hist.GetNbinsY() + 1):
-                theta = hist.GetYaxis().GetBinCenter(y_bin)
-                phi = hist.GetXaxis().GetBinCenter(x_bin)
-                corr = hist.GetBinContent(x_bin, y_bin)
-                if theta_min <= theta <= theta_max:
-                    surf_corr_values.append(corr)
-                    corr_bins.append((x_bin, y_bin))
-
-        # Identify maximum surface correlation
-        if not surf_corr_values:
-            raise RuntimeError("No correlation values found in the specified theta range.")
+        # set the range of the histogram to only be where it's relevant
+        binwidth = hist.GetYaxis().GetBinWidth(1)
+        theta_thresh_bin = int(np.ceil((theta_thresh - hist.GetYaxis().GetXmin())/binwidth + 0.5))
+        hist.GetYaxis().SetRange(theta_thresh_bin, hist.GetYaxis().GetNbins())
         
-        # Check for NaNs
-        if np.isnan(surf_corr_values).any():
-            raise ValueError("surf_corr_values contains NaN values.")
+        # locate the peak in that range, and return the location
+        _peakZ = ctypes.c_int()
+        _peakTheta = ctypes.c_int()
+        _peakPhi = ctypes.c_int()
+        hist.GetMaximumBin(_peakPhi, _peakTheta, _peakZ)
+        max_phi = hist.GetXaxis().GetBinCenter(_peakPhi.value)
+        max_theta = hist.GetYaxis().GetBinCenter(_peakTheta.value)
+        max_surf_corr = hist.GetMaximum()
 
-        # Calculate maximum and index
-        max_surf_corr = np.max(surf_corr_values)
-        max_idx = np.argmax(surf_corr_values)
-        max_bin = corr_bins[max_idx]
-        
-        max_theta = hist.GetYaxis().GetBinCenter(max_bin[1])
-        max_phi = hist.GetXaxis().GetBinCenter(max_bin[0])
+        # reset the range
+        hist.GetYaxis().SetRange(0,0)
 
         return max_surf_corr, max_theta, max_phi
 
@@ -789,22 +775,17 @@ class StandardReco:
         # Calculate average antenna z-coordinate
         _, _, avg_z = mu.calculate_avg_antenna_xyz(self.station_id, self.num_channels)
 
-        min_depth = -float('inf')  # Initialize to find the shallowest depth (least negative)
+        # Find the shallowest bin above threshold.
+        # We want the last bin ABOVE because theta goes from -90 to 90,
+        # and we want the SHALLOWEST (so closets to 90).
+        last_bin = hist.FindLastBinAbove(threshold_corr, 2) # look along the Y (theta) axis, so axis=2
+        if last_bin != -1:
+            # -1 to ROOT means no bin was found above the threshold
+            theta = hist.GetYaxis().GetBinCenter(last_bin)
+            min_depth = radius * math.sin(math.radians(theta)) + avg_z
+        else:
+            min_depth = -float('inf')  
 
-        # Check correlation values against threshold and calculate depth
-        for x_bin in range(1, hist.GetNbinsX() + 1):
-            for y_bin in range(1, hist.GetNbinsY() + 1):
-                corr_value = hist.GetBinContent(x_bin, y_bin)
-                if corr_value >= threshold_corr:
-                    # Calculate depth from theta and adjust by avg_z
-                    theta = hist.GetYaxis().GetBinCenter(y_bin)
-                    depth = radius * math.sin(math.radians(theta)) + avg_z
-                    
-
-                    # Update min_depth 
-                    if depth > min_depth:
-                        min_depth = depth
-        
         return min_depth
 
     def min_frac_corr_depth_multiple(self, reco_results, fraction=0.6, skip_maps={}):
