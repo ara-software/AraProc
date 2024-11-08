@@ -582,7 +582,7 @@ class StandardReco:
         
         # set the range of the histogram to only be where it's relevant
         binwidth = hist.GetYaxis().GetBinWidth(1)
-        theta_thresh_bin = np.ceil((theta_thresh - hist.GetYaxis().GetXmin())/binwidth + 0.5) 
+        theta_thresh_bin = int(np.ceil((theta_thresh - hist.GetYaxis().GetXmin())/binwidth + 0.5))
         hist.GetYaxis().SetRange(theta_thresh_bin, hist.GetYaxis().GetNbins())
         
         # locate the peak in that range, and return the location
