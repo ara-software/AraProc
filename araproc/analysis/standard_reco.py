@@ -5,6 +5,7 @@ import os
 import ROOT
 from scipy.interpolate import Akima1DInterpolator
 import itertools
+import time
 
 from araproc.analysis import interferometry as interf
 from araproc.framework import constants as const
@@ -779,20 +780,15 @@ class StandardReco:
 
         min_depth = -float('inf')  # Initialize to find the shallowest depth (least negative)
 
-        # Check correlation values against threshold and calculate depth
-        for x_bin in range(1, hist.GetNbinsX() + 1):
-            for y_bin in range(1, hist.GetNbinsY() + 1):
-                corr_value = hist.GetBinContent(x_bin, y_bin)
-                if corr_value >= threshold_corr:
-                    # Calculate depth from theta and adjust by avg_z
-                    theta = hist.GetYaxis().GetBinCenter(y_bin)
-                    depth = radius * math.sin(math.radians(theta)) + avg_z
-                    
+        # Find the shallowest bin above threshold.
+        # We want the last bin ABOVE because theta goes from -90 to 90,
+        # and we want the SHALLOWEST (so closets to 90).
+        last_bin = hist.FindLastBinAbove(threshold_corr, 2) # look along the Y (theta) axis, so axis=2
+        if last_bin != -1:
+            # -1 to ROOT means no bin was found above the threshold
+            theta = hist.GetYaxis().GetBinCenter(last_bin)
+            min_depth = radius * math.sin(math.radians(theta)) + avg_z
 
-                    # Update min_depth 
-                    if depth > min_depth:
-                        min_depth = depth
-        
         return min_depth
 
     def min_frac_corr_depth_multiple(self, reco_results, fraction=0.6, skip_maps={}):
