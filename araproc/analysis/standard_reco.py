@@ -867,7 +867,16 @@ class StandardReco:
         """
         
         _, corr_func = wfu.tgraph_to_arrays(self.__get_correlation_function(ch1, ch2, wave_packet, False))
-        corr_snr = snr.get_snr(corr_func[abs(corr_func) > 0.001])
+
+        # trim correlation function 
+        corr_thresh = 1e-3
+        idxAboveThresh = np.squeeze(np.where(np.abs(corr_func) >= corr_thresh)) # all indices above threshold
+        idxFirst = idxAboveThresh[0] # first above threshold
+        idxLast = idxAboveThresh[-1] # last above threshold
+        corr_func = corr_func[idxFirst:idxLast+1] # trim to above threshold region
+ 
+        # calculate snr
+        corr_snr = snr.get_snr(corr_func)
 
         return corr_snr
 
