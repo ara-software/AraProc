@@ -1060,10 +1060,15 @@ class StandardReco:
                     )
                 )
 
+                # AraRoot always compares channels with smaller IDs to channels with 
+                #   larger IDs but we always want to compare to the reference channel.
+                # Correct for this if the current ch_ID is larger than the reference ch_ID
+                reco_delay = reco_delays[ch_ID] if ch_ID<reference_ch else -1*reco_delays[ch_ID]
+
                 # Identify the `zoom_window` nanosecond window around the 
                 #   reconstructed delay
                 zoomed_indices = np.where(
-                    (np.abs( xcorr_times - reco_delays[ch_ID] )) < zoom_window // 2
+                    (np.abs( xcorr_times - reco_delay )) < zoom_window // 2
                 )[0]
 
                 # Calculate the time of maximum correlation from this
