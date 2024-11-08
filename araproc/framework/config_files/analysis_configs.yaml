@@ -44,8 +44,8 @@ station2:
       filt3 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 }
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
+      rf_readout_limit: 20
+      soft_readout_limit: 8
   config2:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -54,8 +54,8 @@ station2:
       filt3 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 }
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
+      rf_readout_limit: 20
+      soft_readout_limit: 8
   config3:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -64,8 +64,8 @@ station2:
       filt3 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 }
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
+      rf_readout_limit: 20
+      soft_readout_limit: 8
   config4:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -74,8 +74,8 @@ station2:
       filt3 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 }
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
+      rf_readout_limit: 26
+      soft_readout_limit: 8
   config5:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -84,8 +84,8 @@ station2:
       filt3 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 }
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
+      rf_readout_limit: 26
+      soft_readout_limit: 8
   config6:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -95,7 +95,7 @@ station2:
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
       rf_readout_limit: 28
-      soft_readout_limit: 10
+      soft_readout_limit: 12
   config7:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -105,7 +105,7 @@ station2:
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
       rf_readout_limit: 28
-      soft_readout_limit: 10
+      soft_readout_limit: 12
 station3:
   config1:
     excluded_channels : []
@@ -115,8 +115,8 @@ station3:
       filt3 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 }
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
+      rf_readout_limit: 45
+      soft_readout_limit: 12
   config2:
     excluded_channels : []
     filters:
@@ -125,8 +125,8 @@ station3:
       filt3 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 }
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
+      rf_readout_limit: 20
+      soft_readout_limit: 8
   config3:
     excluded_channels : [3, 7, 11, 15]
     filters:
@@ -135,8 +135,8 @@ station3:
       filt3 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 }
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
+      rf_readout_limit: 26
+      soft_readout_limit: 8
   config4:
     excluded_channels : [3, 7, 11, 15]
     filters:
@@ -145,8 +145,8 @@ station3:
       filt3 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 }
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
+      rf_readout_limit: 26
+      soft_readout_limit: 8
   config5:
     excluded_channels : [3, 7, 11, 15]
     filters:
@@ -155,8 +155,8 @@ station3:
       filt3 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 }
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
+      rf_readout_limit: 26
+      soft_readout_limit: 8
   config6:
     excluded_channels : []
     filters:
@@ -166,7 +166,7 @@ station3:
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
       rf_readout_limit: 28
-      soft_readout_limit: 10
+      soft_readout_limit: 12
   config7:
     excluded_channels : []
     filters:
@@ -176,7 +176,7 @@ station3:
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
       rf_readout_limit: 28
-      soft_readout_limit: 10
+      soft_readout_limit: 12
   config8:
     excluded_channels : []
     filters:
@@ -186,7 +186,7 @@ station3:
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
       rf_readout_limit: 28
-      soft_readout_limit: 10
+      soft_readout_limit: 12
   config9:
     excluded_channels : []
     filters:
@@ -196,7 +196,7 @@ station3:
       filt4 : { min_freq : 0.404, max_freq : 0.406, min_power_ratio : 0.02 }
     readout_limits:
       rf_readout_limit: 28
-      soft_readout_limit: 10
+      soft_readout_limit: 12
 station4:
   config1:
     excluded_channels : [3, 7, 11, 15] # always exclude string 4
