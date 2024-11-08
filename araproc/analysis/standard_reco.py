@@ -5,7 +5,6 @@ import os
 import ROOT
 from scipy.interpolate import Akima1DInterpolator
 import itertools
-import time
 
 from araproc.analysis import interferometry as interf
 from araproc.framework import constants as const
