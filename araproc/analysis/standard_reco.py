@@ -865,9 +865,9 @@ class StandardReco:
         corr_snr: float
            Channel pair correlation SNR.
         """
-
-        corr_func = self.__get_correlation_function(ch1, ch2, wave_packet, False)
-        corr_snr = snr.get_snr(corr_func)
+        
+        _, corr_func = wfu.tgraph_to_arrays(self.__get_correlation_function(ch1, ch2, wave_packet, False))
+        corr_snr = snr.get_snr(corr_func[abs(corr_func) > 0.001])
 
         return corr_snr
 
