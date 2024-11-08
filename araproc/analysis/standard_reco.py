@@ -582,34 +582,22 @@ class StandardReco:
         if hist is None:
             raise ValueError("The 'map' key was not found in corr_map.")
         
-        surf_corr_values = []
-        corr_bins = []
-
-        # Loop through the bins and store values within theta range
-        for x_bin in range(1, hist.GetNbinsX() + 1):
-            for y_bin in range(1, hist.GetNbinsY() + 1):
-                theta = hist.GetYaxis().GetBinCenter(y_bin)
-                phi = hist.GetXaxis().GetBinCenter(x_bin)
-                corr = hist.GetBinContent(x_bin, y_bin)
-                if theta_min <= theta <= theta_max:
-                    surf_corr_values.append(corr)
-                    corr_bins.append((x_bin, y_bin))
-
-        # Identify maximum surface correlation
-        if not surf_corr_values:
-            raise RuntimeError("No correlation values found in the specified theta range.")
+        # set the range of the histogram to only be where it's relevant
+        theta_min_bin = hist.GetYaxis().FindBin(theta_min)
+        theta_max_bin = hist.GetYaxis().FindBin(theta_max)
+        hist.GetYaxis().SetRange(theta_min_bin+1, theta_max_bin-1)
         
-        # Check for NaNs
-        if np.isnan(surf_corr_values).any():
-            raise ValueError("surf_corr_values contains NaN values.")
+        # locate the peak in that range, and return the location
+        _peakZ = ctypes.c_int()
+        _peakTheta = ctypes.c_int()
+        _peakPhi = ctypes.c_int()
+        hist.GetMaximumBin(_peakPhi, _peakTheta, _peakZ)
+        max_phi = hist.GetXaxis().GetBinCenter(_peakPhi.value)
+        max_theta = hist.GetYaxis().GetBinCenter(_peakTheta.value)
+        max_surf_corr = hist.GetMaximum()
 
-        # Calculate maximum and index
-        max_surf_corr = np.max(surf_corr_values)
-        max_idx = np.argmax(surf_corr_values)
-        max_bin = corr_bins[max_idx]
-        
-        max_theta = hist.GetYaxis().GetBinCenter(max_bin[1])
-        max_phi = hist.GetXaxis().GetBinCenter(max_bin[0])
+        # reset the range
+        hist.GetYaxis().SetRange(0,0)
 
         return max_surf_corr, max_theta, max_phi
 
