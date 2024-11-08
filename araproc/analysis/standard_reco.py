@@ -572,10 +572,8 @@ class StandardReco:
         if radius < (abs(avg_z) + z_thresh):
             return -np.inf, 0, 0 # surface not visible, this map has no surface corr max
 
-        # Define theta range
-        theta_surface = math.degrees(math.asin(abs(avg_z) / radius))
+        # Define theta range -- interested in theta values above z_thresh, so values >= theta_thresh (using elevation angle!)
         theta_thresh = math.degrees(math.asin((abs(avg_z) + z_thresh) / radius))
-        theta_min, theta_max = min(theta_surface, theta_thresh), max(theta_surface, theta_thresh)
 
         # Access correlation map and filter values within the theta range
         hist = corr_map.get("map", None)
@@ -583,9 +581,9 @@ class StandardReco:
             raise ValueError("The 'map' key was not found in corr_map.")
         
         # set the range of the histogram to only be where it's relevant
-        theta_min_bin = hist.GetYaxis().FindBin(theta_min)
-        theta_max_bin = hist.GetYaxis().FindBin(theta_max)
-        hist.GetYaxis().SetRange(theta_min_bin+1, theta_max_bin-1)
+        binwidth = (hist.GetYaxis().fXmax - hist.GetYaxis().fXmin) / float(hist.GetYaxis().fNbins);
+        theta_thresh_bin = np.ceil((theta_thresh - hist.GetYaxis().fXmin)/binwidth + 0.5) 
+        hist.GetYaxis().SetRange(theta_thresh_bin, hist.GetYaxis().fNbins)
         
         # locate the peak in that range, and return the location
         _peakZ = ctypes.c_int()
@@ -777,8 +775,6 @@ class StandardReco:
         # Calculate average antenna z-coordinate
         _, _, avg_z = mu.calculate_avg_antenna_xyz(self.station_id, self.num_channels)
 
-        min_depth = -float('inf')  # Initialize to find the shallowest depth (least negative)
-
         # Find the shallowest bin above threshold.
         # We want the last bin ABOVE because theta goes from -90 to 90,
         # and we want the SHALLOWEST (so closets to 90).
@@ -787,6 +783,8 @@ class StandardReco:
             # -1 to ROOT means no bin was found above the threshold
             theta = hist.GetYaxis().GetBinCenter(last_bin)
             min_depth = radius * math.sin(math.radians(theta)) + avg_z
+        else:
+            min_depth = -float('inf')  
 
         return min_depth
 
