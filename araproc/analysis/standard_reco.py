@@ -581,8 +581,8 @@ class StandardReco:
             raise ValueError("The 'map' key was not found in corr_map.")
         
         # set the range of the histogram to only be where it's relevant
-        binwidth = (hist.GetYaxis().fXmax - hist.GetYaxis().fXmin) / float(hist.GetYaxis().fNbins);
-        theta_thresh_bin = np.ceil((theta_thresh - hist.GetYaxis().fXmin)/binwidth + 0.5) 
+        binwidth = (hist.GetYaxis().GetXmax() - hist.GetYaxis().GetXmin()) / float(hist.GetYaxis().fNbins);
+        theta_thresh_bin = np.ceil((theta_thresh - hist.GetYaxis().GetXmin())/binwidth + 0.5) 
         hist.GetYaxis().SetRange(theta_thresh_bin, hist.GetYaxis().fNbins)
         
         # locate the peak in that range, and return the location
