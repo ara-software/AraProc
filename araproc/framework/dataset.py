@@ -666,8 +666,8 @@ class AnalysisDataset:
         ROOT.SetOwnership(dummy, True) # give python full ownership
 
         nyquist = 1./(2.*self.interp_tstep*1E-9) # interp speed in seconds
-        freq_lopass = 800E6/nyquist # lowpass fitler at 900 MHz, in units of nyquist
-        freq_hipass = 90E6/nyquist # highpass filter at 90 MHz, in units of nyquist
+        freq_lopass = 875E6/nyquist # lowpass fitler at 875 MHz, in units of nyquist
+        freq_hipass = 50E6/nyquist # highpass filter at 50 MHz, in units of nyquist
 
         lp = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 5, freq_lopass)
         hp = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.HIGHPASS, 5, freq_hipass)
@@ -813,43 +813,42 @@ class AnalysisDataset:
         # and if they want filtered waves
         filtered_waves = cwf.apply_filters(self.__cw_filters, dedispersed_waves)
 
-        # BAC 2024-10-05: Stop bandpass filtering temporarily
-        # # and finally, apply some bandpass cleanup filters
-        # for chan_key in list(filtered_waves.keys()):
+        # and finally, apply some bandpass cleanup filters
+        for chan_key in list(filtered_waves.keys()):
 
-        #     """
-        #     This takes some explaining, why I'm not just calling
-        #         digitalFilter.filterGraph(...)
+            """
+            This takes some explaining, why I'm not just calling
+                digitalFilter.filterGraph(...)
             
-        #     Basically, the DigitalFilter class function `filterGraph` calls
-        #     the function `filter()`. The `filter` function calls the function
-        #     `filterOut`, which returns a POINTER to the filtered array.
-        #     Pyroot doesn't know how to clean this up properly.
-        #     So here, I create a pointer to an array via `array.array`,
-        #     and pass that pointer myself via the `filterOut` function.
-        #     That way python has proper ownership of it, and can destroy it
-        #     and avoid a memory leak.
+            Basically, the DigitalFilter class function `filterGraph` calls
+            the function `filter()`. The `filter` function calls the function
+            `filterOut`, which returns a POINTER to the filtered array.
+            Pyroot doesn't know how to clean this up properly.
+            So here, I create a pointer to an array via `array.array`,
+            and pass that pointer myself via the `filterOut` function.
+            That way python has proper ownership of it, and can destroy it
+            and avoid a memory leak.
 
-        #     I discovered this leak because when I called `filterGraph`,
-        #     I ended up with a huge memory leak.
-        #     Beware these python <-> c++ interfaces, especially around pointers...
-        #     """
+            I discovered this leak because when I called `filterGraph`,
+            I ended up with a huge memory leak.
+            Beware these python <-> c++ interfaces, especially around pointers...
+            """
 
-        #     wave = filtered_waves[chan_key]
-        #     n = wave.GetN()
-        #     x = wave.GetX()
-        #     y = wave.GetY()
-        #     y_filt_lp = array.array("d", [0]*len(y))
-        #     y_filt_hp = array.array("d", [0]*len(y))
-        #     self.__lowpass_filter.filterOut(n, y, y_filt_lp)
-        #     self.__highpass_filter.filterOut(n, y_filt_lp, y_filt_hp)
+            wave = filtered_waves[chan_key]
+            n = wave.GetN()
+            x = wave.GetX()
+            y = wave.GetY()
+            y_filt_lp = array.array("d", [0]*len(y))
+            y_filt_hp = array.array("d", [0]*len(y))
+            self.__lowpass_filter.filterOut(n, y, y_filt_lp)
+            self.__highpass_filter.filterOut(n, y_filt_lp, y_filt_hp)
 
-        #     filt_graph = ROOT.TGraph(n, x, y_filt_hp)
-        #     ROOT.SetOwnership(filt_graph, True)
+            filt_graph = ROOT.TGraph(n, x, y_filt_hp)
+            ROOT.SetOwnership(filt_graph, True)
 
-        #     del wave
-        #     del filtered_waves[chan_key]
-        #     filtered_waves[chan_key] = filt_graph
+            del wave
+            del filtered_waves[chan_key]
+            filtered_waves[chan_key] = filt_graph
 
         if which_traces == "filtered":
             wavepacket["waveforms"] = filtered_waves

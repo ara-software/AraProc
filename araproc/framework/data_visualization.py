@@ -112,7 +112,7 @@ def plot_skymap(the_map = None,
         raise TypeError("Path to output file must be a string")
 
     corr_peak, peak_phi, peak_theta = mu.get_corr_map_peak(the_map)
-    the_map.SetTitle(f"Peak Phi/Theta = {peak_phi:.1f}, {peak_theta:.1f}")
+    the_map.SetTitle(f"Peak Phi/Theta/Corr = {peak_phi:.1f}, {peak_theta:.1f}, {corr_peak:.2f}")
     the_map.GetXaxis().SetTitle("Phi (deg)")
     the_map.GetYaxis().SetTitle("Theta (deg)")
     the_map.GetZaxis().SetTitle("Correlation")

@@ -116,14 +116,12 @@ class StandardReco:
         # always add a "nearby" correlator for 41m away
         #dir_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
         #                        "PUBLIC/groups/arasoft/raytrace_timing_tables",
-        dir_path = os.path.join("/mnt/stashcache/icecube",
-                                "PUBLIC/groups/arasoft/raytrace_timing_tables/Updated_Tables",
+        dir_path = os.path.join("/data/ana/ARA/processing/support/raytrace_timing_tables/Updated_Tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{self.calpulser_r_library[station_id]}_angle_1.00_solution_0.root"
                                 )
         #ref_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
         #                        "PUBLIC/groups/arasoft/raytrace_timing_tables",
-        ref_path = os.path.join("/mnt/stashcache/icecube",
-                                "PUBLIC/groups/arasoft/raytrace_timing_tables/Updated_Tables",
+        ref_path = os.path.join("/data/ana/ARA/processing/support/raytrace_timing_tables/Updated_Tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{self.calpulser_r_library[station_id]}_angle_1.00_solution_1.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "nearby",
@@ -135,14 +133,12 @@ class StandardReco:
         # always add a "distant" correlator for 300m away
         #dir_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
         #                        "PUBLIC/groups/arasoft/raytrace_timing_tables",
-        dir_path = os.path.join("/mnt/stashcache/icecube",
-                                "PUBLIC/groups/arasoft/raytrace_timing_tables/Updated_Tables",
+        dir_path = os.path.join("/data/ana/ARA/processing/support/raytrace_timing_tables/Updated_Tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_300.00_angle_1.00_solution_0.root"
                                 )
         #ref_path = os.path.join("/cvmfs/icecube.osgstorage.org/icecube",
         #                        "PUBLIC/groups/arasoft/raytrace_timing_tables",
-        ref_path = os.path.join("/mnt/stashcache/icecube",
-                                "PUBLIC/groups/arasoft/raytrace_timing_tables/Updated_Tables",
+        ref_path = os.path.join("/data/ana/ARA/processing/support/raytrace_timing_tables/Updated_Tables",
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_300.00_angle_1.00_solution_1.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "distant",
@@ -758,11 +754,10 @@ class StandardReco:
         
         return surf_corr_ratio, max_surf_corr_result, max_corr_result
 
-    def min_frac_corr_depth(self, corr_map, fraction=0.6, z_thresh=0):
+    def min_frac_corr_depth(self, corr_map, max_corr, fraction=0.6):
         """
         Finds the shallowest depth where correlation meets a specified fraction of the maximum correlation,
         using 'theta' to calculate depth and adjusting by the average z-coordinate of antennas.
-        Ensures the result remains below the specified depth threshold (z_thresh).
 
         Parameters
         ----------
@@ -770,19 +765,18 @@ class StandardReco:
             Contains:
             - 'map': ROOT.TH2D histogram with correlation values by theta and phi.
             - 'radius': Correlation radius in meters.
+        max_corr : float
+            The maximum correlation to use in setting the correlation threshold.
         fraction : float
             Fraction of the max correlation to set the threshold.
             Default is 0.6 (or 60%).
-        z_thresh : float
-            Maximum allowable depth (relative to the surface). Default is -10 meters.
 
         Returns
         -------
         min_depth : float
-            Shallowest depth (measured from ice surface) where correlation meets the specified fraction of max and below z_thresh.
+            Shallowest depth (measured from ice surface) where correlation meets the specified fraction of max.
         """
-        # Get maximum correlation and threshold
-        max_corr = float(corr_map.get("corr"))
+        # Get correlation threshold
         threshold_corr = fraction * max_corr
 
         # Access correlation map and radius
@@ -807,16 +801,13 @@ class StandardReco:
                     depth = radius * math.sin(math.radians(theta)) + avg_z
                     
 
-                    # Ensure min_depth does not exceed z_thresh
-                    if depth > min_depth and depth <= z_thresh:
+                    # Update min_depth 
+                    if depth > min_depth:
                         min_depth = depth
-
-        if min_depth == -float('inf'):
-            raise RuntimeError("No depth meets the fractional correlation threshold within the z_thresh.")
         
         return min_depth
 
-    def min_frac_corr_depth_multiple(self, reco_results, fraction=0.6, z_thresh=0, skip_maps={}):
+    def min_frac_corr_depth_multiple(self, reco_results, fraction=0.6, skip_maps={}):
         """
         Finds the shallowest depth across multiple correlation maps where correlation meets
         a specified fraction of the maximum correlation. Uses the min_frac_corr_depth function for each map,
@@ -829,8 +820,6 @@ class StandardReco:
             the keys of this object include 'theta' and 'phi')
         fraction : float
             Fraction of the max correlation to set the threshold. Default is 0.6 (60%).
-        z_thresh : float
-            Maximum allowable depth (relative to the surface). Default is 0 meters.
         skip_maps : set
             Will skip every reconstruction result key listed in this set. 
 
@@ -847,12 +836,15 @@ class StandardReco:
         # Make a set to speed up compilation
         skip_maps = set(skip_maps)
 
+        # Get max correlation across all maps
+        max_corr = self.find_map_with_max_corr(reco_results, skip_maps=skip_maps)['max_corr']
+
         # Iterate over each map and find the shallowest depth using min_frac_corr_depth
         for idx, (name, corr_map) in enumerate(reco_results.items()):
             if name in skip_maps: 
                 continue
             # Use the existing function to find the minimum depth for this map
-            depth = self.min_frac_corr_depth(corr_map, fraction=fraction, z_thresh=z_thresh)
+            depth = self.min_frac_corr_depth(corr_map, max_corr, fraction=fraction)
 
 
             # Update min_depth if the current depth is shallower (closer to the surface)
@@ -1089,7 +1081,7 @@ class StandardReco:
                     #   and its not a software trigger, warn user
                     if not is_software: 
                         print(
-                            f"Touble calculating csw for non-software event with "
+                            f"Trouble calculating csw for non-software event with "
                             f"channels {ch_ID} and {reference_ch}")
 
                 else: 
@@ -1256,20 +1248,20 @@ class StandardReco:
                 trim_ammount = len(times) - len(csw_times)
                 if (
                     ( times[0] - csw_times[0] < 0 ) # this wf has an earlier start time than the CSW
-                    and ( times[-1] - csw_times[-1] <= csw_dt/2) # this wf has a later or equal end time than the CSW
-                ): # We need to trim from the front
+                    and ( times[-1] - csw_times[-1] <= csw_dt/2) # this wf has a earlier or equal end time than the CSW
+                ): # We need to trim from the beginning of the waveform
                     times  = times [trim_ammount:]
                     values = values[trim_ammount:]
                 elif (
                     ( times[0] - csw_times[0] > -csw_dt/2) # this wf has a later or equal start time than the CSW
                     and (times[-1] - csw_times[-1] > 0) # this wf has a later end time than the CSW
-                ): # we need to trim from the back
+                ): # we need to trim from the end of the waveform
                     times  = times [:-trim_ammount]
                     values = values[:-trim_ammount]
                 elif (
                     ( times[0] - csw_times[0] < 0 ) # this wf starts earlier than the CSW 
                     and ( times[-1] - csw_times[-1] > 0 ) # this wf ends later than the CSW
-                ): # we need to trim from both ends
+                ): # we need to trim from both ends of the waveform
                     leading_trimmable = np.argwhere( 
                         np.round(times,5) < np.round(csw_times[0], 5) )
                     trailing_trimmable = np.argwhere( 
