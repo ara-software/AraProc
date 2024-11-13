@@ -356,6 +356,21 @@ class StandardReco:
         }
 
         ############################
+        ####### HPol Pulser ########
+        ############################
+
+        # check the cal pulser in H
+        pulser_map_h = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
+            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_nearby, 0,)
+
+        corr_pulser_h, phi_pulser_h, theta_pulser_h = mu.get_corr_map_peak(pulser_map_h)
+        reco_results["pulser_h"] = {
+            "corr" : corr_pulser_h,  "theta" : theta_pulser_h, "phi" : phi_pulser_h,
+            "map" : pulser_map_h, "radius" : self.rtc_wrapper.correlators["nearby"].GetRadius(),
+            'which_distance': 'nearby', 'solution': 0, 'polarization': 1,
+        }
+
+        ############################
         ####### HPol Maps ##########
         ############################
 
