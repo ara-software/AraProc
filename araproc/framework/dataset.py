@@ -584,7 +584,7 @@ class AnalysisDataset:
                  path_to_data_file : str,
                  station_id : int,
                  path_to_pedestal_file : str = None,
-                 interp_tstep : float = 0.25 ,
+                 interp_tstep : float = 0.5 ,
                  is_simulation : bool = False
                  ):
     
@@ -729,7 +729,6 @@ class AnalysisDataset:
                     These are dedispersed waves that are additionally
                     filtered of CW via the FFTtools SineSubtract filter.
                     They are then bandpass filtered to remove out of band noise.
-                    (Bandpass filtered temporarily turned off.)
                     Most people should use the "filtered" traces,
                     and so they are the default argument.
 
