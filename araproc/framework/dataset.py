@@ -584,7 +584,7 @@ class AnalysisDataset:
                  path_to_data_file : str,
                  station_id : int,
                  path_to_pedestal_file : str = None,
-                 interp_tstep : float = 0.25 ,
+                 interp_tstep : float = 0.5 ,
                  is_simulation : bool = False
                  ):
     
@@ -610,6 +610,10 @@ class AnalysisDataset:
 
         if (interp_tstep < 0) or not np.isfinite(interp_tstep):
             raise ValueError(f"Something is wrong with the requested interpolation time step: {interp_tstep}")
+        if (interp_tstep < 0.3):
+            raise ValueError("Requested interpolation time step is <0.3 ns. SineSubtract has been found to give\n"
+                             "\t    incorrect/anomalous behavior for such small timesteps, and CW peaks are not properly\n"
+                             "\t    removed. Comment this warning if you want, but PROCEED WITH CAUTION.")
         self.interp_tstep = interp_tstep
 
         
@@ -729,7 +733,6 @@ class AnalysisDataset:
                     These are dedispersed waves that are additionally
                     filtered of CW via the FFTtools SineSubtract filter.
                     They are then bandpass filtered to remove out of band noise.
-                    (Bandpass filtered temporarily turned off.)
                     Most people should use the "filtered" traces,
                     and so they are the default argument.
 
