@@ -610,6 +610,10 @@ class AnalysisDataset:
 
         if (interp_tstep < 0) or not np.isfinite(interp_tstep):
             raise ValueError(f"Something is wrong with the requested interpolation time step: {interp_tstep}")
+        if (interp_tstep < 0.3):
+            raise ValueError("Requested interpolation time step is <0.3 ns. SineSubtract has been found to give\n"
+                             "\t    incorrect/anomalous behavior for such small timesteps, and CW peaks are not properly\n"
+                             "\t    removed. Comment this warning if you want, but PROCEED WITH CAUTION.")
         self.interp_tstep = interp_tstep
 
         
