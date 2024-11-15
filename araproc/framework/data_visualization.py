@@ -126,3 +126,67 @@ def plot_skymap(the_map = None,
     c.Close()
 
     del c
+
+def plot_csw(
+    self, csw, csw_comps, save_name, xlims=None, ylims=None, title=None):
+    """
+    Take the CSW and rolled waveforms and plot them all together. 
+
+    Parameters
+    ----------
+    csw : TGraph
+        The Coherently Summed Waveform.
+    csw_comps : dict
+        Dictionary where keys are channel IDs and values are the TGraphs
+        corresponding to each channel's WF as it was added to the CSW.
+    save_name : str
+        Full path and file name where you'd like to save this plot.
+    xlims : tuple or None
+        If not `None`, specifies the lower and upper bounds of the X Axis.
+    ylims : tuple or None
+        If not `None`, specifies the lower and upper bounds of the Y Axis.
+    title : str or None
+        If not `None`, specifies the title to be added to the plot.
+    
+    """
+
+    # Initialize Plot
+    fig, ax = plt.subplots()
+    ax.set_xlabel("Time [ns]", size=14)
+    ax.set_ylabel("Voltage [mV]", size=14)
+
+    # Plot CSW
+    ax.fill_between(
+        np.asarray(csw.GetX()), np.zeros(csw.GetN()), np.asarray(csw.GetY()), 
+        label='CSW', color='k', alpha=0.05) 
+
+    cmap = plt.get_cmap('gist_rainbow')
+
+    # Loop over channels
+    for i, (channel, wf) in enumerate(csw_comps.items()): 
+        # Plot waveform
+        ax.plot(
+            np.asarray(wf.GetX()), np.asarray(wf.GetY()),
+            label=f"Channel {channel}", alpha=0.4, color=cmap( i/len(csw_comps) )
+        )
+        # Plot the location of the WF with the maximum value
+        wf_max_idx = np.argmax( np.asarray(wf.GetY()) )
+        ax.scatter(
+            np.asarray(wf.GetX())[wf_max_idx], 
+            np.asarray(wf.GetY())[wf_max_idx], 
+            color=cmap( i/len(csw_comps) ), s=15, zorder=5)
+        
+    # Adjust plot per user request
+    if xlims is not None: 
+        ax.set_xlim(xlims)
+    if ylims is not None: 
+        ax.set_ylim(ylims)
+    if title is not None:
+        ax.set_title(title)
+            
+    # Finish formatting and save plot
+    ax.legend(loc=1)
+    plt.tight_layout()
+    plt.savefig(save_name, dpi=400)
+
+    return
