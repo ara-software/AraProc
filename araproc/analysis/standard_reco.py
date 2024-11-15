@@ -226,8 +226,10 @@ class StandardReco:
         It then calculates a suite of (currently) four maps, with the following names:
             "pulser_v" : vpol x-corr map at the radius of the cal pulser
             "pulser_h" : hpol x-corr map at the radius of the cal pulser
-            "distant_v" : vpol x-corr map at the radius of 300 m
-            "distant_h" : hpol x-corr map at the radius of 300 m 
+            "distant_v_dir" : vpol x-corr map at the radius of 300 m with a direct hypothesis
+            "distant_v_ref" : vpol x-corr map at the radius of 300 m with a refracted/reflected hypothesis
+            "distant_h_dir" : hpol x-corr map at the radius of 300 m with a direct hypothesis
+            "distant_h_ref" : hpol x-corr map at the radius of 300 m with a refracted/reflected hypothesis
         
         For each of these maps, it locates the peak corr and the phi/theta of the peak.
         For each of these maps, it returns a dictionary of results, with a key (a string),
