@@ -953,7 +953,7 @@ class StandardReco:
         return avg_vpol_corr_snr, avg_hpol_corr_snr  
 
     def get_arrival_delays_reco(
-        self, reco_results, excluded_channels, reference_ch, 
+        self, reco_theta, reco_phi, excluded_channels, reference_ch, 
         which_distance, solution
     ):
         """
@@ -962,9 +962,10 @@ class StandardReco:
 
         Parameters
         ----------
-        reco_results : dict
-            Reco results already with the specific reconstruction reqeusted (so
-            the keys of this object include 'theta' and 'phi')
+        reco_theta : float
+            Elevation angle that this event was reconstructed to.
+        reco_phi : float
+            Azimuthal angle that this event was reconstructed to.
         excluded_channels : set
             A set of channels IDs to exclude from arrival time calcualtion
         reference_ch : int
@@ -992,7 +993,7 @@ class StandardReco:
             ch: 0.0 for ch in const.rf_channels_ids if ch not in excluded_channels}
         for ch_ID in arrival_times.keys():
             arrival_times[ch_ID] = self.lookup_arrival_time(
-                ch_ID, reco_results['theta'], reco_results['phi'], 
+                ch_ID, reco_theta, reco_phi, 
                 which_distance=which_distance, solution=solution
             )
         
@@ -1107,8 +1108,9 @@ class StandardReco:
         return delays
 
     def get_csw(
-        self, wavepacket, is_software, is_calpulser, solution, polarization, reco_results,
-        excluded_channels, which_distance='distant', return_csw_comps=False,
+        self, wavepacket, is_software, is_calpulser, solution, polarization, 
+        reco_theta, reco_phi, excluded_channels, 
+        which_distance='distant', return_csw_comps=False,
     ):
         """
         Build the Coherently Summed Waveform (CSW) for the given `useful_event`
@@ -1127,9 +1129,10 @@ class StandardReco:
             0 for direct ray solution. 1 for reflected/refracted ray solution.
         polarization : int
             0 for VPol, 1 for HPol
-        reco_results : dict
-            Reco results already with the specific reconstruction reqeusted (so
-            the keys of this object include 'theta' and 'phi')
+        reco_theta : float
+            Elevation angle that this event was reconstructed to.
+        reco_phi : float
+            Azimuthal angle that this event was reconstructed to.
         excluded_channels : set
             Any channels to exclude that aren't already excluded by 
             livetime configurations.
@@ -1155,13 +1158,6 @@ class StandardReco:
         # Initialize warning object as 0
         warning = 0
 
-        # Check that reco_results have been passed in properly
-        if 'theta' not in reco_results.keys():
-            raise ValueError(
-                "reco_result object passed into this function does not appear "
-                "to be for a specific reconstruction. Should have a 'theta' key "
-                "but only has the following:", reco_results.keys())
-
         # Make the excluded_channels object a set to speed up computation
         excluded_channels = set(excluded_channels)
 
@@ -1184,7 +1180,7 @@ class StandardReco:
         # Get arrival delays relative to the reference channel based on
         #   expected arrival times from reconstruction results
         arrival_delays_reco = self.get_arrival_delays_reco(
-            reco_results, excluded_channels, reference_ch, which_distance, solution)
+            reco_theta, reco_phi, excluded_channels, reference_ch, which_distance, solution)
         
         # Get arrival delays by zooming in on the cross correlation between
         #   each channel and the reference channel around the expected
