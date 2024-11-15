@@ -116,6 +116,8 @@ def plot_skymap(the_map = None,
     the_map.GetXaxis().SetTitle("Phi (deg)")
     the_map.GetYaxis().SetTitle("Theta (deg)")
     the_map.GetZaxis().SetTitle("Correlation")
+   
+    the_map.GetZaxis().SetRangeUser(0, corr_peak)
 
     c = ROOT.TCanvas("c", "c", 700, 500)
     c.cd()
