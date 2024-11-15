@@ -356,6 +356,21 @@ class StandardReco:
         }
 
         ############################
+        ####### HPol Pulser ########
+        ############################
+
+        # check the cal pulser in H
+        pulser_map_h = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
+            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_nearby, 0,)
+
+        corr_pulser_h, phi_pulser_h, theta_pulser_h = mu.get_corr_map_peak(pulser_map_h)
+        reco_results["pulser_h"] = {
+            "corr" : corr_pulser_h,  "theta" : theta_pulser_h, "phi" : phi_pulser_h,
+            "map" : pulser_map_h, "radius" : self.rtc_wrapper.correlators["nearby"].GetRadius(),
+            'which_distance': 'nearby', 'solution': 0, 'polarization': 1,
+        }
+
+        ############################
         ####### HPol Maps ##########
         ############################
 
@@ -865,8 +880,17 @@ class StandardReco:
         corr_snr: float
            Channel pair correlation SNR.
         """
+        
+        _, corr_func = wfu.tgraph_to_arrays(self.__get_correlation_function(ch1, ch2, wave_packet, False))
 
-        corr_func = self.__get_correlation_function(ch1, ch2, wave_packet, False)
+        # trim correlation function 
+        corr_thresh = 1e-3
+        idxAboveThresh = np.squeeze(np.where(np.abs(corr_func) >= corr_thresh)) # all indices above threshold
+        idxFirst = idxAboveThresh[0] # first above threshold
+        idxLast = idxAboveThresh[-1] # last above threshold
+        corr_func = corr_func[idxFirst:idxLast+1] # trim to above threshold region
+ 
+        # calculate snr
         corr_snr = snr.get_snr(corr_func)
 
         return corr_snr
