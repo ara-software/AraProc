@@ -16,7 +16,7 @@ def erf_linear(x, A, B):
     Parameters
     ----------
     x : np.ndarray
-        Independent variable, typically the time fraction or index.
+        Time fraction.
     A : float
         Amplitude scaling factor for the error function.
     B : float
@@ -30,9 +30,46 @@ def erf_linear(x, A, B):
    
     return (A * erf(x / B) + x) / (A * erf(1. / B) + 1)
 
+def get_cdf(trace):
+    """
+    Calculates Hilbert envelope cdf of trace.
+
+    Parameters
+    ----------
+    trace : np.ndarray
+        Array containing the voltage values of the waveform.
+    
+    Returns
+    -------
+    t_frac : np.ndarray
+        Fraction of total trace.
+    cdf : np.ndarray
+        Integrated Hilbert envelope from peak relative to total integral.
+    """
+
+    # Hilbert transform to get the envelope of the waveform
+    hilbert_envelope = wfu.get_hilbert_envelope(trace)   
+    # Find the index of the maximum value in the Hilbert envelope
+    hill_max_idx = np.argmax(hilbert_envelope)
+    hill_max = hilbert_envelope[hill_max_idx]
+
+    # Sorting based on closeness to the maximum index
+    closeness = np.abs(np.arange(len(trace)) - hill_max_idx)
+    clo_sort_idx = np.argsort(closeness)
+
+    # Sort the Hilbert envelope by closeness to the maximum
+    sorted_waveform = hilbert_envelope[clo_sort_idx]
+
+    # Cumulative distribution function (CDF) calculation
+    cdf = np.cumsum(sorted_waveform)
+    cdf /= np.max(cdf)
+
+    t_frac = np.linspace(0, 1, len(cdf))
+
+    return t_frac, cdf
 
 # Function to calculate impulsivity-related variables
-def calculate_impulsivity_measures(channel_wf,channel_time):
+def calculate_impulsivity_measures(channel_wf):
     """
     Calculates impulsivity and other statistical measures from a waveform's voltage and time arrays.
 
@@ -40,8 +77,6 @@ def calculate_impulsivity_measures(channel_wf,channel_time):
     ----------
     channel_wf : np.ndarray
         Array containing the voltage values of the waveform.
-    channel_time : np.ndarray
-        Array containing the corresponding time values of the waveform.
 
     Returns
     -------
@@ -74,25 +109,12 @@ def calculate_impulsivity_measures(channel_wf,channel_time):
     """
     result = {}
 
-    # Hilbert transform to get the envelope of the waveform
-    hilbert_envelope = wfu.get_hilbert_envelope(channel_wf)   
-    # Find the index of the maximum value in the Hilbert envelope
-    hill_max_idx = np.argmax(hilbert_envelope)
-    hill_max = hilbert_envelope[hill_max_idx]
+    t_frac, cdf = get_cdf(channel_wf)
 
-    # Sorting based on closeness to the maximum index
-    closeness = np.abs(np.arange(len(channel_wf)) - hill_max_idx)
-    clo_sort_idx = np.argsort(closeness)
-
-    # Sort the Hilbert envelope by closeness to the maximum
-    sorted_waveform = hilbert_envelope[clo_sort_idx]
-
-    # Cumulative distribution function (CDF) calculation
-    cdf = np.cumsum(sorted_waveform)
-    cdf /= np.max(cdf)
+    # Calculate impulsivity
+    impulsivity = 2 * np.mean(cdf) - 1
 
     # Linear regression to get slope, intercept, and other statistics
-    t_frac = np.linspace(0, 1, len(cdf))
     slope, intercept, r_value, p_value, std_err = linregress(t_frac, cdf)
     cdf_fit = slope * t_frac + intercept
 
@@ -114,18 +136,10 @@ def calculate_impulsivity_measures(channel_wf,channel_time):
     gr.Fit(fErfLinear, "SQFM") # perform fit
     A_fit = fErfLinear.GetParameter(0) # get best-fit value on parameter [0] 
     B_fit = fErfLinear.GetParameter(1) # get best-fit value on parameter [1]
-    
-    # evaluate function with best-fit parameters
-    cdf_erf_fit = erf_linear(t_frac, A_fit, B_fit)
-
-    # Calculate impulsivity
-    impulsivity = 2 * np.mean(cdf) - 1
-
+    chi2_erf_linear = gr.Chisquare(fErfLinear)   
+ 
     # Calculate linear chi2 (difference between linear fit and ideal x=y line)
-    chi2_linear = np.sum((cdf - cdf_fit) ** 2)
-
-    # Calculate erf-linear chi2 (difference between erf-linear fit and data)
-    chi2_erf_linear = np.sum((cdf - cdf_erf_fit) ** 2)
+    chi2_linear = np.sum((cdf - t_frac) ** 2)
 
     # Calculate significance of erf-linear fit over linear fit using Wilks' theorem
     dChi2 = chi2_linear - chi2_erf_linear
