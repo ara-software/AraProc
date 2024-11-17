@@ -13,6 +13,9 @@ station100:
     readout_limits:
       rf_readout_limit: 26
       soft_readout_limit: 8
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config2:
     excluded_channels : []
     filters:
@@ -25,6 +28,9 @@ station100:
     readout_limits:
       rf_readout_limit: 26
       soft_readout_limit: 8
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config3:
     excluded_channels : []
     filters:
@@ -35,6 +41,9 @@ station100:
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 8
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
 station2:
   config1:
     excluded_channels : [15] # always exclude channel 15
@@ -56,6 +65,9 @@ station2:
     readout_limits:
       rf_readout_limit: 20
       soft_readout_limit: 8
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config3:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -66,6 +78,9 @@ station2:
     readout_limits:
       rf_readout_limit: 20
       soft_readout_limit: 8
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config4:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -76,6 +91,9 @@ station2:
     readout_limits:
       rf_readout_limit: 26
       soft_readout_limit: 8
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config5:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -86,6 +104,9 @@ station2:
     readout_limits:
       rf_readout_limit: 26
       soft_readout_limit: 8
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config6:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -96,6 +117,9 @@ station2:
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 12
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config7:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -106,6 +130,9 @@ station2:
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 12
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
 station3:
   config1:
     excluded_channels : []
@@ -117,6 +144,9 @@ station3:
     readout_limits:
       rf_readout_limit: 45
       soft_readout_limit: 12
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config2:
     excluded_channels : []
     filters:
@@ -127,6 +157,9 @@ station3:
     readout_limits:
       rf_readout_limit: 20
       soft_readout_limit: 8
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config3:
     excluded_channels : [3, 7, 11, 15]
     filters:
@@ -137,6 +170,9 @@ station3:
     readout_limits:
       rf_readout_limit: 26
       soft_readout_limit: 8
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config4:
     excluded_channels : [3, 7, 11, 15]
     filters:
@@ -147,6 +183,9 @@ station3:
     readout_limits:
       rf_readout_limit: 26
       soft_readout_limit: 8
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config5:
     excluded_channels : [3, 7, 11, 15]
     filters:
@@ -157,6 +196,9 @@ station3:
     readout_limits:
       rf_readout_limit: 26
       soft_readout_limit: 8
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config6:
     excluded_channels : []
     filters:
@@ -167,6 +209,9 @@ station3:
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 12
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config7:
     excluded_channels : []
     filters:
@@ -177,6 +222,9 @@ station3:
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 12
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config8:
     excluded_channels : []
     filters:
@@ -187,6 +235,9 @@ station3:
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 12
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config9:
     excluded_channels : []
     filters:
@@ -197,6 +248,9 @@ station3:
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 12
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
 station4:
   config1:
     excluded_channels : [3, 7, 11, 15] # always exclude string 4
@@ -207,6 +261,9 @@ station4:
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 10
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config2:
     excluded_channels : [3, 7, 11, 15] # always exclude string 4
     filters:
@@ -216,6 +273,9 @@ station4:
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 10
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config3:
     excluded_channels : [3, 7, 11, 15] # always exclude string 4
     filters:
@@ -225,6 +285,9 @@ station4:
     readout_limits:
       rf_readout_limit: 32
       soft_readout_limit: 10
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config4:
     excluded_channels : [3, 7, 11, 15] # always exclude string 4
     filters:
@@ -234,6 +297,9 @@ station4:
     readout_limits:
       rf_readout_limit: 32
       soft_readout_limit: 10
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
 station5:
   config1:
     excluded_channels : []
@@ -244,6 +310,9 @@ station5:
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 10
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5
   config2:
     excluded_channels : []
     filters:
@@ -253,3 +322,6 @@ station5:
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 10
+    dda_volt_limits:
+      lower_limit: 3.0
+      upper_limit: 3.5

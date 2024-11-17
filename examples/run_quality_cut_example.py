@@ -39,16 +39,17 @@ config = d.config
 # Setup output arrays
 save_final_cuts = np.full((num_evts), 0, dtype=float)
 
-#### investigate events with quality issue ######
+dda_volt_array = daq_qual_cut.get_bias_voltage_events(args.input_file, d,args.station,config)
 
 # Process first 5 events
 for e in range(5):
     useful_event = d.get_useful_event(e)
     evt_num = useful_event.eventNumber
     combined_errors = daq_qual_cut.check_daq_quality(useful_event, args.station,config)
+    dda_volt_event = dda_volt_array[e]
     save_final_cuts[e] = combined_errors  # If this sum value is >0 for an event then it's a bad event 
     del useful_event,evt_num
-    print(combined_errors)
+    print(combined_errors,dda_volt_event)
 # Save results to HDF5 file
 file_name = f'daq_err_A{args.station}_run{run_number}.h5'
 with h5py.File(file_name, 'w') as hf:

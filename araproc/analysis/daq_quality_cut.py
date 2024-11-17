@@ -1,6 +1,10 @@
 import numpy as np
 import logging
 import yaml
+import uproot
+import os
+import re
+
 from araproc.framework import constants
 import importlib.resources as pkg_resources
 import araproc.framework.config_files as config_files
@@ -246,4 +250,88 @@ def check_daq_quality(useful_event, station_id, config):
     combined_errors = daq_errors or readout_errors
 
     return combined_errors
+
+######### Bias voltage check ########################
+
+def get_voltage(volt_curr):
+    """
+    Converts raw DDA voltage data into actual voltage measurements.
+
+    Parameters:
+    - volt_curr (np.array): Array of raw DDA voltage data stored as unsigned integers.
+
+    Returns:
+    - np.array: Array of converted voltages in volts.
+    """
+    VoltageADC = ((volt_curr & 0xff) << 4) | ((volt_curr & 0xf00000) >> 20)
+    return (6.65 / 4096) * VoltageADC
+
+def get_bias_voltage_events(root_file_path, d,station_id,config):
+    """
+    Determines which events fall outside the specified voltage thresholds by analyzing sensor data.
+
+    Parameters:
+    - root_file_path (str): The path to the ROOT file containing event data.
+    - d (object): An object that provides an interface to event data.
+    - volt_cut (list): A list containing two floats, [min_volt, max_volt], defining the acceptable voltage range.
+
+    Returns:
+    - np.array: A binary array where 1 indicates an event outside the voltage threshold and 0 indicates an event within the threshold.
+    """
+    # Extract the run number from the file path and construct the sensor file path
+    directory = os.path.dirname(root_file_path)
+    run_num = re.search(r'run(\d+)', root_file_path).group(1)
+    sensor_file = os.path.join(directory, f'sensorHk{run_num}.root')
+
+    file = pkg_resources.open_text(config_files,"analysis_configs.yaml")
+    file_content = yaml.safe_load(file)
+    #Get the readout limits for different triggers
+    dda_limits = file_content[f"station{station_id}"][f"config{config}"]["dda_volt_limits"]
+    lower_limit = dda_limits["lower_limit"]
+    upper_limit = dda_limits["upper_limit"]
+    volt_cut = [lower_limit,upper_limit]
+
+    print('Sensor file:', sensor_file)
+
+    # Load the sensor data from the ROOT file
+    with uproot.open(sensor_file) as file:
+        tree = file['sensorHkTree']
+        sensor_unix = tree["sensorHk/unixTime"].array(library="np")
+        dda_volt_current = tree["sensorHk/ddaVoltageCurrent[4]"].array(library="np")
+
+    # Check for empty or invalid data
+    if np.any(np.isnan(sensor_unix)) or len(sensor_unix) == 0:
+        print('There is an empty or invalid sensorHk file!')
+        return np.zeros_like(sensor_unix, dtype=int) if len(sensor_unix) else np.ones((4974,), dtype=int)
+
+    # Convert raw voltage readings
+    dda_volt = get_voltage(dda_volt_current)
+
+    # Determine which sensor readings are out of the specified voltage range
+    bad_dda_bool = np.logical_or(dda_volt < volt_cut[0], dda_volt > volt_cut[1])
+    good_dda_bool = ~bad_dda_bool
+
+    bias_volt_evts = np.zeros(d.num_events, dtype=int)  # Initialize the array for event statuses
+
+    # Evaluate the events
+    if len(sensor_unix) == 1:
+        print('There is a single sensorHk value!')
+        bias_volt_evts = good_dda_bool.astype(int)
+    else:
+        good_digi_bool = np.logical_and(good_dda_bool[1:], good_dda_bool[:-1])
+        dda_digi_idx = np.arange(1, len(sensor_unix), dtype=int)
+        event_unix = np.array([d.get_useful_event(evt).unixTime for evt in range(d.num_events)])
+        unix_digi = np.digitize(event_unix, sensor_unix)
+
+        for dda in range(dda_volt.shape[1]):  # Assuming dda_volt is 2D
+            good_digi_idx = dda_digi_idx[good_digi_bool[:, dda]]
+            bias_volt_evts += np.in1d(unix_digi, good_digi_idx, invert=True).astype(int)
+
+    bias_volt_evts[bias_volt_evts != 0] = 1
+
+    count = np.count_nonzero(bias_volt_evts)
+    print('dda volt bad counts:', count, 'good events:', len(bias_volt_evts) - count)
+
+    return bias_volt_evts > 0
+
 
