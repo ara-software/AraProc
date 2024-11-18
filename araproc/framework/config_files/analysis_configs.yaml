@@ -10,6 +10,7 @@ station100:
       filt6 : { min_freq : 0.396, max_freq : 0.410, min_power_ratio : 0.02 }
       filt7 : { min_freq : 0.470, max_freq : 0.480, min_power_ratio : 0.02 }
       filt8 : { min_freq : 0.570, max_freq : 0.580, min_power_ratio : 0.02 }
+      filt9 : { min_freq : 0.150, max_freq : 0.850, min_power_ratio : 0.10 }
     readout_limits:
       rf_readout_limit: 26
       soft_readout_limit: 8
@@ -22,6 +23,7 @@ station100:
       filt4 : { min_freq : 0.245, max_freq : 0.255, min_power_ratio : 0.02 }
       filt5 : { min_freq : 0.396, max_freq : 0.410, min_power_ratio : 0.02 }
       filt6 : { min_freq : 0.570, max_freq : 0.580, min_power_ratio : 0.02 }
+      filt7 : { min_freq : 0.150, max_freq : 0.850, min_power_ratio : 0.10 }
     readout_limits:
       rf_readout_limit: 26
       soft_readout_limit: 8
@@ -33,6 +35,7 @@ station100:
       filt3 : { min_freq : 0.245, max_freq : 0.255, min_power_ratio : 0.02 }
       filt4 : { min_freq : 0.396, max_freq : 0.410, min_power_ratio : 0.02 }
       filt5 : { min_freq : 0.570, max_freq : 0.580, min_power_ratio : 0.02 }
+      filt6 : { min_freq : 0.150, max_freq : 0.850, min_power_ratio : 0.10 }
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 8
