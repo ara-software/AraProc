@@ -43,7 +43,8 @@ save_av_rpr = np.full(( num_evts), np.nan, dtype=float)
 for e in tq(range(5)):
     print(f'Processing event {e}')
     useful_event = d.get_useful_event(e)
-    this_wave_bundle = d.get_waveforms(useful_event)
+    wavepacket = d.get_wavepacket(useful_event)
+    this_wave_bundle = wavepacket["waveforms"]
     average_rpr = rpr.get_avg_rpr(this_wave_bundle)
     save_av_rpr[e] = average_rpr
     print( average_rpr)

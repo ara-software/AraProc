@@ -53,11 +53,10 @@ for e in range(0, 5, 1):
     print(e)
 
     useful_event = d.get_useful_event(e)
-
-    this_wave_bundle = d.get_waveforms(useful_event)
-    this_reco_results = reco.do_standard_reco(this_wave_bundle)
+    wavepacket = d.get_wavepacket(useful_event)
+    this_wave_bundle = wavepacket["waveforms"]
+    this_reco_results = reco.do_standard_reco(wavepacket)
     this_avg_snr = snr.get_avg_snr(this_wave_bundle)
-
     # stash the output results
     output_event_number.value = useful_event.eventNumber
     output_reco_result_pulser_v[0] = this_reco_results["pulser_v"]["corr"]
