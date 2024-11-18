@@ -20,7 +20,7 @@ matplotlib.use("pdf")
 def plot_waveform_bundle(
     waveform_dict = None,
     time_or_freq = "time",
-    ouput_file_path = None
+    output_file_path = None
     ):
     """
     Code to plot a bundle of waveforms.
@@ -44,11 +44,11 @@ def plot_waveform_bundle(
         "freq" : "Frequency (GHz)"
     }
     ylabel_options = {
-        "time" : "Voltage (V)",
+        "time" : "Voltage (mV)",
         "freq" : "log10 Spectrum (au)"
     }    
 
-    if not isinstance(ouput_file_path, str):
+    if not isinstance(output_file_path, str):
         raise TypeError("Path to output file must be a string")
         
     ####################
@@ -95,20 +95,20 @@ def plot_waveform_bundle(
         ax.set_ylim([1,4])
 
     # save figure
-    fig.savefig(ouput_file_path)
+    fig.savefig(output_file_path)
 
     # careful cleanup
     plt.close(fig)
     del fig, axd
 
 def plot_skymap(the_map = None,
-                ouput_file_path = None
+                output_file_path = None
                 ):
     
     if the_map is None:
         raise Exception("the_map is None")
 
-    if not isinstance(ouput_file_path, str):
+    if not isinstance(output_file_path, str):
         raise TypeError("Path to output file must be a string")
 
     corr_peak, peak_phi, peak_theta = mu.get_corr_map_peak(the_map)
@@ -123,7 +123,7 @@ def plot_skymap(the_map = None,
     c.cd()
     the_map.Draw("z aitoff")
     ROOT.gPad.SetRightMargin(0.15) # make space for the z axis
-    c.SaveAs(ouput_file_path)
+    c.SaveAs(output_file_path)
     ROOT.gPad.SetRightMargin(0) # reset, so we don't affect settings globally
     c.Close()
 
