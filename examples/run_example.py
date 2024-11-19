@@ -104,10 +104,13 @@ for e in range(iter_start, iter_stop, 1):
         # plot the waveforms
         dv.plot_waveform_bundle(wave_bundle, 
                     time_or_freq="time",
-                    ouput_file_path=f"./station_{d.station_id}_run_{d.run_number}_event_{e}_waves.png",
+                    output_file_path=f"./station_{d.station_id}_run_{d.run_number}_event_{e}_waves.png",
                     )
         
         # and also plot one of the skymaps (in this case, the vpol map the distance of the pulser)
         dv.plot_skymap(reco_results["pulser_v"]["map"],
-                       ouput_file_path=f"./station_{d.station_id}_run_{d.run_number}_event_{e}_map.png",
+                       output_file_path=f"./station_{d.station_id}_run_{d.run_number}_event_{e}_map.png",
                        )
+
+
+
