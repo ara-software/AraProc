@@ -41,11 +41,11 @@ def plot_waveform_bundle(
 
     xlabel_options = {
         "time" : "Time (ns)",
-        "freq" : "Frequency (GHz)"
+        "freq" : "Frequency (MHz)"
     }
     ylabel_options = {
         "time" : "Voltage (mV)",
-        "freq" : "log10 Spectrum (au)"
+        "freq" : "Spectrum (dBm)"
     }    
 
     if not isinstance(output_file_path, str):
@@ -73,22 +73,29 @@ def plot_waveform_bundle(
     ymin = 1e100
     ymax = -1e100
     for wave_key in tgraphs_to_plot.keys():
-        times, volts = wu.tgraph_to_arrays(tgraphs_to_plot[wave_key])
+        times, volts = wu.tgraph_to_arrays(tgraphs_to_plot[wave_key]) # 'times' in 'ns' and 'volts' in 'mV'
         xvals = times
         yvals = volts
 
         if time_or_freq == "freq":
             # if they frequested frequency domain, do the FFT
-            freqs, spectrum = wu.time2freq(times, volts)
-            xvals = freqs
+            freqs, spectrum = wu.time2freq(times, volts) # 'freqs' in 'GHz' and 'spectrum' (complex) in 'mV'
+           
             xvals = freqs*1e3 # from GHz to MHz
             yvals = 10*np.log10(np.abs(spectrum)**2 / 50 / 1e3) # from mV to dBm
+
+            # np.abs(spectrum)**2 makes spectrum in mV^2. For power, you do P = V^2/R , here R = Z_0 = 50 Ohm.
+            # mV**2/50 =  mW * 1e-3. Power is always reperesented as dBm in dB scale which is 10*log10(P in mW)
 
         ymin = min(ymin, yvals.min())
         ymax = max(ymax, yvals.max())
 
-        axd[f"ch{wave_key}"].plot(xvals, yvals) # make the plot
-        axd[f"ch{wave_key}"].set_title(f"Channel {wave_key}")
+        if wave_key < 8: # VPol channels
+            axd[f"ch{wave_key}"].plot(xvals, yvals, color = 'purple', lw = 1) # make the plot
+            axd[f"ch{wave_key}"].set_title(f"Channel {wave_key}")
+        else: # HPol channels
+            axd[f"ch{wave_key}"].plot(xvals, yvals, color = 'green', lw = 1) # make the plot
+            axd[f"ch{wave_key}"].set_title(f"Channel {wave_key}")
 
     # label axes  
     for ax in [axd["ch12"], axd["ch13"], axd["ch14"], axd["ch15"]]:
@@ -121,16 +128,20 @@ def plot_skymap(the_map = None,
         raise TypeError("Path to output file must be a string")
 
     corr_peak, peak_phi, peak_theta = mu.get_corr_map_peak(the_map)
-    the_map.SetTitle(f"Peak Phi/Theta/Corr = {peak_phi:.1f}, {peak_theta:.1f}, {corr_peak:.2f}")
+    the_map.SetTitle(f"Peak Phi/Theta/Corr = {peak_phi:.1f}/ {peak_theta:.1f}/ {corr_peak:.2f}")
     the_map.GetXaxis().SetTitle("Phi (deg)")
     the_map.GetYaxis().SetTitle("Theta (deg)")
     the_map.GetZaxis().SetTitle("Correlation")
    
     the_map.GetZaxis().SetRangeUser(0, corr_peak)
+    the_map.GetXaxis().CenterTitle(1)
+    the_map.GetYaxis().CenterTitle(1)
+    the_map.GetZaxis().CenterTitle(1)
 
     c = ROOT.TCanvas("c", "c", 700, 500)
     c.cd()
     the_map.Draw("z aitoff")
+    ROOT.gStyle.SetPalette(112) # viridis
     ROOT.gPad.SetRightMargin(0.15) # make space for the z axis
     c.SaveAs(output_file_path)
     ROOT.gPad.SetRightMargin(0) # reset, so we don't affect settings globally
