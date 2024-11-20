@@ -70,6 +70,7 @@ def plot_waveform_bundle(
                               layout="constrained")
 
     # draw the graphs, label each one appropriately
+    ymax = -1e100
     for wave_key in tgraphs_to_plot.keys():
         times, volts = wu.tgraph_to_arrays(tgraphs_to_plot[wave_key])
         xvals = times
@@ -80,6 +81,8 @@ def plot_waveform_bundle(
             freqs, spectrum = wu.time2freq(times, volts)
             xvals = freqs
             yvals = np.log10(np.abs(spectrum))
+
+        ymax = max(ymax, yvals.max())
 
         axd[f"ch{wave_key}"].plot(xvals, yvals) # make the plot
         axd[f"ch{wave_key}"].set_title(f"Channel {wave_key}")
@@ -92,7 +95,7 @@ def plot_waveform_bundle(
     
     # make limits look nice
     if time_or_freq == "freq":
-        ax.set_ylim([1,4])
+        ax.set_ylim([1,ymax+0.2])
 
     # save figure
     fig.savefig(output_file_path)
