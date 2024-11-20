@@ -80,7 +80,8 @@ def plot_waveform_bundle(
             # if they frequested frequency domain, do the FFT
             freqs, spectrum = wu.time2freq(times, volts)
             xvals = freqs
-            yvals = np.log10(np.abs(spectrum))
+            xvals = freqs*1e3 # from GHz to MHz
+            yvals = 10*np.log10(np.abs(spectrum)**2 / 50 / 1e3) # from mV to dBm
 
         ymax = max(ymax, yvals.max())
 
