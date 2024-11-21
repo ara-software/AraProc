@@ -1239,8 +1239,16 @@ class StandardReco:
                 #   waveform 2 yeilds (1.6 - 1.4) % 0.5 = 0.2 
                 #   and waveform 3 yeilds (0.9 - 0.5) % 0.5 = 0.4 
             ) 
+
+            # It was noticed that after subtracting arrival_delays[ch_ID] 
+            #   from the time array, usually all bins start and end on the same 
+            #   fraction of a nanosecond, meaning there should be no need for a
+            #   rebinning shift. 
+            # If the calculated rebinning_shift is _not_ within 0.0001 ns of 0 or
+            #   the csw_dt, add to the warning so the user is aware one or more
+            #   waveforms don't have their bins lined up as expected.
             if csw_dt - 0.0001 > abs(rebinning_shift) > 0.0001: 
-                warning += 10_00_00
+                warning += 1
 
             # Trim this waveform's length to match the CSW length
             if len(times) > len(csw_times):
@@ -1287,22 +1295,24 @@ class StandardReco:
             roll_shift_time = roll_shift_bins*(times[1] - times[0])
             if abs(roll_shift_bins) % 1.0 > 0.0001: 
                 # roll_shift is not close to an integer. Add to the warning
-                warning += 10
+                warning += 1_00
             roll_shift_bins = int(roll_shift_bins)
             if abs(roll_shift_bins)>len(times) and not is_software:
                 # More waveform to roll than there is time in the waveform,
                 #   so add to the warning tracker. 
                 # Software triggers are so short, this sometimes occurs for them.
                 #   Don't warn in this scenario.
-                warning += 10_00_00_00
+                warning += 1_00_00
             if roll_shift_bins > 0 and abs(roll_shift_bins)<len(times): 
-                # Rolling from front to back, check that signal region isn't in the front
+                # Rolling from front to back, warn if the expected signal is
+                #   in the region about to be rolled
                 if times[0] <= expected_signal_time <= times[roll_shift_bins]: 
-                    warning += 10_00
+                    warning += 1_00_00_00
             elif roll_shift_bins < 0 and abs(roll_shift_bins)<len(times): 
-                # Rolling from back to front, check that signal region isn't in the back
+                # Rolling from back to front, warn if the expected signal is
+                #   in the region about to be rolled
                 if  times[roll_shift_bins]  <= expected_signal_time <= times[-1]: 
-                    warning += 10_00
+                    warning += 1_00_00_00
             rolled_wf = np.roll( values, -roll_shift_bins )
             csw_comps[c] = rolled_wf
             rolled_times = np.linspace(
