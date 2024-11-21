@@ -1239,6 +1239,14 @@ class StandardReco:
                 #   waveform 2 yeilds (1.6 - 1.4) % 0.5 = 0.2 
                 #   and waveform 3 yeilds (0.9 - 0.5) % 0.5 = 0.4 
             ) 
+
+            # It was noticed that after subtracting arrival_delays[ch_ID] 
+            #   from the time array, usually all bins start and end on the same 
+            #   fraction of a nanosecond, meaning there should be no need for a
+            #   rebinning shift. 
+            # If the calculated rebinning_shift is _not_ within 0.0001 ns of 0 or
+            #   the csw_dt, add to the warning so the user is aware one or more
+            #   waveforms don't have their bins lined up as expected.
             if csw_dt - 0.0001 > abs(rebinning_shift) > 0.0001: 
                 warning += 10_00_00
 
