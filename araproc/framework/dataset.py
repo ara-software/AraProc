@@ -144,6 +144,7 @@ class DataWrapper:
         self.event_tree = None
         self.run_number = None
         self.station_id = None
+        self.data_station_id = None
         self.num_events = None
         self.calibrator = None
         self.raw_event_ptr = None
@@ -160,6 +161,7 @@ class DataWrapper:
         
         self.__open_tfile_load_ttree()
         self.__establish_run_number() # set the run number
+        self.__establish_data_station_id() # get station id from root file
         self.num_events = self.event_tree.GetEntries()
 
         # force AraRoot to load the proper sqlite table
@@ -223,7 +225,7 @@ class DataWrapper:
     
         self.run_number = run_ptr.value
 
-    def __establish_station_id(self):
+    def __establish_data_station_id(self):
 
         """
         This function works to find the station id.
@@ -244,7 +246,7 @@ class DataWrapper:
         """
         try:
             test = self.event_tree.Draw("abs(event.stationId)", "Entry$==0", "goff")
-            self.station_id = int(np.frombuffer(self.event_tree.GetV1(), np.dtype('float'), test)[0])
+            self.data_station_id = int(np.frombuffer(self.event_tree.GetV1(), np.dtype('float'), test)[0])
             logging.debug(f"Got the station id {self.station_id}")
         except:
             logging.critical("Gettig the station id from the eventTree failed")
@@ -331,6 +333,35 @@ class DataWrapper:
             raise 
         ROOT.SetOwnership(useful_event, True)
         return useful_event
+
+    def get_event_index(self, event_number):
+        """
+        Quickly get the index for a specific event number.
+
+        Parameters
+        ----------
+        event_number : int
+            The event number requested.
+
+        Returns
+        -------
+        event_idx : int
+            The ROOT event index with the requested event number.
+        """
+        if event_number is None:
+            raise KeyError(f"Requested event number {event_number} is invalid")
+        if event_number < 0:
+            raise KeyError(f"Requested event number {event_number} is invalid (negative)")
+
+        self.event_tree.Draw("Entry$", f"eventNumber=={event_number}", "goff")
+        if(self.event_tree.GetSelectedRows() == 1):
+            event_idx = int(self.event_tree.GetV1()[0])
+        elif(self.event_tree.GetSelectedRows() > 1):
+            raise Exception(f"More than one entry in ROOT file has event number {event_number}!")
+        else:
+            raise KeyError(f"Requested event number {event_number} not found in ROOT file.")
+
+        return event_idx
 
 class SimWrapper:
 
@@ -488,6 +519,35 @@ class SimWrapper:
         useful_event = copy.deepcopy(self.useful_event_ptr) # make a copy and pass that back
         ROOT.SetOwnership(useful_event, True)
         return useful_event
+    
+    def get_event_index(self, event_number):
+        """
+        Quickly get the index for a specific event number.
+
+        Parameters
+        ----------
+        event_number : int
+            The event number requested.
+
+        Returns
+        -------
+        event_idx : int
+            The ROOT event index with the requested event number.
+        """
+        if event_number is None:
+            raise KeyError(f"Requested event number {event_number} is invalid")
+        if event_number < 0:
+            raise KeyError(f"Requested event number {event_number} is invalid (negative)")
+
+        self.event_tree.Draw("Entry$", f"eventNumber=={event_number}", "goff")
+        if(self.event_tree.GetSelectedRows() == 1):
+            event_idx = int(self.event_tree.GetV1()[0])
+        elif(self.event_tree.GetSelectedRows() > 1):
+            raise Exception(f"More than one entry in ROOT file has event number {event_number}!")
+        else:
+            raise KeyError(f"Requested event number {event_number} not found in ROOT file.")
+
+        return event_idx
 
     def get_sim_information(self, 
                             event_idx : int = None
@@ -594,6 +654,7 @@ class AnalysisDataset:
         self.pedestal_file = None # not requried if simulation
         self.run_number = None
         self.station_id = None
+        self.data_station_id = None
         self.num_events = None
         self.num_rf_channels = None
         self.rf_channel_indices = None
@@ -632,6 +693,8 @@ class AnalysisDataset:
         
         self.run_number = self.__dataset_wrapper.run_number
         self.station_id = self.__dataset_wrapper.station_id
+        if(not self.is_simulation):
+          self.data_station_id = self.__dataset_wrapper.data_station_id
         self.num_events = self.__dataset_wrapper.num_events
         self.config = self.__dataset_wrapper.config
 
@@ -688,6 +751,13 @@ class AnalysisDataset:
         useful_event = self.__dataset_wrapper.get_useful_event(event_idx)
         
         return useful_event
+    
+    def get_event_index(self, 
+                            event_number : int = None):
+
+        event_idx = self.__dataset_wrapper.get_event_index(event_number)
+
+        return event_idx
 
     def get_event_sim_info(self, 
                              event_idx : int = None
