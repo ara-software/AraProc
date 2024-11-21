@@ -1304,11 +1304,13 @@ class StandardReco:
                 #   Don't warn in this scenario.
                 warning += 1_00_00
             if roll_shift_bins > 0 and abs(roll_shift_bins)<len(times): 
-                # Rolling from front to back, check that signal region isn't in the front
+                # Rolling from front to back, warn if the expected signal is
+                #   in the region about to be rolled
                 if times[0] <= expected_signal_time <= times[roll_shift_bins]: 
                     warning += 1_00_00_00
             elif roll_shift_bins < 0 and abs(roll_shift_bins)<len(times): 
-                # Rolling from back to front, check that signal region isn't in the back
+                # Rolling from back to front, warn if the expected signal is
+                #   in the region about to be rolled
                 if  times[roll_shift_bins]  <= expected_signal_time <= times[-1]: 
                     warning += 1_00_00_00
             rolled_wf = np.roll( values, -roll_shift_bins )
