@@ -80,7 +80,8 @@ def plot_waveform_bundle(
         if time_or_freq == "freq":
             # if they frequested frequency domain, do the FFT
             freqs, spectrum = wu.time2freq(times, volts) # 'freqs' in 'GHz' and 'spectrum' (complex) in 'mV'
-           
+            xvals = freqs
+            
             # Convert yvals to dBm
             # np.abs(spectrum)**2 makes spectrum in mV^2. For power, you do P = V^2/R , here R = Z_0 = 50 Ohm.
             # mV**2/50 =  mW * 1e-3. Power is always reperesented as dBm in dB scale which is 10*log10(P in mW)
