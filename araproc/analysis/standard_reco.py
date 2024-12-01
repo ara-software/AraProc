@@ -387,14 +387,14 @@ class StandardReco:
         # Store the direct rays results
         reco_results["distant_h_dir"] = {
             "corr": corr_distant_h_dir,  "theta": theta_distant_h_dir, "phi": phi_distant_h_dir,
-            "map": distant_map_v_dir, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
+            "map": distant_map_h_dir, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
             'which_distance': 'distant', 'solution': 0, 'polarization': 1,
         }
 
         # Store the refracted/reflected rays results in a separate dictionary
         reco_results["distant_h_ref"] = {
             "corr": corr_distant_h_ref,  "theta": theta_distant_h_ref, "phi": phi_distant_h_ref,
-            "map": distant_map_v_ref, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
+            "map": distant_map_h_ref, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
             'which_distance': 'distant', 'solution': 1, 'polarization': 1,
         }
 
