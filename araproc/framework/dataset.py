@@ -271,7 +271,7 @@ class DataWrapper:
 
         else:
             cvmfs_ped = get_cvmfs_ped_file_name(self.station_id, self.run_number)
-            if file_is_safe:
+            if file_is_safe(cvmfs_ped):
                 logging.info(f"Will try to load cvmfs ped file: {cvmfs_ped}")
                 self.path_to_pedestal_file = cvmfs_ped
             else:
