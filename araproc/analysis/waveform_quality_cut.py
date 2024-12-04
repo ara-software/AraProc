@@ -19,6 +19,8 @@ def check_waveform_saturation(wave_bundle, excluded_channels=[]):
     -------
     is_saturated : bool
         Whether a waveform is saturated.
+
+    An example event that will fail this check is A4 run 6421 event 15333
     """
     
     chans = list(wave_bundle.keys())
