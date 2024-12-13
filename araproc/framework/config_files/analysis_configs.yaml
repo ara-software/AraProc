@@ -12,7 +12,7 @@ station100:
       filt8 : { min_freq : 0.570, max_freq : 0.580, min_power_ratio : 0.02 }
       filt9 : { min_freq : 0.50, max_freq : 0.950, min_power_ratio : 0.10 }
     readout_limits:
-      rf_readout_limit: 26
+      rf_readout_limit: 20
       soft_readout_limit: 8
   config2:
     excluded_channels : []
