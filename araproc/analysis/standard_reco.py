@@ -579,7 +579,7 @@ class StandardReco:
         radius = float(radius)
 
         # Calculate average antenna z coordinates
-        _, _, avg_z = mu.calculate_avg_antenna_xyz(self.station_id, self.num_channels)
+        _, _, avg_z = mu.initialize_ARA_geometry(self.station_id).get_station_center(excluded_channels = [])
 
         # Check if surface is visible at the given radius
         if radius < (abs(avg_z) + z_thresh):
@@ -786,7 +786,7 @@ class StandardReco:
         radius = float(radius)
 
         # Calculate average antenna z-coordinate
-        _, _, avg_z = mu.calculate_avg_antenna_xyz(self.station_id, self.num_channels)
+        _, _, avg_z = mu.initialize_ARA_geometry(self.station_id).get_station_center(excluded_channels = [])
 
         # Find the shallowest bin above threshold.
         # We want the last bin ABOVE because theta goes from -90 to 90,
