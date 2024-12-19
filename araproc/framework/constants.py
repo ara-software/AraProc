@@ -15,3 +15,5 @@ num_samples_per_block = 64
 num_samples_per_dda = 32768
 num_polarization = 2
 num_trigger_type = 3
+num_RF_channels = 16
+
