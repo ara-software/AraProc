@@ -17,6 +17,7 @@ def get_corr_map_peak(the_map  = None):
         
         
     Returns
+    -------
     peak_corr : float
         The peak in the correlation  map
     peak_phi : int
@@ -43,10 +44,12 @@ def initialize_ARA_geometry(station_id):
     """
     Initialize the geometry tool and station information, providing access to all functions.
 
-    Parameters:
+    Parameters
+    ----------
     - station_id (int): ID of the station.
 
-    Returns:
+    Returns
+    -------
     - Object with dynamically bound functions for use.
     """
     # Load required ARA libraries
@@ -74,6 +77,7 @@ def initialize_ARA_geometry(station_id):
            list of channels (antennas) to exclude.
 
         Returns
+        -------
         av_ant_position:tuple
            station center (x,y,z) for given station 
         """ 
@@ -101,6 +105,7 @@ def initialize_ARA_geometry(station_id):
             The index of calpulser (0-3) 
         
         Returns
+        -------
         local_calpulser: list 
             The [x,y,z] position of calpulser
         """
@@ -132,11 +137,13 @@ def initialize_ARA_geometry(station_id):
         """
         Convert global coordinates to station-centric coordinates.
 
-        Parameters:
+        Parameters
+        ----------
         - array_coords (list or numpy array): 
           Global coordinates [x, y, z].
 
-        Returns:
+        Returns
+        -------
         - output_coords: numpy array
           Station-centric coordinates [x', y', z'].
         """
@@ -245,7 +252,7 @@ def get_known_landmarks(station_id,list_of_landmarks = None,cal_pulser_index=Non
     """
     Parameters
     ----------    
-    station_id : int
+    station_id (int): ID of the station.
     cal_pulser_index : int (0-3)   
       which calpulser you want to see in your skymap
     list_of_landmarks: list
