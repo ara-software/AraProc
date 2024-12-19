@@ -294,6 +294,7 @@ class AraGeom:
                 this_pulser = self.get_distant_pulsers(pulser, spice_depth)
                 r, t, p = self.get_relative_cartesian_to_spherical(station_center, this_pulser)
                 collect[pulser] = [r, t, p]
+                del r,t,p 
 
         for known_loc in ["ICL", "WT", "SPT"]:
             if known_loc in list_of_landmarks:
@@ -302,5 +303,7 @@ class AraGeom:
                 st_centric = self.get_global_to_station_centric(this_loc[:3])
                 r, t, p = self.get_relative_cartesian_to_spherical(station_center, st_centric)
                 collect[known_loc] = [r, t, p]
+                del r,t,p
+
         return collect
 

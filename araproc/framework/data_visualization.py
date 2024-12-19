@@ -172,6 +172,11 @@ def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth =
            vertical_line.SetLineStyle(2)  # Dashed line
            vertical_line.SetLineWidth(2)
            vertical_line.Draw("SAME")
+           label = ROOT.TLatex(phi + 2, theta + 50, "SP direction")  # Offset for clarity
+           label.SetTextColor(ROOT.kBlue)
+           label.SetTextSize(0.03)
+           label.Draw("SAME")
+           labels.append(label)
 
     ROOT.gStyle.SetPalette(112) # viridis
     ROOT.gPad.SetRightMargin(0.15) # make space for the z axis
