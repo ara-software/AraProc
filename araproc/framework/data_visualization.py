@@ -143,17 +143,18 @@ def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth =
     the_map.Draw("COLZ") # keeping this off for now: the_map.Draw("z aitoff")
 
     ## Add known locations to the skymap 
-    landmark_dict = mu.get_known_landmarks(st,list_of_landmarks,cal_pulse_index,spice_depth)
+    landmark_dict = mu.AraGeom(st).get_known_landmarks(list_of_landmarks,cal_pulse_index,spice_depth)
     markers = []  # Keep references to markers to avoid garbage collection
     labels = []   # Keep references to labels
 
     for entry in landmark_dict.keys():
         phi = landmark_dict[entry][2]
         theta = landmark_dict[entry][1]
-
         # Draw the marker
         marker = ROOT.TMarker(phi, theta, 29)  # Style 29: Star
-        marker.SetMarkerColor(ROOT.kBlack if entry == "CP" else ROOT.kRed)  # Black for CP, Red for others
+        color = ROOT.kBlack if "CP" in entry else ROOT.kRed
+        marker.SetMarkerColor(color)
+
         marker.SetMarkerSize(2.0)
         marker.Draw("SAME")
         markers.append(marker)
