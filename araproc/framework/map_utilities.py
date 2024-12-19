@@ -96,7 +96,7 @@ class AraGeom:
         Parameters
         ----------
         list_of_cal_pulser_indices: list
-            The indices of calpulser [0,1,2,3] Note: 0 and 2 for HPols and 1 and 3 are VPols
+            The indices of calpulser [0,1,2,3] Note: 0 & 2 are HPols and 1 & 3 are VPols (0&1 are in one string and 2&3 are in another string)
 
         Returns
         -------

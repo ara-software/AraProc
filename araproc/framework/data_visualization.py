@@ -120,6 +120,25 @@ def plot_waveform_bundle(
 def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth = None,the_map = None,
                 output_file_path = None
                 ):
+    """
+    This function returns skymap for given map type
+    Parameters
+    ----------
+    list_of_cal_pulser_indices : list ## example [0,1,2,3]
+       which calpulsers you want to see in your skymap
+    list_of_landmarks: list ## example ['ICL',IC22S']
+       which landmarks you want to see in your skymap
+    spice_depth : int/float
+       the depth of spice pulser ## example -1451.3
+    the_map:
+       reconstruction results for given map 
+    output_file_path: str
+       path to the output file
+  
+    Returns
+    -------
+    A plotted skymap in pdf
+    """
     
     if the_map is None:
         raise Exception("the_map is None")
