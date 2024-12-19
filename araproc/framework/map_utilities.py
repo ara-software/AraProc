@@ -13,7 +13,6 @@ def get_corr_map_peak(the_map  = None):
     the_map : ROOT.TH2D
         A 2D map you want the peak found
         
-        
     Returns
     -------
     peak_corr : float
@@ -101,8 +100,8 @@ class AraGeom:
 
         Returns
         -------
-        local_calpulser: list
-            The [x, y, z] position of calpulser
+        calpulsers: list
+            A dictionary of [x, y, z] position of calpulsers
         """
 
         calpulsers = {}
@@ -119,9 +118,11 @@ class AraGeom:
         Parameters
         ----------
         easting:
-          The easting coordiates from surveyour's note in feets
+          The easting coordiate from surveyour's note in feets
         northing:
-          The northing coordiates from surveyour's note in feets
+          The northing coordiate from surveyour's note in feets
+        elevation:
+          The elevation coordiate from surveyour's note in feets
 
         Returns
         -------
@@ -163,6 +164,7 @@ class AraGeom:
            ICL : stands for IceCube Lab
            WT : Wind Turbine
            SPT : South Pole Telescope
+
         Returns
         -------
         landmarks : array
@@ -195,6 +197,9 @@ class AraGeom:
           IC1S : IceCube 1S pulser
           IC22S : IceCube 22S pulser
           Spice : Spicecore pulser
+        northing:
+          The northing coordiates from surveyour's note in feets
+
         Returns
         -------
         st_centric_coords: array
@@ -262,6 +267,7 @@ class AraGeom:
           which landmarks you want to see in your skymap
         spice_depth : int/float
           the depth of spice pulser ## example -1451.3 
+
         Returns
         -------
         collect : dict
