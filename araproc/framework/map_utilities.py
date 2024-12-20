@@ -263,7 +263,7 @@ class AraGeom:
         ----------
         list_of_cal_pulser_indices : list ## example [0,1,2,3]
           which calpulsers you want to see in your skymap
-        list_of_landmarks: list ## example ['ICL',IC22S']
+        list_of_landmarks: list ## example ['ICL',IC22S','SPT','IC1S','Spice','WT']
           which landmarks you want to see in your skymap
         spice_depth : int/float
           the depth of spice pulser ## example -1451.3 
