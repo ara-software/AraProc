@@ -263,7 +263,7 @@ class AraGeom:
         ----------
         list_of_cal_pulser_indices : list ## example [0,1,2,3]
           which calpulsers you want to see in your skymap
-        list_of_landmarks: list ## example ['ICL',IC22S','SPT','IC1S','Spice','WT']
+        list_of_landmarks: list ## example ['ICL','IC22S','SPT','IC1S','Spice','WT']
           which landmarks you want to see in your skymap
         spice_depth : int/float
           the depth of spice pulser ## example -1451.3 
@@ -276,9 +276,14 @@ class AraGeom:
 
         if list_of_landmarks is None:
             list_of_landmarks = ["IC22S", "ICL"]
+        elif list_of_landmarks == ['all']:
+             list_of_landmarks = ['ICL','IC22S','SPT','IC1S','WT']   
         if list_of_cal_pulser_indices is None:
             list_of_cal_pulser_indices = [3]
-
+        elif list_of_cal_pulser_indices == ['all']:
+             list_of_cal_pulser_indices = [0,1,2,3]
+        if spice_depth is not None:
+           list_of_landmarks.append('Spice')
         collect = {}
         
         calpulser = self.get_local_CP(list_of_cal_pulser_indices)

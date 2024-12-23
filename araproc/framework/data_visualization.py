@@ -179,9 +179,13 @@ def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth =
         markers.append(marker)
 
         # Draw the label
-        label = ROOT.TLatex(phi + 2, theta - 2, entry)  # Offset for clarity
+        if entry in ['IC1S', 'SPT','CP1','CP3']:
+           offset = 4 
+        else:
+           offset = -4
+        label = ROOT.TLatex(phi + offset, theta - offset, entry)  # Offset for clarity
         label.SetTextColor(ROOT.kWhite)
-        label.SetTextSize(0.03)
+        label.SetTextSize(0.02)
         label.Draw("SAME")
         labels.append(label)
 
