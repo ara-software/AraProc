@@ -120,6 +120,11 @@ class DataWrapper:
         This will be inferred from the data itself
     station_id: 
         station id from 1->5, 100 (only A1-A5 supported for now)
+    do_not_calibrate: bool
+        a boolean that controls if the calibration (pedestals, voltage ad timing cal files) will be loaded and applied
+        If True, then you can only access "raw" events, meaning no waveforms.
+        If False, then AraProc will ask AraRoot to perform AraCalType::kLatestCalib (pedestals, and timing/volt cal). User will have access to waveforms.
+        Most users will leave this False.
     num_events: int
         number of data events in the data ROOT file
     raw_event_ptr : RawAtriStationEvent
@@ -135,11 +140,13 @@ class DataWrapper:
     def __init__(self,
                  path_to_data_file : str = None,
                  path_to_pedestal_file : str = None,
-                 station_id : int = None
+                 station_id : int = None,
+                 do_not_calibrate : bool = False
                  ):
         
         self.path_to_data_file = None
         self.path_to_pedestal_file = None
+        self.do_not_calibrate = do_not_calibrate
         self.root_tfile = None
         self.event_tree = None
         self.run_number = None
@@ -174,8 +181,10 @@ class DataWrapper:
         self.__assign_config()
 
         # now pedestals
-        self.path_to_pedestal_file = path_to_pedestal_file
-        self.__load_pedestal(path_to_pedestal_file) # load the pedestals
+        logging.warning(f"do_not_calibrate = {self.do_not_calibrate}. Data will not be calibrated...")
+        if not self.do_not_calibrate:
+            self.path_to_pedestal_file = path_to_pedestal_file
+            self.__load_pedestal(path_to_pedestal_file) # load the pedestals
 
     def __open_tfile_load_ttree(self):
 
@@ -293,6 +302,46 @@ class DataWrapper:
             logging.critical("Setting the AtriPedFile failed")
             raise
 
+    def get_raw_event(self, event_idx):
+        """
+        Fetch a specific *un*calibrated event
+
+        Parameters
+        ----------
+        event_idx : int
+            The ROOT event index to be passed to GetEntry().
+            Please note this is the ROOT TTree event index!
+            Not the rawAtriEvPtr->eventNumber variable!
+
+        Returns
+        -------
+        raw_event : RawAtriStationEvent
+            A *un*calibrated RawAtriStationEvent
+        """
+        if event_idx is None:
+            raise KeyError(f"Requested event index {event_idx} is invalid")
+        if event_idx >= self.num_events:
+            raise KeyError(f"Requested event index {event_idx} exceeds number of events in the run ({self.num_events})")
+        if event_idx <0:
+            raise KeyError(f"Requested event index {event_idx} is invalid (negative)")
+
+        try:
+            self.event_tree.GetEntry(event_idx)
+            logging.debug(f"Called root get entry {event_idx}")
+        except:
+            logging.critical(f"Getting entry {event_idx} failed.")
+            raise
+        
+        raw_event = None
+        try:
+            raw_event = copy.deepcopy(self.raw_event_ptr)
+            logging.debug(f"Copied raw event {event_idx}")
+        except:
+            logging.critical(f"Copying Raw event index {event_idx} failed.")
+            raise 
+        ROOT.SetOwnership(raw_event, True)
+        return raw_event
+
     def get_useful_event(self, event_idx):
         """
         Fetch a specific calibrated event
@@ -316,6 +365,9 @@ class DataWrapper:
         if event_idx <0:
             raise KeyError(f"Requested event index {event_idx} is invalid (negative)")
         
+        if self.do_not_calibrate:
+            raise Exception("Dataset is not calibrated! You are not allowed to get a useful event!")
+
         try:
             self.event_tree.GetEntry(event_idx)
             logging.debug(f"Called root get entry {event_idx}")
@@ -609,6 +661,11 @@ class AnalysisDataset:
         If it's not None, the user-specified pedestals are used.
         This argument is imcompatible with is_simulation = True (since AraSim output is already calibrated.)
         An error will be thrown if those two things clash.
+    do_not_calibrate : bool
+        A boolean to control if you want real data to be calibrated or not.
+        If True, then you can only access "raw" events, meaning no waveforms.
+        If False, then AraProc will ask AraRoot to perform AraCalType::kLatestCalib (pedestals, and timing/volt cal). User will have access to waveforms.
+        Most users will leave this False.
     run_number: int
         ARA run number for this dataset
         This will be inferred from the data itself
@@ -645,10 +702,15 @@ class AnalysisDataset:
                  station_id : int,
                  path_to_pedestal_file : str = None,
                  interp_tstep : float = 0.5 ,
-                 is_simulation : bool = False
+                 is_simulation : bool = False,
+                 do_not_calibrate : bool = False
                  ):
     
         self.is_simulation = is_simulation
+        self.do_not_calibrate = do_not_calibrate
+
+        if self.is_simulation and self.do_not_calibrate:
+            raise Exception(f"Simulation (is_simulation = {self.is_simulation}) and uncalibrated data (do_not_calibrate = {self.do_not_calibrate}) are incompatible settings")
 
         self.path_to_data_file = None
         self.pedestal_file = None # not requried if simulation
@@ -676,12 +738,12 @@ class AnalysisDataset:
                              "\t    incorrect/anomalous behavior for such small timesteps, and CW peaks are not properly\n"
                              "\t    removed. Comment this warning if you want, but PROCEED WITH CAUTION.")
         self.interp_tstep = interp_tstep
-
         
         if not self.is_simulation:
             self.__dataset_wrapper = DataWrapper(path_to_data_file,
                                                  path_to_pedestal_file,
-                                                 station_id=station_id
+                                                 station_id=station_id,
+                                                 do_not_calibrate = self.do_not_calibrate
                                              )
         else:
             self.__dataset_wrapper = SimWrapper(path_to_data_file,
@@ -743,11 +805,25 @@ class AnalysisDataset:
 
         self.__lowpass_filter = lp
         self.__highpass_filter = hp
+
+    def get_raw_event(self, 
+                             event_idx : int = None
+                             ):
+
+        if self.is_simulation:
+            raise Exception("You are working with simulation! Cannot get a raw event!")
+
+        raw_event = self.__dataset_wrapper.get_raw_event(event_idx)
+        
+        return raw_event  
     
     def get_useful_event(self, 
                              event_idx : int = None
                              ):
         
+        if self.do_not_calibrate:
+            raise Exception("Dataset is not calibrated! You are not allowed to get a useful event!")
+
         useful_event = self.__dataset_wrapper.get_useful_event(event_idx)
         
         return useful_event
