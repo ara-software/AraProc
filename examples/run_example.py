@@ -16,6 +16,7 @@ logging.getLogger().setLevel(logging.INFO)
 d = dataset.AnalysisDataset(
     station_id=5,
     path_to_data_file="/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/event005626.root",
+    do_not_calibrate = False, # turn this flag to True if you only need raw atri events
 )
 iter_start = 0
 iter_stop = 200
@@ -57,60 +58,66 @@ reco = sr.StandardReco(d.station_id,
 
 for e in range(iter_start, iter_stop, 1):
 
-    useful_event = d.get_useful_event(e)
+    if not d.is_simulation:
+        # if this is not simulation, we can get raw events
+        raw_event = d.get_raw_event(e)
     
-    if d.is_simulation:
-        # if and only the dataset is simulation, we can ask for access
-        # to some of the MC truth information 
-        sim_info = d.get_event_sim_info(e)
-        print(f"This event has weight {sim_info['weight']:.1e}, Energy {sim_info['enu']:.1e}")
-
-    process_event = False
-    if d.is_simulation:
-        # for simulated events, I'm willing to plot everything
-        process_event = True
-    else:
-        # but in the other case, I'd like to showcase either the CW contaminated event for A2
-        # or just cal pulsers for A5
-        station2_case = (d.station_id==2) and (useful_event.eventNumber == 213179)
-        station5_case = (d.station_id==5) and (useful_event.isCalpulserEvent())
-        process_event = station2_case or station5_case
-
-    if process_event:
-      
-        # by default, you get all the bells and whistles
-        # (interpolated, dedispersed, cw filtered, and bandpassed)
-        wavepacket = d.get_wavepacket(useful_event)
-        wave_bundle = wavepacket["waveforms"]
-
-        # print the average snr across channels 
-        avg_snr = snr.get_avg_snr(wave_bundle, excluded_channels=d.excluded_channels)
-        print(f"The Average SNR is {avg_snr:.1f}")
- 
-        # run our standard suite of reconstructions
-        reco_results = reco.do_standard_reco(wavepacket)
-
-        pair_idx = reco.get_pair_index(1, 2, reco.pairs_v)
-
-        # here's how we can lookup arrival times given a reconstructed direction
-        arrival_time = reco.lookup_arrival_time(channel = 0, 
-                                                theta = reco_results["pulser_v"]["theta"], 
-                                                phi = reco_results["pulser_v"]["phi"],
-                                                which_distance="nearby",
-                                                solution=0,
-                                                )
-        print(f"Arrival time at ch 0 is {arrival_time:.1f} ns")
-
-        # plot the waveforms
-        dv.plot_waveform_bundle(wave_bundle, 
-                    time_or_freq="time",
-                    output_file_path=f"./station_{d.station_id}_run_{d.run_number}_event_{e}_waves.png",
-                    )
+    if not d.do_not_calibrate:
+        # only if we have calibrated data
+        useful_event = d.get_useful_event(e)
         
-        # and also plot one of the skymaps (in this case, the vpol map the distance of the pulser)
-        dv.plot_skymap(reco_results["pulser_v"]["map"],
-                       output_file_path=f"./station_{d.station_id}_run_{d.run_number}_event_{e}_map.png",
-                       )
+        if d.is_simulation:
+            # if and only the dataset is simulation, we can ask for access
+            # to some of the MC truth information 
+            sim_info = d.get_event_sim_info(e)
+            print(f"This event has weight {sim_info['weight']:.1e}, Energy {sim_info['enu']:.1e}")
+
+        process_event = False
+        if d.is_simulation:
+            # for simulated events, I'm willing to plot everything
+            process_event = True
+        else:
+            # but in the other case, I'd like to showcase either the CW contaminated event for A2
+            # or just cal pulsers for A5
+            station2_case = (d.station_id==2) and (useful_event.eventNumber == 213179)
+            station5_case = (d.station_id==5) and (useful_event.isCalpulserEvent())
+            process_event = station2_case or station5_case
+
+        if process_event:
+        
+            # by default, you get all the bells and whistles
+            # (interpolated, dedispersed, cw filtered, and bandpassed)
+            wavepacket = d.get_wavepacket(useful_event)
+            wave_bundle = wavepacket["waveforms"]
+
+            # print the average snr across channels 
+            avg_snr = snr.get_avg_snr(wave_bundle, excluded_channels=d.excluded_channels)
+            print(f"The Average SNR is {avg_snr:.1f}")
+    
+            # run our standard suite of reconstructions
+            reco_results = reco.do_standard_reco(wavepacket)
+
+            pair_idx = reco.get_pair_index(1, 2, reco.pairs_v)
+
+            # here's how we can lookup arrival times given a reconstructed direction
+            arrival_time = reco.lookup_arrival_time(channel = 0, 
+                                                    theta = reco_results["pulser_v"]["theta"], 
+                                                    phi = reco_results["pulser_v"]["phi"],
+                                                    which_distance="nearby",
+                                                    solution=0,
+                                                    )
+            print(f"Arrival time at ch 0 is {arrival_time:.1f} ns")
+
+            # plot the waveforms
+            dv.plot_waveform_bundle(wave_bundle, 
+                        time_or_freq="time",
+                        output_file_path=f"./station_{d.station_id}_run_{d.run_number}_event_{e}_waves.png",
+                        )
+            
+            # and also plot one of the skymaps (in this case, the vpol map the distance of the pulser)
+            dv.plot_skymap(reco_results["pulser_v"]["map"],
+                        output_file_path=f"./station_{d.station_id}_run_{d.run_number}_event_{e}_map.png",
+                        )
 
 
 
