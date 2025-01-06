@@ -123,7 +123,7 @@ class DataWrapper:
     do_not_calibrate: bool
         a boolean that controls if the calibration (pedestals, voltage ad timing cal files) will be loaded and applied
         If True, then you can only access "raw" events, meaning no waveforms.
-        If False, then AraProc will load the pedestals, and timing/volt cal, and you will have acces to waveforms.
+        If False, then AraProc will ask AraRoot to perform AraCalType::kLatestCalib (pedestals, and timing/volt cal). User will have access to waveforms.
         Most users will leave this False.
     num_events: int
         number of data events in the data ROOT file
@@ -664,7 +664,7 @@ class AnalysisDataset:
     do_not_calibrate : bool
         A boolean to control if you want real data to be calibrated or not.
         If True, then you can only access "raw" events, meaning no waveforms.
-        If False, then AraProc will load the pedestals, and timing/volt cal, and you will have acces to waveforms.
+        If False, then AraProc will ask AraRoot to perform AraCalType::kLatestCalib (pedestals, and timing/volt cal). User will have access to waveforms.
         Most users will leave this False.
     run_number: int
         ARA run number for this dataset
