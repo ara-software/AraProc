@@ -181,10 +181,11 @@ class DataWrapper:
         self.__assign_config()
 
         # now pedestals
-        logging.warning(f"do_not_calibrate = {self.do_not_calibrate}. Data will not be calibrated...")
         if not self.do_not_calibrate:
             self.path_to_pedestal_file = path_to_pedestal_file
             self.__load_pedestal(path_to_pedestal_file) # load the pedestals
+        else:
+            logging.warning(f"do_not_calibrate = {self.do_not_calibrate}. Data will not be calibrated...")
 
     def __open_tfile_load_ttree(self):
 
