@@ -167,6 +167,20 @@ def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth =
     labels = []   # Keep references to labels
 
     for entry in landmark_dict.keys():
+        if entry == 'critical_angle':
+           critical_ang = landmark_dict[entry]
+           horizontal_line = ROOT.TLine(-180, critical_ang, 180, critical_ang)  # Draw line from theta=-90 to theta=90
+           horizontal_line.SetLineColor(ROOT.kRed)
+           horizontal_line.SetLineStyle(2)  # Dashed line
+           horizontal_line.SetLineWidth(2)
+           horizontal_line.Draw("SAME")
+           label1 = ROOT.TLatex(150,  critical_ang + 5, "critical angle")  # Offset for clarity
+           label1.SetTextColor(ROOT.kRed)
+           label1.SetTextSize(0.03)
+           label1.Draw("SAME")
+           labels.append(label1)
+           continue
+
         phi = landmark_dict[entry][2]
         theta = landmark_dict[entry][1]
         # Draw the marker
@@ -195,7 +209,7 @@ def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth =
            vertical_line.SetLineStyle(2)  # Dashed line
            vertical_line.SetLineWidth(2)
            vertical_line.Draw("SAME")
-           label = ROOT.TLatex(phi + 2, theta + 50, "SP direction")  # Offset for clarity
+           label = ROOT.TLatex(phi + 2, theta + 30, "SP direction")  # Offset for clarity
            label.SetTextColor(ROOT.kBlue)
            label.SetTextSize(0.03)
            label.Draw("SAME")
