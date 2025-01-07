@@ -24,6 +24,14 @@ iter_stop = shk.num_data_points
 for p in range(iter_start, iter_stop, 1):
 
     hk = shk.get_data_point(p)
-    dda_v_0 = hk.getDdaVoltage(0)
-    print(dda_v_0)
 
+    # how to get dda/tda voltages and currents
+    dda_volt = []
+    dda_curr = []
+    tda_volt = []
+    tda_curr = []
+    for dda in range(4):
+        dda_volt.append(hk.getDdaVoltage(dda))
+        dda_curr.append(hk.getDdaCurrent(dda))
+        tda_volt.append(hk.getTdaVoltage(dda))
+        tda_curr.append(hk.getTdaCurrent(dda))
