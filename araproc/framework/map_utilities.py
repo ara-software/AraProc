@@ -268,10 +268,8 @@ class AraGeom:
         station_depth = abs(self.get_station_center()[2])
         n_air = 1.0
         n_ice = 1.78 - 0.454*np.exp(-0.0202*station_depth)
-        print('station depth in meter', station_depth, n_ice)
         critical_angle = np.arcsin(n_air/n_ice)
         critical_angle *= (180/np.pi)
-        print(critical_angle)
 
         return 90 - critical_angle  ## In terms of elevation angle
 
@@ -329,6 +327,5 @@ class AraGeom:
                 collect[known_loc] = [r, t, p]
                 del r,t,p
         collect['critical_angle'] = self.get_critical_angle()
-        print('collect', collect)
         return collect
 
