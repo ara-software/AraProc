@@ -24,8 +24,8 @@ class SensorHkWrapper:
         the pointer to the ROOT TFile that corresponds to the opened sensor hk file
     sensor_tree : ROOT TTree
         the sensorHkTree
-    num_entries: int
-        number of entries in the sensor hk file
+    num_data_points: int
+        number of data points recorded in the sensor hk file
     """
 
     def __init__(self,
@@ -43,12 +43,7 @@ class SensorHkWrapper:
             raise Exception(f"{path_to_hk_file} has a problem!")
         
         self.__open_tfile_load_ttree()
-        # self.num_events = self.sensor_tree.GetEntries()
-
-    # def __del__(self):
-    #     # destructor
-    #     print("Call destructor")
-    #     # del self.sensor_hk_ptr
+        self.num_data_points = self.sensor_tree.GetEntries()
     
     def __open_tfile_load_ttree(self):
 
@@ -69,8 +64,14 @@ class SensorHkWrapper:
             self.root_tfile.Close() # close the file
             raise
 
-        # load up the ARA event
+        # load up the sensor hk data point
         self.sensor_hk_ptr = ROOT.AtriSensorHkData()
+        
+        # for whatever reason, pyroot is happier when C++ remains in control
+        # when this is True, or not called at all, garbage collection triggers a segfault
+        # so let's put this here I guess (this will probably come back to bite me...)
+        ROOT.SetOwnership(self.sensor_hk_ptr, False) 
+        
         try:
             self.sensor_tree.SetBranchAddress("sensorHk",ROOT.AddressOf(self.sensor_hk_ptr))
             logging.debug("Successfully assigned AtriSensorHkData branch")

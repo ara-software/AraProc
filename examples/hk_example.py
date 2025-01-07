@@ -17,4 +17,4 @@ logging.getLogger().setLevel(logging.DEBUG)
 shk = housekeeping.SensorHkWrapper(
     path_to_hk_file = "/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/sensorHk005626.root"
 )
-print("Did the thing")
+print(shk.num_data_points)
