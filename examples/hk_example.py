@@ -2,7 +2,14 @@ import araproc # noqa: F401
 from araproc.framework import dataset
 from araproc.framework import housekeeping
 
+###################################################
+###################################################
+###################################################
 # an example of how to read a sensor Hk file
+###################################################
+###################################################
+###################################################
+
 shk = housekeeping.SensorHkWrapper(
     path_to_hk_file = "/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/sensorHk005626.root"
 )
@@ -28,7 +35,14 @@ for p in range(shk.num_data_points):
         tda_curr.append(hk.getTdaCurrent(dda))
         tda_temp.append(hk.getTdaTemp(dda))
 
+###################################################
+###################################################
+###################################################
 # an example of how to read a event Hk file
+###################################################
+###################################################
+###################################################
+
 ehk = housekeeping.EventHkWrapper(
     path_to_hk_file = "/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/eventHk005626.root"
 )
@@ -48,7 +62,14 @@ for p in range(ehk.num_data_points):
             rates.append(hk.getSingleChannelRateHz(dda,chan))
             thresh.append(hk.getSingleChannelThreshold(dda,chan))
 
+###################################################
+###################################################
+###################################################
 # an example of how to read a data config file
+###################################################
+###################################################
+###################################################
+
 cfg = housekeeping.ConfigFileWrapper(
     path_to_config_file = "/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/configFile.run005626.dat"
 )
