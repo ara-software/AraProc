@@ -80,7 +80,7 @@ class SensorHkWrapper:
             self.root_tfile.Close() # close the file
             raise
     
-    def get_data_point(self, point_idx):
+    def get_sensor_data_point(self, point_idx):
         if point_idx is None:
             raise KeyError(f"Requested data point index {point_idx} is invalid")
         if point_idx >= self.num_data_points:
