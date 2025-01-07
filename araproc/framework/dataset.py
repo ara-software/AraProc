@@ -3,46 +3,17 @@ import copy
 import ctypes
 import logging
 import numpy as np
-import os
 import ROOT
 import yaml
 
 from araproc.framework import waveform_utilities as wu
 from araproc.framework import constants as const
+from araproc.framework import file_utilities as futil
 from araproc.analysis import dedisperse as dd
 from araproc.analysis import cw_filter as cwf
 
 import importlib.resources as pkg_resources
 from . import config_files
-
-def file_is_safe(file_path):
-    
-    is_safe = False
-
-    if not isinstance(file_path, str):
-        logging.error(f"Path to file must be a string. Is {type(file_path)}")
-    if not os.path.exists(file_path):
-        logging.error(f"File ({file_path}) not found")
-    if not os.path.isfile(file_path):
-        logging.error(f"{file_path} is not a file")
-    else:
-        is_safe = True
-    
-    return is_safe
-
-def get_cvmfs_ped_file_name(station_id, run_number):
-
-    if station_id not in const.valid_station_ids:
-        raise Exception(f"Station id {station_id} is not supported")
-
-    if not np.isfinite(run_number) or run_number < 0:
-        raise Exception(f"Run number {run_number} is not supported")
-    
-    cvmfs_top_dir = "/cvmfs/icecube.osgstorage.org/icecube/PUBLIC/groups/arasoft/pedestals_v2"
-    start = start = run_number - (run_number % 1000)
-    stop = start + 999
-    file=f"station_{station_id}/{start:07d}-{stop:07d}/station_{station_id}_run_{run_number:07d}.gz"
-    return os.path.join(cvmfs_top_dir, file)
 
 
 def get_filters(station_id, analysis_config):
@@ -161,7 +132,7 @@ class DataWrapper:
             raise Exception(f"Station id {station_id} is not supported")
         self.station_id = station_id
 
-        if file_is_safe(path_to_data_file):
+        if futil.file_is_safe(path_to_data_file):
             self.path_to_data_file = path_to_data_file
         else:
             raise Exception(f"{path_to_data_file} has a problem!")
@@ -273,15 +244,15 @@ class DataWrapper:
         # otherwise, try to find it in cvmfs
         # and if that doesn't work, raie an error
         if path_to_pedestal_file is not None:
-            if file_is_safe(path_to_pedestal_file):
+            if futil.file_is_safe(path_to_pedestal_file):
                 logging.info(f"Will try to load custom ped file: {path_to_pedestal_file}")
                 self.path_to_pedestal_file = path_to_pedestal_file
             else:
                 raise Exception(f"{path_to_pedestal_file} has a problem!")
 
         else:
-            cvmfs_ped = get_cvmfs_ped_file_name(self.station_id, self.run_number)
-            if file_is_safe(cvmfs_ped):
+            cvmfs_ped = futil.get_cvmfs_ped_file_name(self.station_id, self.run_number)
+            if futil.file_is_safe(cvmfs_ped):
                 logging.info(f"Will try to load cvmfs ped file: {cvmfs_ped}")
                 self.path_to_pedestal_file = cvmfs_ped
             else:
@@ -467,7 +438,7 @@ class SimWrapper:
             raise Exception(f"Station id {station_id} is not supported")
         self.station_id = station_id
 
-        if file_is_safe(path_to_data_file):
+        if futil.file_is_safe(path_to_data_file):
             self.path_to_data_file = path_to_data_file
         else:
             raise Exception(f"{path_to_data_file} has a problem!")
