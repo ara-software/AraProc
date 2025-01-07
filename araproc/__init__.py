@@ -4,7 +4,7 @@ import os
 
 # libAraEvent
 try:
-    success_flag_libAraEvent = ROOT.gSystem.Load(os.environ.get("ARA_UTIL_INSTALL_DIR")+"/lib/libAraEvent.so")
+    success_flag_libAraEvent = ROOT.gSystem.Load(os.environ.get("ARA_ROOT_LIB_DIR")+"/libAraEvent.so")
 except: # noqa: E722
     logging.critical("Loading libAraEvent.so failed. Stop all work!")
     raise ImportError("Failed to load libAraEvent.so")
@@ -13,7 +13,7 @@ if success_flag_libAraEvent not in [0, 1]:
 
 # libAra (this is AraSim)
 try:
-    success_flag_libAra = ROOT.gSystem.Load(os.environ.get("ARA_UTIL_INSTALL_DIR")+"/lib/libAra.so")
+    success_flag_libAra = ROOT.gSystem.Load(os.environ.get("ARA_SIM_LIB_DIR")+"/libAra.so")
 except: # noqa: E722
     logging.critical("Loading libAra.so failed. Stop all work!")
     raise ImportError("Failed to load libAra.so")
@@ -23,7 +23,7 @@ if success_flag_libAra not in [0, 1]:
 
 # libAraCorrelator
 try:
-    success_flag_libAraCorrelator = ROOT.gSystem.Load(os.environ.get("ARA_UTIL_INSTALL_DIR")+"/lib/libAraCorrelator.so")
+    success_flag_libAraCorrelator = ROOT.gSystem.Load(os.environ.get("ARA_ROOT_LIB_DIR")+"/libAraCorrelator.so")
 except: # noqa: E722
     logging.critical("Loading libAraCorrelator.so failed. Stop all work!")
     raise ImportError("Failed to load libAraCorrelator.so")
