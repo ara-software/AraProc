@@ -6,10 +6,7 @@ from araproc.framework import housekeeping
 shk = housekeeping.SensorHkWrapper(
     path_to_hk_file = "/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/sensorHk005626.root"
 )
-iter_start = 0
-iter_stop = shk.num_data_points
-
-for p in range(iter_start, iter_stop, 1):
+for p in range(shk.num_data_points):
 
     hk = shk.get_data_point(p)
 
@@ -35,10 +32,7 @@ for p in range(iter_start, iter_stop, 1):
 ehk = housekeeping.EventHkWrapper(
     path_to_hk_file = "/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/eventHk005626.root"
 )
-iter_start = 0
-iter_stop = ehk.num_data_points
-
-for p in range(iter_start, iter_stop, 1):
+for p in range(ehk.num_data_points):
 
     hk = ehk.get_data_point(p)
 
