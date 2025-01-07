@@ -2,9 +2,6 @@ import araproc # noqa: F401
 from araproc.framework import dataset
 from araproc.framework import housekeeping
 
-import logging
-logging.getLogger().setLevel(logging.DEBUG)
-
 # an example of how to read a sensor Hk file
 shk = housekeeping.SensorHkWrapper(
     path_to_hk_file = "/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/sensorHk005626.root"
@@ -14,7 +11,7 @@ iter_stop = shk.num_data_points
 
 for p in range(iter_start, iter_stop, 1):
 
-    hk = shk.get_sensor_data_point(p)
+    hk = shk.get_data_point(p)
 
     # how to get the data point unix time
     unix_time = hk.unixTime
@@ -34,3 +31,25 @@ for p in range(iter_start, iter_stop, 1):
         tda_curr.append(hk.getTdaCurrent(dda))
         tda_temp.append(hk.getTdaTemp(dda))
 
+# an example of how to read a event Hk file
+ehk = housekeeping.EventHkWrapper(
+    path_to_hk_file = "/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/eventHk005626.root"
+)
+iter_start = 0
+iter_stop = ehk.num_data_points
+
+for p in range(iter_start, iter_stop, 1):
+
+    hk = ehk.get_data_point(p)
+
+    # how to get the data point unix time
+    unix_time = hk.unixTime
+
+    # the L1 rate (threshold per channel)
+    # nb: only the first four channels of each dda are actually meaningful
+    rates = []
+    thresh = []
+    for dda in range(4):
+        for chan in range(4):
+            rates.append(hk.getSingleChannelRateHz(dda,chan))
+            thresh.append(hk.getSingleChannelThreshold(dda,chan))
