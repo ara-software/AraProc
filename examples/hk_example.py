@@ -17,4 +17,13 @@ logging.getLogger().setLevel(logging.DEBUG)
 shk = housekeeping.SensorHkWrapper(
     path_to_hk_file = "/data/exp/ARA/2019/blinded/L1/ARA05/0701/run005626/sensorHk005626.root"
 )
-print(shk.num_data_points)
+iter_start = 0
+iter_stop = shk.num_data_points
+
+
+for p in range(iter_start, iter_stop, 1):
+
+    hk = shk.get_data_point(p)
+    dda_v_0 = hk.getDdaVoltage(0)
+    print(dda_v_0)
+

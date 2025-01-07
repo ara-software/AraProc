@@ -79,4 +79,34 @@ class SensorHkWrapper:
             logging.critical("Assigning the sensor_hk_ptr in the sensorHkTree failed")
             self.root_tfile.Close() # close the file
             raise
+    
+    def get_data_point(self, point_idx):
+        if point_idx is None:
+            raise KeyError(f"Requested data point index {point_idx} is invalid")
+        if point_idx >= self.num_data_points:
+            raise KeyError(f"Requested data point index {point_idx} exceeds number of events in the run ({self.num_data_points})")
+        if point_idx <0:
+            raise KeyError(f"Requested event index {point_idx} is invalid (negative)")
+
+        try:
+            self.sensor_tree.GetEntry(point_idx)
+            logging.debug(f"Called root get entry {point_idx}")
+        except:
+            logging.critical(f"Getting entry {point_idx} failed.")
+            raise
+        
+        this_sensor_hk_ptr = None
+        try:
+            this_sensor_hk_ptr = copy.deepcopy(self.sensor_hk_ptr)
+            logging.debug(f"Copied hk data point {point_idx}")
+        except:
+            logging.critical(f"Copying data point index {point_idx} failed.")
+            raise 
+        ROOT.SetOwnership(this_sensor_hk_ptr, False) ## again, c++ needs to retain control of this for... reasons
+        return this_sensor_hk_ptr
+
+
+
+
+
 
