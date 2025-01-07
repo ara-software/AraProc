@@ -202,3 +202,71 @@ class EventHkWrapper:
             raise 
         ROOT.SetOwnership(this_event_hk_ptr, False) ## again, c++ needs to retain control of this for... reasons
         return this_event_hk_ptr
+
+class ConfigFileWrapper:
+
+    """
+    A class for representing an ARA data taking run config file
+
+    This wraps around ara data taking config file
+
+    ...
+
+    Attributes
+    ----------
+    path_to_config_file : str
+       the full path to the config file
+    """
+
+    def __init__(self,
+                 path_to_config_file : str = None,
+                 ):
+        
+        self.path_to_config_file = None
+
+        if futil.file_is_safe(path_to_config_file):
+            self.path_to_config_file = path_to_config_file
+        else:
+            raise Exception(f"{path_to_config_file} has a problem!")
+        
+        self.cal_pulser_info = self.parse_cal_pulser_info()
+    
+    def parse_cal_pulser_info(self, end_key = ';', num_vals = 1):
+
+        with open(self.path_to_config_file, 'r') as c_file:
+             config_file_read = c_file.read()
+
+        calpulser_key = ['antennaIceA#I1=', 'antennaIceB#I1=', 'opIceA#I1=', 'opIceB#I1=', 'attIceA#I1=', 'attIceB#I1=']
+
+        cal_pulser_info = {}
+
+        for key in calpulser_key:
+
+            # check whether there is a same config but commented out one
+            # if there is, delete it before begin the search
+            old_key = '//'+key
+            new_config_file_read = config_file_read.replace(old_key, '')
+
+            # find the index of the key    
+            key_idx = new_config_file_read.find(key)
+
+            # check whether key is in the txt_read or not
+            if key_idx != -1:
+               key_idx += len(key)
+               # find the end_key index after key_idx
+               end_key_idx = new_config_file_read.find(end_key, key_idx)
+
+               # if there are multiple values for same key
+               if num_vals != 1:
+                  val = np.asarray(new_config_file_read[key_idx:end_key_idx].split(","), dtype = int)
+               else:
+                  val = int(new_config_file_read[key_idx:end_key_idx])
+
+            # it there is no key in the txt_read, output numpy nan
+            else:
+               val = np.full((num_vals), np.nan, dtype = float)
+
+            cal_pulser_info[key.split("#",1)[0]] = val # when assigning the key, drop everything after the #
+
+        return cal_pulser_info
+    
