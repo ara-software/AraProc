@@ -117,16 +117,35 @@ def plot_waveform_bundle(
     plt.close(fig)
     del fig, axd
 
-def plot_skymap(the_map = None,
+def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth = None,the_map = None,
                 output_file_path = None
                 ):
+    """
+    This function returns skymap for given map type
+    Parameters
+    ----------
+    list_of_cal_pulser_indices : list ## example [0,1,2,3]
+       which calpulsers you want to see in your skymap
+    list_of_landmarks: list ## example ['ICL',IC22S','SPT','IC1S','Spice','WT']
+       which landmarks you want to see in your skymap
+    spice_depth : int/float
+       the depth of spice pulser ## example -1451.3
+    the_map:
+       reconstruction results for given map 
+    output_file_path: str
+       path to the output file
+  
+    Returns
+    -------
+    A plotted skymap in pdf
+    """
     
     if the_map is None:
         raise Exception("the_map is None")
 
     if not isinstance(output_file_path, str):
         raise TypeError("Path to output file must be a string")
-
+   
     corr_peak, peak_phi, peak_theta = mu.get_corr_map_peak(the_map)
     the_map.SetTitle(f"Peak Phi/Theta/Corr = {peak_phi:.1f}/ {peak_theta:.1f}/ {corr_peak:.2f}")
     the_map.GetXaxis().SetTitle("Phi (deg)")
@@ -140,7 +159,62 @@ def plot_skymap(the_map = None,
 
     c = ROOT.TCanvas("c", "c", 700, 500)
     c.cd()
-    the_map.Draw("z aitoff")
+    the_map.Draw("COLZ") # keeping this off for now: the_map.Draw("z aitoff")
+
+    ## Add known locations to the skymap 
+    landmark_dict = mu.AraGeom(st).get_known_landmarks(list_of_landmarks,cal_pulse_index,spice_depth)
+    markers = []  # Keep references to markers to avoid garbage collection
+    labels = []   # Keep references to labels
+
+    for entry in landmark_dict.keys():
+        if entry == 'critical_angle':
+           critical_ang = landmark_dict[entry]
+           horizontal_line = ROOT.TLine(-180, critical_ang, 180, critical_ang)  # Draw line from theta=-90 to theta=90
+           horizontal_line.SetLineColor(ROOT.kRed)
+           horizontal_line.SetLineStyle(2)  # Dashed line
+           horizontal_line.SetLineWidth(2)
+           horizontal_line.Draw("SAME")
+           label1 = ROOT.TLatex(150,  critical_ang + 5, "critical angle")  # Offset for clarity
+           label1.SetTextColor(ROOT.kRed)
+           label1.SetTextSize(0.03)
+           label1.Draw("SAME")
+           labels.append(label1)
+           continue
+
+        phi = landmark_dict[entry][2]
+        theta = landmark_dict[entry][1]
+        # Draw the marker
+        marker = ROOT.TMarker(phi, theta, 29)  # Style 29: Star
+        color = ROOT.kBlack if "CP" in entry else ROOT.kRed
+        marker.SetMarkerColor(color)
+
+        marker.SetMarkerSize(2.0)
+        marker.Draw("SAME")
+        markers.append(marker)
+
+        # Draw the label
+        if entry in ['IC1S', 'SPT','CP1','CP3']:
+           offset = 4 
+        else:
+           offset = -4
+        label = ROOT.TLatex(phi + offset, theta - offset, entry)  # Offset for clarity
+        label.SetTextColor(ROOT.kWhite)
+        label.SetTextSize(0.02)
+        label.Draw("SAME")
+        labels.append(label)
+
+        if entry == "ICL":
+           vertical_line = ROOT.TLine(phi, -90, phi, 90)  # Draw line from theta=-90 to theta=90
+           vertical_line.SetLineColor(ROOT.kBlue)
+           vertical_line.SetLineStyle(2)  # Dashed line
+           vertical_line.SetLineWidth(2)
+           vertical_line.Draw("SAME")
+           label = ROOT.TLatex(phi + 2, theta + 30, "SP direction")  # Offset for clarity
+           label.SetTextColor(ROOT.kBlue)
+           label.SetTextSize(0.03)
+           label.Draw("SAME")
+           labels.append(label)
+
     ROOT.gStyle.SetPalette(112) # viridis
     ROOT.gPad.SetRightMargin(0.15) # make space for the z axis
     c.SaveAs(output_file_path)
