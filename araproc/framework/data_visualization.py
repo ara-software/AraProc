@@ -127,6 +127,7 @@ def plot_waveform_bundle(
           ax2.set_ylim(fmin, fmax)
           ax2.set_yscale('log')
           ax2.set_yticks(10**np.arange(np.ceil(np.log10(fmin)), 0+0.1, 1))
+          ax2.axhline(y=1.0, c='lightgray', linestyle='--')
           if ch in ["ch3", "ch7", "ch11", "ch15"]:
             ax2.set_ylabel("Fractional Power")
       else:
