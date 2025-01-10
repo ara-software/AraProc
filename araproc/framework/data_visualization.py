@@ -126,7 +126,7 @@ def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth =
     ----------
     list_of_cal_pulser_indices : list ## example [0,1,2,3]
        which calpulsers you want to see in your skymap
-    list_of_landmarks: list ## example ['ICL',IC22S','SPT','IC1S','Spice','WT']
+    list_of_landmarks: list ## example ['ICL',IC22S','SPT','IC1S','SPIce','WT']
        which landmarks you want to see in your skymap
     spice_depth : int/float
        the depth of spice pulser ## example -1451.3
@@ -147,11 +147,12 @@ def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth =
         raise TypeError("Path to output file must be a string")
    
     corr_peak, peak_phi, peak_theta = mu.get_corr_map_peak(the_map)
-    the_map.SetTitle(f"Peak Phi/Theta/Corr = {peak_phi:.1f}/ {peak_theta:.1f}/ {corr_peak:.2f}")
-    the_map.GetXaxis().SetTitle("Phi (deg)")
-    the_map.GetYaxis().SetTitle("Theta (deg)")
+    the_map.SetTitle(f"Peak #phi/#theta/Corr = {peak_phi:.1f}^{{o}}/ {peak_theta:.1f}^{{o}}/ {corr_peak:.2f}")
+    the_map.GetXaxis().SetTitle("Azimuth, #phi (^{o})")
+    the_map.GetYaxis().SetTitle("Elevation, #theta (^{o})")
     the_map.GetZaxis().SetTitle("Correlation")
-   
+    ROOT.gStyle.SetTitleFontSize(0.04)
+ 
     the_map.GetZaxis().SetRangeUser(0, corr_peak)
     the_map.GetXaxis().CenterTitle(1)
     the_map.GetYaxis().CenterTitle(1)
@@ -174,7 +175,7 @@ def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth =
            horizontal_line.SetLineStyle(2)  # Dashed line
            horizontal_line.SetLineWidth(2)
            horizontal_line.Draw("SAME")
-           label1 = ROOT.TLatex(150,  critical_ang + 5, "critical angle")  # Offset for clarity
+           label1 = ROOT.TLatex(150,  critical_ang + 5, "#theta_{c}")  # Offset for clarity
            label1.SetTextColor(ROOT.kRed)
            label1.SetTextSize(0.03)
            label1.Draw("SAME")
@@ -193,24 +194,24 @@ def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth =
         markers.append(marker)
 
         # Draw the label
-        if entry in ['IC1S', 'SPT','CP1','CP3']:
-           offset = 4 
+        if entry in ['IC1S','SPT','CP1','CP3']:
+           offset = 5 
         else:
-           offset = -4
+           offset = -5
         label = ROOT.TLatex(phi + offset, theta - offset, entry)  # Offset for clarity
-        label.SetTextColor(ROOT.kWhite)
+        label.SetTextColor(ROOT.kMagenta)
         label.SetTextSize(0.02)
         label.Draw("SAME")
         labels.append(label)
 
         if entry == "ICL":
            vertical_line = ROOT.TLine(phi, -90, phi, 90)  # Draw line from theta=-90 to theta=90
-           vertical_line.SetLineColor(ROOT.kBlue)
+           vertical_line.SetLineColor(ROOT.kCyan)
            vertical_line.SetLineStyle(2)  # Dashed line
            vertical_line.SetLineWidth(2)
            vertical_line.Draw("SAME")
-           label = ROOT.TLatex(phi + 2, theta + 30, "SP direction")  # Offset for clarity
-           label.SetTextColor(ROOT.kBlue)
+           label = ROOT.TLatex(phi + 2, theta + 30, "#phi_{SP}")  # Offset for clarity
+           label.SetTextColor(ROOT.kCyan)
            label.SetTextSize(0.03)
            label.Draw("SAME")
            labels.append(label)
