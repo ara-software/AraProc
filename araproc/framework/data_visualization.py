@@ -72,6 +72,7 @@ def plot_waveform_bundle(
     # draw the graphs, label each one appropriately
     ymin = 1e100
     ymax = -1e100
+    spec2Tot = {}
     for wave_key in tgraphs_to_plot.keys():
         times, volts = wu.tgraph_to_arrays(tgraphs_to_plot[wave_key]) # 'times' in 'ns' and 'volts' in 'mV'
         xvals = times
@@ -86,6 +87,9 @@ def plot_waveform_bundle(
             # np.abs(spectrum)**2 makes spectrum in mV^2. For power, you do P = V^2/R , here R = Z_0 = 50 Ohm.
             # mV**2/50 =  mW * 1e-3. Power is always reperesented as dBm in dB scale which is 10*log10(P in mW)
             yvals = 10*np.log10(np.abs(spectrum)**2 / 50 / 1e3) # from mV to dBm
+            
+            # save total of square of absolute spectrum for reference
+            spec2Tot[f"ch{wave_key}"] = (np.abs(spectrum)**2).sum()
 
         ymin = min(ymin, yvals.min())
         ymax = max(ymax, yvals.max())
@@ -104,11 +108,30 @@ def plot_waveform_bundle(
         ax.set_ylabel(ylabel_options[time_or_freq])
     
     # make limits look nice
-    if time_or_freq == "freq":
-        # limit y range downwards
-        ymin = max(ymin, -25)
+    for ch in axd:
+      if time_or_freq == "freq":
+          axd[ch].set_xlim(0, 1)
+          # limit y range downwards
+          ymin = max(ymin, -25)
+          axd[ch].set_ylim([ymin-5,ymax+5])
 
-        ax.set_ylim([ymin-5,ymax+5])
+          # add secondary axis to help with CW filtering
+          ax2 = axd[ch].twinx()
+          y1min, y1max = axd[ch].get_ylim()
+          ## convert back to just the spec^2
+          spec2min = 50.*1e3*10.**(y1min/10.)
+          spec2max = 50.*1e3*10.**(y1max/10.)
+          ## normalize by total power in spectrum
+          fmin = spec2min/spec2Tot[ch]
+          fmax = spec2max/spec2Tot[ch]
+          ax2.set_ylim(fmin, fmax)
+          ax2.set_yscale('log')
+          ax2.set_yticks(10**np.arange(np.ceil(np.log10(fmin)), 0+0.1, 1))
+          ax2.axhline(y=1.0, c='lightgray', linestyle='--')
+          if ch in ["ch3", "ch7", "ch11", "ch15"]:
+            ax2.set_ylabel("Fractional Power")
+      else:
+          axd[ch].set_ylim(ymin, ymax)
 
     # save figure
     fig.savefig(output_file_path)
