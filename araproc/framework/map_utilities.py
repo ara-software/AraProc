@@ -196,7 +196,7 @@ class AraGeom:
         pulser_name: str
           IC1S : IceCube 1S pulser
           IC22S : IceCube 22S pulser
-          Spice : Spicecore pulser
+          SPIce : South Pole IceCore pulser
         northing:
           The northing coordiates from surveyour's note in feets
 
@@ -206,14 +206,14 @@ class AraGeom:
           X, Y, Z location of pulser in station centric
         """
 
-        if pulser_name == "Spice" and spice_depth is None:
-            raise ValueError(f"Unknown Spice pulser depth")
+        if pulser_name == "SPIce" and spice_depth is None:
+            raise ValueError(f"Unknown SPIce pulser depth")
         pulser_coords = {
             "IC1S": [45659.6457, 50490.4199],
             "IC22S": [44884.416, 51444.8819],
-            "Spice": [42600, 48800],
+            "SPIce": [42600, 48800],
         }
-        pulser_depths = {"IC1S": -1400, "IC22S": -1450.47, "Spice": spice_depth}
+        pulser_depths = {"IC1S": -1400, "IC22S": -1450.47, "SPIce": spice_depth}
         if pulser_name not in pulser_coords:
             raise ValueError(f"Unknown pulser name: {pulser_name}")
 
@@ -280,7 +280,7 @@ class AraGeom:
         ----------
         list_of_cal_pulser_indices : list ## example [0,1,2,3]
           which calpulsers you want to see in your skymap
-        list_of_landmarks: list ## example ['ICL','IC22S','SPT','IC1S','Spice','WT']
+        list_of_landmarks: list ## example ['ICL','IC22S','SPT','IC1S','SPIce','WT']
           which landmarks you want to see in your skymap
         spice_depth : int/float
           the depth of spice pulser ## example -1451.3 
@@ -300,7 +300,7 @@ class AraGeom:
         elif list_of_cal_pulser_indices == ['all']:
              list_of_cal_pulser_indices = [0,1,2,3]
         if spice_depth is not None:
-           list_of_landmarks.append('Spice')
+           list_of_landmarks.append('SPIce')
         collect = {}
         
         calpulser = self.get_local_CP(list_of_cal_pulser_indices)
@@ -311,7 +311,7 @@ class AraGeom:
             del rCal, tCal, pCal
         del calpulser
           
-        for pulser in ["IC1S", "IC22S", "Spice"]:
+        for pulser in ["IC1S", "IC22S", "SPIce"]:
             if pulser in list_of_landmarks:
                 this_pulser = self.get_distant_pulsers(pulser, spice_depth)
                 r, t, p = self.get_relative_cartesian_to_spherical(station_center, this_pulser)
