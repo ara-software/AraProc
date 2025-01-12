@@ -265,9 +265,9 @@ class AraGeom:
         critical angle in terms of elevation angle
 
         """
-        station_depth = abs(self.get_station_center()[2])
-        n_air = 1.0
-        n_ice = 1.78 - 0.454*np.exp(-0.0202*station_depth)
+        station_depth = self.get_station_center()[2]
+        n_air = constants.get_index_of_refraction(1e-3)
+        n_ice = constants.get_index_of_refraction(station_depth)
         critical_angle = np.arcsin(n_air/n_ice)
         critical_angle *= (180/np.pi)
 
@@ -296,7 +296,7 @@ class AraGeom:
         elif list_of_landmarks == ['all']:
              list_of_landmarks = ['ICL','IC22S','SPT','IC1S','WT']   
         if list_of_cal_pulser_indices is None:
-            list_of_cal_pulser_indices = [3]
+            list_of_cal_pulser_indices = [1,3]
         elif list_of_cal_pulser_indices == ['all']:
              list_of_cal_pulser_indices = [0,1,2,3]
         if spice_depth is not None:

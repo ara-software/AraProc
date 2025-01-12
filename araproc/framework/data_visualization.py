@@ -18,7 +18,7 @@ import matplotlib # noqa : E402
 matplotlib.use("pdf")
 
 def plot_waveform_bundle(
-    waveform_dict = None,
+    waveform_dict,
     time_or_freq = "time",
     output_file_path = None
     ):
@@ -77,7 +77,7 @@ def plot_waveform_bundle(
         times, volts = wu.tgraph_to_arrays(tgraphs_to_plot[wave_key]) # 'times' in 'ns' and 'volts' in 'mV'
         xvals = times
         yvals = volts
-
+     
         if time_or_freq == "freq":
             # if they frequested frequency domain, do the FFT
             freqs, spectrum = wu.time2freq(times, volts) # 'freqs' in 'GHz' and 'spectrum' (complex) in 'mV'
@@ -140,23 +140,28 @@ def plot_waveform_bundle(
     plt.close(fig)
     del fig, axd
 
-def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth = None,the_map = None,
+def plot_skymap(the_map,
+                plane_wave_elevation = None, 
+                station_id = None, landmarks = None,
+                calpulser_indices = None, spice_depth = None,
                 output_file_path = None
                 ):
     """
     This function returns skymap for given map type
     Parameters
     ----------
-    list_of_cal_pulser_indices : list ## example [0,1,2,3]
-       which calpulsers you want to see in your skymap
-    list_of_landmarks: list ## example ['ICL',IC22S','SPT','IC1S','Spice','WT']
-       which landmarks you want to see in your skymap
-    spice_depth : int/float
-       the depth of spice pulser ## example -1451.3
     the_map:
-       reconstruction results for given map 
+        reconstruction results for given map
+    plane_wave_elevation : float
+        elevation angle (in degrees) from plane wave reco 
+    calpulser_indices : list ## example [0,1,2,3]
+        which calpulsers you want to see in your skymap
+    landmarks: list ## example ['ICL',IC22S','SPT','IC1S','Spice','WT']
+        which landmarks you want to see in your skymap
+    spice_depth : int/float
+        the depth of spice pulser ## example -1451.3
     output_file_path: str
-       path to the output file
+        path to the output file
   
     Returns
     -------
@@ -184,20 +189,33 @@ def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth =
     c.cd()
     the_map.Draw("COLZ") # keeping this off for now: the_map.Draw("z aitoff")
 
-    ## Add known locations to the skymap 
-    landmark_dict = mu.AraGeom(st).get_known_landmarks(list_of_landmarks,cal_pulse_index,spice_depth)
     markers = []  # Keep references to markers to avoid garbage collection
     labels = []   # Keep references to labels
+    ## Add plan wave elevation if requested
+    if plane_wave_elevation is not None:
+       horizontal_line0 = ROOT.TLine(-180, plane_wave_elevation, 180, plane_wave_elevation)  # Draw line from phi=-180 to phi=180
+       horizontal_line0.SetLineColor(ROOT.kOrange)
+       horizontal_line0.SetLineStyle(2)  # Dashed line
+       horizontal_line0.SetLineWidth(2)
+       horizontal_line0.Draw("SAME")
+       label0 = ROOT.TLatex(110, plane_wave_elevation + 5, "plane wave")  # Offset for clarity
+       label0.SetTextColor(ROOT.kOrange)
+       label0.SetTextSize(0.03)
+       label0.Draw("SAME")
+       labels.append(label0)
+      
+    ## Add known locations to the skymap 
+    landmark_dict = mu.AraGeom(station_id).get_known_landmarks(landmarks, calpulser_indices, spice_depth)
 
     for entry in landmark_dict.keys():
         if entry == 'critical_angle':
            critical_ang = landmark_dict[entry]
-           horizontal_line = ROOT.TLine(-180, critical_ang, 180, critical_ang)  # Draw line from theta=-90 to theta=90
+           horizontal_line = ROOT.TLine(-180, critical_ang, 180, critical_ang)  # Draw line from phi=-180 to phi=180 
            horizontal_line.SetLineColor(ROOT.kRed)
            horizontal_line.SetLineStyle(2)  # Dashed line
            horizontal_line.SetLineWidth(2)
            horizontal_line.Draw("SAME")
-           label1 = ROOT.TLatex(150,  critical_ang + 5, "critical angle")  # Offset for clarity
+           label1 = ROOT.TLatex(110,  critical_ang + 5, "critical angle")  # Offset for clarity
            label1.SetTextColor(ROOT.kRed)
            label1.SetTextSize(0.03)
            label1.Draw("SAME")

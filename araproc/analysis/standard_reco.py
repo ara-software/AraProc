@@ -39,6 +39,8 @@ class StandardReco:
         The list of channels you want *exclued* from the interferometry
     station_id : int
         The id of the station you want to reco (only station 1-5 supported)
+    geom_tool : AraGeomTool
+        An instance of the AraGeomTool.
     rtc_wrapper : RayTraceCorrelatorWrapper
         A instance of the RayTraceCorrelatorWrapper described earlier in this module.
     the_pairs_v : std::map<int, std::vector<int>>
@@ -144,17 +146,17 @@ class StandardReco:
                 )
         
         # we need a geomtool
-        geom_tool = ROOT.AraGeomTool.Instance()
-        ROOT.SetOwnership(geom_tool, True)
+        self.geom_tool = ROOT.AraGeomTool.Instance()
+        ROOT.SetOwnership(self.geom_tool, True)
         the_pairs_v = self.rtc_wrapper.correlators["distant"].SetupPairs(self.station_id,
-                                                       geom_tool,
+                                                       self.geom_tool,
                                                        ROOT.AraAntPol.kVertical,
                                                        excluded_channels_vec
                                                        )
         ROOT.SetOwnership(the_pairs_v, True) # take posession
         self.pairs_v = the_pairs_v
         the_pairs_h = self.rtc_wrapper.correlators["distant"].SetupPairs(self.station_id,
-                                                       geom_tool,
+                                                       self.geom_tool,
                                                        ROOT.AraAntPol.kHorizontal,
                                                        excluded_channels_vec
                                                        )
@@ -950,6 +952,127 @@ class StandardReco:
 
         return avg_vpol_corr_snr, avg_hpol_corr_snr  
 
+    def get_plane_wave_zenith(self, wave_packet, ch1, ch2):
+        """
+        Computes the elevation angle of a signal based on timing differences between
+        a channel pair (assuming a plane wave).
+
+        Parameters
+        ----------
+        wavepacket: dict
+            A dict with three entries:
+              "event": int  
+                Event number
+              "waveforms": dict
+                Dict mapping RF channel ID to waveforms.
+                Keys are channel id (an integer)
+                Values are TGraphs
+              "trace_type": string
+                Waveform type requested by which_trace.
+        ch1 : int
+            The first channel in the pair.
+        ch2 : int
+            The second channel in the pair.
+
+        Returns
+        -------
+        zenith: float
+            zenith angle in degrees.
+        """
+
+        if(ch1 == ch2):
+            raise ValueError("Cannot compute plane wave zenith using a single channel")
+
+        # get depth of each channels
+        station_info = self.geom_tool.getStationInfo(self.station_id)
+        z1 = station_info.getAntennaInfo(ch1).antLocation[2]
+        z2 = station_info.getAntennaInfo(ch2).antLocation[2]
+        # AraRoot always measures the offset relative to the smaller channel ID,
+        #   so let's use the same convention here to define the difference
+        #   between channel depths
+        if(ch1 < ch2):
+          dz = z2 - z1
+        else:
+          dz = z1 - z2
+
+        # find time difference with max correlation
+        t, corr_func = wfu.tgraph_to_arrays(self.__get_correlation_function(ch1, ch2, wave_packet, True))
+        idx = corr_func.argmax()
+        dt = t[idx] # ns
+
+        # get index of refraction near channels
+        zavg = (z1+z2)/2.
+        n = const.get_index_of_refraction(zavg)
+        v = const.speed_of_light/n # m/ns
+
+        # calculate elevation angle
+        
+        # assume a time difference longer than the light travel time between channels
+        # is due to either 1) lack of signal or 2) using the average index of refraction 
+        # we assume the first case if its much longer and return nan
+        # otherwise we retunr 0/180  
+        if(np.abs(v*dt) > 1.2*np.abs(dz)): 
+            zenith = np.nan  
+        elif(np.abs(v*dt) > np.abs(dz)):
+            zenith = np.arccos(np.sign(v*dt/dz))*180./np.pi        
+        else:
+            zenith = np.arccos(v*dt/dz)*180./np.pi
+
+        return zenith
+
+    def get_best_plane_wave_elevation(self, wave_packet, excluded_channels=[]):
+        """
+        Finds best plane wave elevation, in that it minimizes the squared error
+        between same-polarization channel pairs on a string. 
+        
+        Parameters
+        ----------
+        wavepacket: dict
+            A dict with three entries:
+              "event": int  
+                Event number
+              "waveforms": dict
+                Dict mapping RF channel ID to waveforms.
+                Keys are channel id (an integer)
+                Values are TGraphs
+              "trace_type": string
+                Waveform type requested by which_trace.
+        excluded_channels: list
+            List of dictionary keys to exclude from average.
+        
+        Returns
+        -------
+        elevation : float
+            Best elevation angle in degrees.
+        """
+ 
+        zeniths = []
+        corrs = []
+ 
+        nPairs = const.num_polarization * const.num_string # assumes one pair on each string per polarization
+        for pairNo in range(nPairs):
+
+            polarization = pairNo//const.num_string # 0 = Vpol, 1 = Hpol
+            ch1 = pairNo + polarization*const.num_string
+            ch2 = ch1 + const.num_string
+
+            if (ch1 in excluded_channels) or (ch2 in excluded_channels):
+                continue
+
+            thisZenith = self.get_plane_wave_zenith(wave_packet, ch1, ch2)
+            zeniths.append(thisZenith)
+
+        zeniths = np.asarray(zeniths)
+
+        # average in cosZenith to minimize error between all channel pairs
+        cosZeniths = np.cos(zeniths*np.pi/180.)
+        bestCosZenith = np.nanmean(cosZeniths)
+        bestZenith = np.arccos(bestCosZenith)*180./np.pi
+
+        elevation = 90. - bestZenith
+
+        return elevation
+
     def get_arrival_delays_reco(
         self, reco_theta, reco_phi, excluded_channels, reference_ch, 
         which_distance, solution
@@ -1336,3 +1459,6 @@ class StandardReco:
             return wfu.arrays_to_tgraph(csw_times, csw_values), warning, csw_comps
         else: 
             return wfu.arrays_to_tgraph(csw_times, csw_values), warning
+
+    
+
