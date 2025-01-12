@@ -18,7 +18,7 @@ import matplotlib # noqa : E402
 matplotlib.use("pdf")
 
 def plot_waveform_bundle(
-    waveform_dict = None,
+    waveform_dict,
     time_or_freq = "time",
     output_file_path = None
     ):
@@ -72,11 +72,12 @@ def plot_waveform_bundle(
     # draw the graphs, label each one appropriately
     ymin = 1e100
     ymax = -1e100
+    spec2Tot = {}
     for wave_key in tgraphs_to_plot.keys():
         times, volts = wu.tgraph_to_arrays(tgraphs_to_plot[wave_key]) # 'times' in 'ns' and 'volts' in 'mV'
         xvals = times
         yvals = volts
-
+     
         if time_or_freq == "freq":
             # if they frequested frequency domain, do the FFT
             freqs, spectrum = wu.time2freq(times, volts) # 'freqs' in 'GHz' and 'spectrum' (complex) in 'mV'
@@ -86,6 +87,9 @@ def plot_waveform_bundle(
             # np.abs(spectrum)**2 makes spectrum in mV^2. For power, you do P = V^2/R , here R = Z_0 = 50 Ohm.
             # mV**2/50 =  mW * 1e-3. Power is always reperesented as dBm in dB scale which is 10*log10(P in mW)
             yvals = 10*np.log10(np.abs(spectrum)**2 / 50 / 1e3) # from mV to dBm
+            
+            # save total of square of absolute spectrum for reference
+            spec2Tot[f"ch{wave_key}"] = (np.abs(spectrum)**2).sum()
 
         ymin = min(ymin, yvals.min())
         ymax = max(ymax, yvals.max())
@@ -104,11 +108,30 @@ def plot_waveform_bundle(
         ax.set_ylabel(ylabel_options[time_or_freq])
     
     # make limits look nice
-    if time_or_freq == "freq":
-        # limit y range downwards
-        ymin = max(ymin, -25)
+    for ch in axd:
+      if time_or_freq == "freq":
+          axd[ch].set_xlim(0, 1)
+          # limit y range downwards
+          ymin = max(ymin, -25)
+          axd[ch].set_ylim([ymin-5,ymax+5])
 
-        ax.set_ylim([ymin-5,ymax+5])
+          # add secondary axis to help with CW filtering
+          ax2 = axd[ch].twinx()
+          y1min, y1max = axd[ch].get_ylim()
+          ## convert back to just the spec^2
+          spec2min = 50.*1e3*10.**(y1min/10.)
+          spec2max = 50.*1e3*10.**(y1max/10.)
+          ## normalize by total power in spectrum
+          fmin = spec2min/spec2Tot[ch]
+          fmax = spec2max/spec2Tot[ch]
+          ax2.set_ylim(fmin, fmax)
+          ax2.set_yscale('log')
+          ax2.set_yticks(10**np.arange(np.ceil(np.log10(fmin)), 0+0.1, 1))
+          ax2.axhline(y=1.0, c='lightgray', linestyle='--')
+          if ch in ["ch3", "ch7", "ch11", "ch15"]:
+            ax2.set_ylabel("Fractional Power")
+      else:
+          axd[ch].set_ylim(ymin, ymax)
 
     # save figure
     fig.savefig(output_file_path)
@@ -117,23 +140,28 @@ def plot_waveform_bundle(
     plt.close(fig)
     del fig, axd
 
-def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth = None,the_map = None,
+def plot_skymap(the_map,
+                plane_wave_elevation = None, 
+                station_id = None, landmarks = None,
+                calpulser_indices = None, spice_depth = None,
                 output_file_path = None
                 ):
     """
     This function returns skymap for given map type
     Parameters
     ----------
-    list_of_cal_pulser_indices : list ## example [0,1,2,3]
-       which calpulsers you want to see in your skymap
-    list_of_landmarks: list ## example ['ICL',IC22S','SPT','IC1S','SPIce','WT']
-       which landmarks you want to see in your skymap
-    spice_depth : int/float
-       the depth of spice pulser ## example -1451.3
     the_map:
-       reconstruction results for given map 
+        reconstruction results for given map
+    plane_wave_elevation : float
+        elevation angle (in degrees) from plane wave reco 
+    calpulser_indices : list ## example [0,1,2,3]
+        which calpulsers you want to see in your skymap
+    landmarks: list ## example ['ICL',IC22S','SPT','IC1S','SPIce','WT']
+        which landmarks you want to see in your skymap
+    spice_depth : int/float
+        the depth of spice pulser ## example -1451.3
     output_file_path: str
-       path to the output file
+        path to the output file
   
     Returns
     -------
@@ -162,15 +190,28 @@ def plot_skymap(st,list_of_landmarks = None,cal_pulse_index = None,spice_depth =
     c.cd()
     the_map.Draw("COLZ") # keeping this off for now: the_map.Draw("z aitoff")
 
-    ## Add known locations to the skymap 
-    landmark_dict = mu.AraGeom(st).get_known_landmarks(list_of_landmarks,cal_pulse_index,spice_depth)
     markers = []  # Keep references to markers to avoid garbage collection
     labels = []   # Keep references to labels
+    ## Add plan wave elevation if requested
+    if plane_wave_elevation is not None:
+       horizontal_line0 = ROOT.TLine(-180, plane_wave_elevation, 180, plane_wave_elevation)  # Draw line from phi=-180 to phi=180
+       horizontal_line0.SetLineColor(ROOT.kOrange)
+       horizontal_line0.SetLineStyle(2)  # Dashed line
+       horizontal_line0.SetLineWidth(2)
+       horizontal_line0.Draw("SAME")
+       label0 = ROOT.TLatex(110, plane_wave_elevation + 5, "plane wave")  # Offset for clarity
+       label0.SetTextColor(ROOT.kOrange)
+       label0.SetTextSize(0.03)
+       label0.Draw("SAME")
+       labels.append(label0)
+      
+    ## Add known locations to the skymap 
+    landmark_dict = mu.AraGeom(station_id).get_known_landmarks(landmarks, calpulser_indices, spice_depth)
 
     for entry in landmark_dict.keys():
         if entry == 'critical_angle':
            critical_ang = landmark_dict[entry]
-           horizontal_line = ROOT.TLine(-180, critical_ang, 180, critical_ang)  # Draw line from theta=-90 to theta=90
+           horizontal_line = ROOT.TLine(-180, critical_ang, 180, critical_ang)  # Draw line from phi=-180 to phi=180 
            horizontal_line.SetLineColor(ROOT.kRed)
            horizontal_line.SetLineStyle(2)  # Dashed line
            horizontal_line.SetLineWidth(2)
