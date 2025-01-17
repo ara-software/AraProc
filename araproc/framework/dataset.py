@@ -529,7 +529,7 @@ class SimWrapper:
         ROOT.gSystem.RedirectOutput("/dev/null");
         self.sim_settings_tree.Scan("DETECTOR_STATION_LIVETIME_CONFIG")
         self.config = int(self.settings_ptr.DETECTOR_STATION_LIVETIME_CONFIG)
-        ROOT.gSystem.RedirectOutput(0,0);
+        ROOT.gROOT.ProcessLine("gSystem->RedirectOutput(0);")
 
     def __check_event_idx_sanity(self, event_idx):
         if event_idx is None:
@@ -625,7 +625,6 @@ class SimWrapper:
         """
 
         self.__check_event_idx_sanity(event_idx)
-        print(self.sim_tree.GetEntries())
     
         try:
             self.sim_tree.GetEntry(event_idx)
