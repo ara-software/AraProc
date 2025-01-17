@@ -230,7 +230,7 @@ class ConfigFileWrapper:
             raise Exception(f"{path_to_config_file} has a problem!")
         
         self.cal_pulser_info = self.parse_cal_pulser_info()
-        self.is_cal_pulser_on = bool(self.cal_pulser_info["opIceA"] and self.cal_pulser_info["opIceB"])
+        self.is_cal_pulser_on = bool(self.cal_pulser_info["opIceA"] or self.cal_pulser_info["opIceB"])
     
     def parse_cal_pulser_info(self, end_key = ';', num_vals = 1):
 
