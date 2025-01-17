@@ -238,7 +238,7 @@ class ConfigFileWrapper:
 
         calpulser_key = ['antennaIceA#I1=', 'antennaIceB#I1=', 'opIceA#I1=', 'opIceB#I1=', 'attIceA#I1=', 'attIceB#I1=']
 
-        cal_pulser_info = {}
+        cal_pulser_info = {}m
 
         for key in calpulser_key:
 
