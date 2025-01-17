@@ -1,6 +1,7 @@
 import os
 import ctypes
 import ROOT
+import datetime
 
 def file_is_safe(file_path):
     
@@ -30,3 +31,34 @@ def get_cvmfs_ped_file_name(station_id, run_number):
     stop = start + 999
     file=f"station_{station_id}/{start:07d}-{stop:07d}/station_{station_id}_run_{run_number:07d}.gz"
     return os.path.join(cvmfs_top_dir, file)
+
+def guess_location_of_hk_files(dataset):
+
+    """
+    A utility function to guess the location of the housekeeping file
+    associated with a run.
+    You need to be at the WIPAC datawarehosue for this to work.
+    """
+
+    # get the year from the date of the first event in the file
+    t_start = dataset.get_raw_event(0).unixTime
+    timestamp = datetime.datetime.fromtimestamp(t_start)
+    year = timestamp.strftime('%Y')
+
+
+    # always look for the 100pct file
+    file_path = os.path.join("/data/exp/ARA/", str(year), 
+                                f"L1/100pct/ARA0{dataset.station_id}")
+    
+    sensor_hk_file = None
+    event_hk_file = None
+
+    for root, dirs, files in os.walk(file_path):
+        for file in files:
+            if str(dataset.run_number) in file:
+                if "sensorHk" in file:
+                    sensor_hk_file = os.path.join(root, file)
+                if "eventHk" in file:
+                    event_hk_file = os.path.join(root, file)
+    
+    return sensor_hk_file, event_hk_file
