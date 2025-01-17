@@ -625,7 +625,6 @@ class SimWrapper:
         """
 
         self.__check_event_idx_sanity(event_idx)
-        print(self.sim_tree.GetEntries())
     
         try:
             self.sim_tree.GetEntry(event_idx)
