@@ -230,6 +230,7 @@ class ConfigFileWrapper:
             raise Exception(f"{path_to_config_file} has a problem!")
         
         self.cal_pulser_info = self.parse_cal_pulser_info()
+        self.is_cal_pulser_on = bool(self.cal_pulser_info["opIceA"] and self.cal_pulser_info["opIceA"])
     
     def parse_cal_pulser_info(self, end_key = ';', num_vals = 1):
 
@@ -238,7 +239,7 @@ class ConfigFileWrapper:
 
         calpulser_key = ['antennaIceA#I1=', 'antennaIceB#I1=', 'opIceA#I1=', 'opIceB#I1=', 'attIceA#I1=', 'attIceB#I1=']
 
-        cal_pulser_info = {}m
+        cal_pulser_info = {}
 
         for key in calpulser_key:
 

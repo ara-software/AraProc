@@ -75,3 +75,4 @@ cfg = housekeeping.ConfigFileWrapper(
 )
 
 print(cfg.cal_pulser_info)
+print(cfg.is_cal_pulser_on)
