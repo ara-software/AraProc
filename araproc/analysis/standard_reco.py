@@ -887,7 +887,7 @@ class StandardReco:
         corr_thresh = 1e-3
         idxAboveThresh = np.squeeze(np.where(np.abs(corr_func) >= corr_thresh)) # all indices above threshold
 
-        # checking if idxAboveThresh is empty, if yes, just return 0 
+        # check if there are no above threshold indices, if so return 0
         if idxAboveThresh.size == 0:  # idxAboveThresh is empty
             return 0
         idxFirst = idxAboveThresh[0] # first above threshold
