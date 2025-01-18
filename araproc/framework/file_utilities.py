@@ -48,7 +48,7 @@ def guess_location_of_hk_files(dataset):
     sensor_hk_full_path = inpath + sensor_hk_file
     files = glob.glob(sensor_hk_full_path)
     if not files:
-        raise Exception(f"Requested run file not found: {fullpath}. Abort.")
+        raise Exception(f"Requested run file not found: {sensor_hk_full_path}. Abort.")
     if len(files) > 1:
         raise Exception(f"Requested run found in more than one directory!\n{files}")
     
@@ -61,10 +61,32 @@ def guess_location_of_hk_files(dataset):
     event_hk_full_path = inpath + event_hk_file
     files = glob.glob(event_hk_full_path)
     if not files:
-        raise Exception(f"Requested run file not found: {fullpath}. Abort.")
+        raise Exception(f"Requested run file not found: {event_hk_full_path}. Abort.")
     if len(files) > 1:
         raise Exception(f"Requested run found in more than one directory!\n{files}")
     
     event_hk_file = files[0]
 
     return sensor_hk_file, event_hk_file
+
+def guess_location_of_daq_config_file(dataset):
+
+
+    """
+    A utility function to guess the location of the daq config file.
+    You need to be at the WIPAC datawarehosue for this to work.
+    """
+
+    inpath = f"/data/exp/ARA/*/L1/100pct/ARA0{dataset.station_id}/*/run{dataset.run_number:06d}/"
+
+    config_file = f"configFile.run{dataset.run_number:06d}.dat"
+    config_file_full_path = inpath + config_file
+    files = glob.glob(config_file_full_path)
+    if not files:
+        raise Exception(f"Requested run file not found: {config_file_full_path}. Abort.")
+    if len(files) > 1:
+        raise Exception(f"Requested run found in more than one directory!\n{files}")
+    
+    config_file = files[0]
+
+    return config_file
