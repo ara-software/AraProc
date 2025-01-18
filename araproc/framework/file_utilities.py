@@ -2,6 +2,7 @@ import os
 import ctypes
 import ROOT
 import datetime
+import glob
 
 def file_is_safe(file_path):
     
@@ -40,25 +41,30 @@ def guess_location_of_hk_files(dataset):
     You need to be at the WIPAC datawarehosue for this to work.
     """
 
-    # get the year from the date of the first event in the file
-    t_start = dataset.get_raw_event(0).unixTime
-    timestamp = datetime.datetime.fromtimestamp(t_start)
-    year = timestamp.strftime('%Y')
+    inpath = f"/data/exp/ARA/*/L1/100pct/ARA0{dataset.station_id}/*/run{dataset.run_number:06d}/"
 
-
-    # always look for the 100pct file
-    file_path = os.path.join("/data/exp/ARA/", str(year), 
-                                f"L1/100pct/ARA0{dataset.station_id}")
+    # first the sensor hk file
+    sensor_hk_file = f"sensorHk{dataset.run_number:06d}.root"
+    sensor_hk_full_path = inpath + sensor_hk_file
+    files = glob.glob(sensor_hk_full_path)
+    if not files:
+        raise Exception(f"Requested run file not found: {fullpath}. Abort.")
+    if len(files) > 1:
+        raise Exception(f"Requested run found in more than one directory!\n{files}")
     
-    sensor_hk_file = None
-    event_hk_file = None
+    sensor_hk_file = files[0]
 
-    for root, dirs, files in os.walk(file_path):
-        for file in files:
-            if str(dataset.run_number) in file:
-                if "sensorHk" in file:
-                    sensor_hk_file = os.path.join(root, file)
-                if "eventHk" in file:
-                    event_hk_file = os.path.join(root, file)
+    files = None # reset
+
+    # now the event hk file
+    event_hk_file = f"eventHk{dataset.run_number:06d}.root"
+    event_hk_full_path = inpath + event_hk_file
+    files = glob.glob(event_hk_full_path)
+    if not files:
+        raise Exception(f"Requested run file not found: {fullpath}. Abort.")
+    if len(files) > 1:
+        raise Exception(f"Requested run found in more than one directory!\n{files}")
     
+    event_hk_file = files[0]
+
     return sensor_hk_file, event_hk_file
