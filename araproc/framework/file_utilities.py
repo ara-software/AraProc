@@ -3,6 +3,7 @@ import ctypes
 import ROOT
 import datetime
 import glob
+import numpy as np
 from araproc.framework import constants as const
 
 def file_is_safe(file_path):
