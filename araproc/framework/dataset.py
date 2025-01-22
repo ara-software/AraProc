@@ -817,7 +817,8 @@ class AnalysisDataset:
 
     def get_wavepacket(self,
                       useful_event,
-                      which_traces = "filtered"
+                      which_traces = "filtered",
+                      crop_times = None,
                       ):
                      
         """
@@ -852,6 +853,14 @@ class AnalysisDataset:
                     They are then bandpass filtered to remove out of band noise.
                     Most people should use the "filtered" traces,
                     and so they are the default argument.
+                "cropped" :
+                    These are filtered waveforms that are cropped to a time range
+                    passed by the user through the crop_times argument. Outside this
+                    range the waveform is set to 0. 
+        crop_times : dict of float pairs
+            The time range (tmin, tmax) which traces should be cropped to for each channel. 
+            To avoid cropping you can set tmin/tmax to a very negative/positive number. If
+            a channel is missing from the dictionary, it will be skipped in the cropping process.  
 
         Returns
         -------
@@ -870,7 +879,7 @@ class AnalysisDataset:
         if useful_event is None:
             raise KeyError("Passed useful event is None for some reason")
 
-        if which_traces not in ["calibrated", "interpolated", "dedispersed", "filtered"]:
+        if which_traces not in ["calibrated", "interpolated", "dedispersed", "filtered", "cropped"]:
             raise KeyError(f"Requested waveform treatment ({which_traces}) is not supported")
 
         wavepacket = {}
@@ -973,3 +982,30 @@ class AnalysisDataset:
         if which_traces == "filtered":
             wavepacket["waveforms"] = filtered_waves
             return wavepacket
+
+        # crop waveforms
+        if(crop_times is None):
+            raise ValueError("crop_times argument must be passed for cropped waveforms!")
+
+        cropped_waves = {}
+        for chan_key in list(filtered_waves.keys()):
+            
+            x, y = wu.tgraph_to_arrays(filtered_waves[chan_key])
+
+            # get the time range to crop to (zero pad outside this range)
+            if chan_key in crop_times:
+                tmin, tmax = crop_times[chan_key]
+            
+                mask = np.logical_or(x < tmin, x > tmax)
+                y[mask] = 0.             
+
+            cropped_wave = wu.arrays_to_tgraph(x, y)
+            ROOT.SetOwnership(cropped_wave, True)
+
+            cropped_waves[chan_key] = cropped_wave
+
+        if which_traces == "cropped":
+            wavepacket["waveforms"] = cropped_waves
+            return wavepacket 
+
+
