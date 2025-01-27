@@ -55,6 +55,7 @@ def process_event_info(useful_event, station_id):
         trig_type = 0
     else:
        logger.error("__________________ Unknown trigger type for the event _______________________")  # error message
+       trig_type = None
     num_ddas = constants.num_dda 
     blk_len = read_win // num_ddas
 
@@ -236,6 +237,9 @@ def check_daq_quality(useful_event, station_id, config):
 
     # Extract necessary information from useful_event using the merged function
     num_ddas,blk_len, trig_type, irs_block_number, channel_mask = process_event_info(useful_event, station_id)
+    ## Make sure the event has known trigger type
+    if trig_type is None:
+       return True 
 
     # Get DAQ structure errors
     daq_errors = get_daq_structure_errors(num_ddas,blk_len, trig_type, irs_block_number, channel_mask)
