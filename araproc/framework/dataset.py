@@ -651,7 +651,7 @@ class AnalysisDataset:
     interp_tstep : float
         The time step you want wavforms interpolated with for later.
         In nanoseconds.
-    __dataset_wrapper
+    dataset_wrapper
         Either a DataWrapper or a SimWrapper based on is_simulation.
         This allows this meta class to access either a SimWrapper or the DataWrapper
         behind the scenes, and the user doesn't have to worry about which is 
@@ -692,7 +692,7 @@ class AnalysisDataset:
         self.num_rf_channels = None
         self.rf_channel_indices = None
         self.interp_tstep = None
-        self.__dataset_wrapper = None
+        self.dataset_wrapper = None
         self.excluded_channels = None
         self.excluded_channels_and_hpol = None
         self.excluded_channels_and_vpol = None
@@ -711,25 +711,25 @@ class AnalysisDataset:
         self.interp_tstep = interp_tstep
         
         if not self.is_simulation:
-            self.__dataset_wrapper = DataWrapper(path_to_data_file,
+            self.dataset_wrapper = DataWrapper(path_to_data_file,
                                                  path_to_pedestal_file,
                                                  station_id=station_id,
                                                  do_not_calibrate = self.do_not_calibrate
                                              )
         else:
-            self.__dataset_wrapper = SimWrapper(path_to_data_file,
+            self.dataset_wrapper = SimWrapper(path_to_data_file,
                                                 station_id=station_id
                                                 )
         
-        if self.__dataset_wrapper is None:
+        if self.dataset_wrapper is None:
             raise Exception("Something went wrong with creating either the sim or data wrapper")
         
-        self.run_number = self.__dataset_wrapper.run_number
-        self.station_id = self.__dataset_wrapper.station_id
+        self.run_number = self.dataset_wrapper.run_number
+        self.station_id = self.dataset_wrapper.station_id
         if(not self.is_simulation):
-          self.data_station_id = self.__dataset_wrapper.data_station_id
-        self.num_events = self.__dataset_wrapper.num_events
-        self.config = self.__dataset_wrapper.config
+          self.data_station_id = self.dataset_wrapper.data_station_id
+        self.num_events = self.dataset_wrapper.num_events
+        self.config = self.dataset_wrapper.config
 
         self.__get_excluded_channels() # after we set the station ID and config
 
@@ -784,7 +784,7 @@ class AnalysisDataset:
         if self.is_simulation:
             raise Exception("You are working with simulation! Cannot get a raw event!")
 
-        raw_event = self.__dataset_wrapper.get_raw_event(event_idx)
+        raw_event = self.dataset_wrapper.get_raw_event(event_idx)
         
         return raw_event  
     
@@ -795,14 +795,14 @@ class AnalysisDataset:
         if self.do_not_calibrate:
             raise Exception("Dataset is not calibrated! You are not allowed to get a useful event!")
 
-        useful_event = self.__dataset_wrapper.get_useful_event(event_idx)
+        useful_event = self.dataset_wrapper.get_useful_event(event_idx)
         
         return useful_event
     
     def get_event_index(self, 
                             event_number : int = None):
 
-        event_idx = self.__dataset_wrapper.get_event_index(event_number)
+        event_idx = self.dataset_wrapper.get_event_index(event_number)
 
         return event_idx
 
@@ -812,7 +812,7 @@ class AnalysisDataset:
         if not self.is_simulation:
             raise ValueError("You requested simulation information, but this dataset is marked as data. Abort!")
 
-        sim_info = self.__dataset_wrapper.get_sim_information(event_idx)
+        sim_info = self.dataset_wrapper.get_sim_information(event_idx)
         return sim_info
 
     def get_wavepacket(self,

@@ -35,7 +35,7 @@ def get_cvmfs_ped_file_name(station_id, run_number):
     file=f"station_{station_id}/{start:07d}-{stop:07d}/station_{station_id}_run_{run_number:07d}.gz"
     return os.path.join(cvmfs_top_dir, file)
 
-def guess_location_of_hk_files(dataset):
+def guess_location_of_hk_files(station_id, run_number):
 
     """
     A utility function to guess the location of the housekeeping file
@@ -43,10 +43,10 @@ def guess_location_of_hk_files(dataset):
     You need to be at the WIPAC datawarehosue for this to work.
     """
 
-    inpath = f"/data/exp/ARA/*/L1/100pct/ARA0{dataset.station_id}/*/run{dataset.run_number:06d}/"
+    inpath = f"/data/exp/ARA/*/L1/100pct/ARA0{station_id}/*/run{run_number:06d}/"
 
     # first the sensor hk file
-    sensor_hk_file = f"sensorHk{dataset.run_number:06d}.root"
+    sensor_hk_file = f"sensorHk{run_number:06d}.root"
     sensor_hk_full_path = inpath + sensor_hk_file
     files = glob.glob(sensor_hk_full_path)
     if not files:
@@ -59,7 +59,7 @@ def guess_location_of_hk_files(dataset):
     files = None # reset
 
     # now the event hk file
-    event_hk_file = f"eventHk{dataset.run_number:06d}.root"
+    event_hk_file = f"eventHk{run_number:06d}.root"
     event_hk_full_path = inpath + event_hk_file
     files = glob.glob(event_hk_full_path)
     if not files:
@@ -71,7 +71,7 @@ def guess_location_of_hk_files(dataset):
 
     return sensor_hk_file, event_hk_file
 
-def guess_location_of_daq_config_file(dataset):
+def guess_location_of_daq_config_file(station_id, run_number):
 
 
     """
@@ -79,9 +79,9 @@ def guess_location_of_daq_config_file(dataset):
     You need to be at the WIPAC datawarehosue for this to work.
     """
 
-    inpath = f"/data/exp/ARA/*/L1/100pct/ARA0{dataset.station_id}/*/run{dataset.run_number:06d}/"
+    inpath = f"/data/exp/ARA/*/L1/100pct/ARA0{station_id}/*/run{run_number:06d}/"
 
-    config_file = f"configFile.run{dataset.run_number:06d}.dat"
+    config_file = f"configFile.run{run_number:06d}.dat"
     config_file_full_path = inpath + config_file
     files = glob.glob(config_file_full_path)
     if not files:
