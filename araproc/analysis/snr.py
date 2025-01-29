@@ -153,3 +153,82 @@ def get_avg_snr(wave_bundle, excluded_channels=[]):
     avg_snr = np.mean(avg_snr)
 
     return avg_snr
+
+def get_third_highest_snr(wave_bundle, excluded_channels=[]):
+
+    """
+    Calculates the 3rd highest SNR.
+
+    Parameters
+    ----------
+    wave_bundle: dict of TGraphs or np.ndarrays
+        Dictionary of waveform TGraphs or np.ndarrays to be averaged.
+    excluded_channels: list
+        List of dictionary keys to exclude from average.
+
+    Returns
+    -------
+    third_snr : float
+        The third highest SNR.
+    """
+
+    chans = list(wave_bundle.keys())
+
+    snrs = []
+    for chan in chans:
+      if(chan in excluded_channels):
+        continue
+
+      waveform = wave_bundle[chan]
+      snr = get_snr(waveform)
+      snrs.append(snr)
+
+    # check that we have enough snrs to have a third
+    if len(snrs) < 3:
+      raise Exception("Not enough channels included to have a 3rd highest SNR. Abort.")
+
+    sorted_snrs = np.sort(snrs) # sort ascending
+    sorted_snrs = sorted_snrs[::-1] # switch to descending order
+
+    third_snr = sorted_snrs[2] # get the 3rd highest 
+
+    return third_snr
+    
+def get_snr_ratio(wave_bundle, excluded_channels=[]):
+
+    """
+    Calculates the ratio of the 1st-to-2nd highest SNR.
+
+    Parameters
+    ----------
+    wave_bundle: dict of TGraphs or np.ndarrays
+        Dictionary of waveform TGraphs or np.ndarrays to be averaged.
+    excluded_channels: list
+        List of dictionary keys to exclude from average.
+
+    Returns
+    -------
+    snr_ratio : float
+        The SNR ratio.
+    """
+
+    chans = list(wave_bundle.keys())
+
+    snrs = []
+    for chan in chans:
+      if(chan in excluded_channels):
+        continue
+
+      waveform = wave_bundle[chan]
+      snr = get_snr(waveform)
+      snrs.append(snr)
+
+    sorted_snrs = np.sort(snrs) # sort ascending
+    sorted_snrs = sorted_snrs[::-1] # switch to descending order
+
+    snr_ratio = sorted_snrs[0] / sorted_snrs[1] # get the 3rd highest 
+
+    return snr_ratio 
+
+
+
