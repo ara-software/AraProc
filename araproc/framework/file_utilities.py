@@ -5,6 +5,7 @@ import datetime
 import glob
 import numpy as np
 from araproc.framework import constants as const
+import logging
 
 def file_is_safe(file_path):
     
