@@ -121,6 +121,37 @@ def get_snr(waveform):
 
     return snr
 
+def collect_snrs(wave_bundle, excluded_channels=[]):
+
+    """
+    Collects the SNRs of each included channel.
+
+    Parameters
+    ----------
+    wave_bundle: dict of TGraphs or np.ndarrays
+        Dictionary of waveform TGraphs or np.ndarrays to be averaged.
+    excluded_channels: list
+        List of dictionary keys to exclude from average.
+
+    Returns
+    -------
+    snrs : list of floats 
+        The snrs of all included channels
+    """
+    
+    chans = list(wave_bundle.keys())
+
+    snrs = []
+    for chan in chans:
+      if(chan in excluded_channels):
+        continue
+
+      waveform = wave_bundle[chan]
+      snr = get_snr(waveform)
+      snrs.append(snr)
+
+    return snrs
+
 def get_avg_snr(wave_bundle, excluded_channels=[]):
 
     """
@@ -139,18 +170,8 @@ def get_avg_snr(wave_bundle, excluded_channels=[]):
         The average SNR.
     """
 
-    chans = list(wave_bundle.keys())
-
-    avg_snr = []
-    for chan in chans:
-      if(chan in excluded_channels):
-        continue
-
-      waveform = wave_bundle[chan]
-      snr = get_snr(waveform)
-      avg_snr.append(snr)
-
-    avg_snr = np.mean(avg_snr)
+    snrs = collect_snrs(wave_bundle, excluded_channels)
+    avg_snr = np.mean(snrs)
 
     return avg_snr
 
@@ -172,16 +193,7 @@ def get_third_highest_snr(wave_bundle, excluded_channels=[]):
         The third highest SNR.
     """
 
-    chans = list(wave_bundle.keys())
-
-    snrs = []
-    for chan in chans:
-      if(chan in excluded_channels):
-        continue
-
-      waveform = wave_bundle[chan]
-      snr = get_snr(waveform)
-      snrs.append(snr)
+    snrs = collect_snrs(wave_bundle, excluded_channels)
 
     # check that we have enough snrs to have a third
     if len(snrs) < 3:
@@ -212,16 +224,7 @@ def get_snr_ratio(wave_bundle, excluded_channels=[]):
         The SNR ratio.
     """
 
-    chans = list(wave_bundle.keys())
-
-    snrs = []
-    for chan in chans:
-      if(chan in excluded_channels):
-        continue
-
-      waveform = wave_bundle[chan]
-      snr = get_snr(waveform)
-      snrs.append(snr)
+    snrs = collect_snrs(wave_bundle, excluded_channels)
 
     sorted_snrs = np.sort(snrs) # sort ascending
     sorted_snrs = sorted_snrs[::-1] # switch to descending order
