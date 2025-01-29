@@ -106,7 +106,8 @@ def plot_waveform_bundle(
         ax.set_xlabel(xlabel_options[time_or_freq])
     for ax in [axd["ch0"], axd["ch4"], axd["ch8"], axd["ch12"]]:
         ax.set_ylabel(ylabel_options[time_or_freq])
-    
+   
+    frac_pow_axes = [] 
     # make limits look nice
     for ch in axd:
       if time_or_freq == "freq":
@@ -114,9 +115,9 @@ def plot_waveform_bundle(
           # limit y range downwards
           ymin = max(ymin, -25)
           axd[ch].set_ylim([ymin-5,ymax+5])
-
           # add secondary axis to help with CW filtering
           ax2 = axd[ch].twinx()
+          frac_pow_axes.append(ax2)
           y1min, y1max = axd[ch].get_ylim()
           ## convert back to just the spec^2
           spec2min = 50.*1e3*10.**(y1min/10.)
@@ -130,8 +131,14 @@ def plot_waveform_bundle(
           ax2.axhline(y=1.0, c='lightgray', linestyle='--')
           if ch in ["ch3", "ch7", "ch11", "ch15"]:
             ax2.set_ylabel("Fractional Power")
+          else:
+            ax2.tick_params(axis = 'y', left = False, right = False, labelleft = False, labelright = False)
       else:
           axd[ch].set_ylim(ymin, ymax)
+
+    # share secondary y-axes
+    for axd_twin in frac_pow_axes:
+        axd_twin.sharey(frac_pow_axes[0])
 
     # save figure
     fig.savefig(output_file_path)
