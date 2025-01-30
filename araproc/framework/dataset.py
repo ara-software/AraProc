@@ -60,7 +60,7 @@ def get_filters(station_id, analysis_config):
             the_filter.setVerbose(False)
             the_filter.setFreqLimits(config_settings["min_freq"], 
                                     config_settings["max_freq"])
-            the_filter.setPeakFindingOption(0) 
+            the_filter.setPeakFindingOption(0) # change to use global max as peak 
             ROOT.SetOwnership(the_filter, True) # give python full ownership
             cw_filters[filter_name] = the_filter
 
