@@ -126,8 +126,6 @@ def plot_waveform_bundle(
           fmax = np.log10(spec2max/spec2Tot[ch])
           ax2.set_ylim(fmin, fmax)
           ax2.set_yticks(np.arange(np.ceil(fmin), np.floor(fmax)+0.1, 1)) # ticks MUST fall within the [fmin, fmax] range or y-axes will not correspond correctly
-          print(fmin, np.arange(np.ceil(fmin), np.floor(fmax)+0.1, 1)[0])
-          print(fmax, np.arange(np.ceil(fmin), np.floor(fmax)+0.1, 1)[-1])
           ax2.axhline(y=0.0, c='lightgray', linestyle='--')
           if ch in ["ch3", "ch7", "ch11", "ch15"]:
             ax2.set_ylabel("lg(Fractional Power)")
