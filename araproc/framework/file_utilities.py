@@ -30,7 +30,8 @@ def get_cvmfs_ped_file_name(station_id, run_number):
     if not np.isfinite(run_number) or run_number < 0:
         raise Exception(f"Run number {run_number} is not supported")
     
-    cvmfs_top_dir = "/cvmfs/icecube.osgstorage.org/icecube/PUBLIC/groups/arasoft/pedestals_v2"
+    #cvmfs_top_dir = "/cvmfs/icecube.osgstorage.org/icecube/PUBLIC/groups/arasoft/pedestals_v2"
+    cvmfs_top_dir = "/data/ana/ARA/processing/support/pedestals_v2"
     start = start = run_number - (run_number % 1000)
     stop = start + 999
     file=f"station_{station_id}/{start:07d}-{stop:07d}/station_{station_id}_run_{run_number:07d}.gz"
