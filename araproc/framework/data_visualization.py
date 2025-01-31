@@ -122,14 +122,15 @@ def plot_waveform_bundle(
           spec2min = 50.*1e3*10.**(y1min/10.)
           spec2max = 50.*1e3*10.**(y1max/10.)
           ## normalize by total power in spectrum
-          fmin = spec2min/spec2Tot[ch]
-          fmax = spec2max/spec2Tot[ch]
+          fmin = np.log10(spec2min/spec2Tot[ch])
+          fmax = np.log10(spec2max/spec2Tot[ch])
           ax2.set_ylim(fmin, fmax)
-          ax2.set_yscale('log')
-          ax2.set_yticks(10**np.arange(np.ceil(np.log10(fmin)), np.floor(np.log10(fmax))+0.1, 1)) # ticks MUST fall within the [fmin, fmax] range or y-axes will not correspond correctly
-          ax2.axhline(y=1.0, c='lightgray', linestyle='--')
+          ax2.set_yticks(np.arange(np.ceil(fmin), np.floor(fmax)+0.1, 1)) # ticks MUST fall within the [fmin, fmax] range or y-axes will not correspond correctly
+          print(fmin, np.arange(np.ceil(fmin), np.floor(fmax)+0.1, 1)[0])
+          print(fmax, np.arange(np.ceil(fmin), np.floor(fmax)+0.1, 1)[-1])
+          ax2.axhline(y=0.0, c='lightgray', linestyle='--')
           if ch in ["ch3", "ch7", "ch11", "ch15"]:
-            ax2.set_ylabel("log(Fractional Power)")
+            ax2.set_ylabel("lg(Fractional Power)")
       else:
           axd[ch].set_ylim(ymin, ymax)
 
