@@ -230,44 +230,55 @@ class ConfigFileWrapper:
             raise Exception(f"{path_to_config_file} has a problem!")
         
         self.cal_pulser_info = self.parse_cal_pulser_info()
-        self.is_cal_pulser_on = bool(self.cal_pulser_info["opIceA"] or self.cal_pulser_info["opIceB"])
+        if len(self.cal_pulser_info) == 0:
+            # if the CP dictionary came back empty, assume the CP was on
+            self.is_cal_pulser_on = True
+        else:
+            # otherwise, actually parse it
+            self.is_cal_pulser_on = bool(self.cal_pulser_info["opIceA"] or self.cal_pulser_info["opIceB"])
     
     def parse_cal_pulser_info(self, end_key = ';', num_vals = 1):
 
-        with open(self.path_to_config_file, 'r') as c_file:
-             config_file_read = c_file.read()
-
-        calpulser_key = ['antennaIceA#I1=', 'antennaIceB#I1=', 'opIceA#I1=', 'opIceB#I1=', 'attIceA#I1=', 'attIceB#I1=']
-
         cal_pulser_info = {}
 
-        for key in calpulser_key:
+        # first, make sure the file actually contains information
+        num_lines = None
+        with open(self.path_to_config_file, 'r') as fp:
+            num_lines = len(fp.readlines())
+        
+        if num_lines > 0:
 
-            # check whether there is a same config but commented out one
-            # if there is, delete it before begin the search
-            old_key = '//'+key
-            new_config_file_read = config_file_read.replace(old_key, '')
+            with open(self.path_to_config_file, 'r') as c_file:
+                config_file_read = c_file.read()
+                
+            calpulser_key = ['antennaIceA#I1=', 'antennaIceB#I1=', 'opIceA#I1=', 'opIceB#I1=', 'attIceA#I1=', 'attIceB#I1=']
 
-            # find the index of the key    
-            key_idx = new_config_file_read.find(key)
+            for key in calpulser_key:
 
-            # check whether key is in the txt_read or not
-            if key_idx != -1:
-               key_idx += len(key)
-               # find the end_key index after key_idx
-               end_key_idx = new_config_file_read.find(end_key, key_idx)
+                # check whether there is a same config but commented out one
+                # if there is, delete it before begin the search
+                old_key = '//'+key
+                new_config_file_read = config_file_read.replace(old_key, '')
 
-               # if there are multiple values for same key
-               if num_vals != 1:
-                  val = np.asarray(new_config_file_read[key_idx:end_key_idx].split(","), dtype = int)
-               else:
-                  val = int(new_config_file_read[key_idx:end_key_idx])
+                # find the index of the key    
+                key_idx = new_config_file_read.find(key)
 
-            # it there is no key in the txt_read, output numpy nan
-            else:
-               val = np.full((num_vals), np.nan, dtype = float)
+                # check whether key is in the txt_read or not
+                if key_idx != -1:
+                    key_idx += len(key)
+                    # find the end_key index after key_idx
+                    end_key_idx = new_config_file_read.find(end_key, key_idx)
 
-            cal_pulser_info[key.split("#",1)[0]] = val # when assigning the key, drop everything after the #
+                    # if there are multiple values for same key
+                    if num_vals != 1:
+                        val = np.asarray(new_config_file_read[key_idx:end_key_idx].split(","), dtype = int)
+                    else:
+                        val = int(new_config_file_read[key_idx:end_key_idx])
+
+                # it there is no key in the txt_read, output numpy nan
+                else:
+                    val = np.full((num_vals), np.nan, dtype = float)
+
+                cal_pulser_info[key.split("#",1)[0]] = val # when assigning the key, drop everything after the #
 
         return cal_pulser_info
-    
