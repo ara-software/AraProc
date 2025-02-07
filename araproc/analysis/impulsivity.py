@@ -61,7 +61,7 @@ def get_cdf(trace):
     sorted_waveform = hilbert_envelope[clo_sort_idx]
 
     # Cumulative distribution function (CDF) calculation
-    cdf = np.cumsum(sorted_waveform)
+    cdf = np.cumsum(sorted_waveform**2)
     cdf /= np.max(cdf)
 
     t_frac = np.linspace(0, 1, len(cdf))
