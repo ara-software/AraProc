@@ -233,5 +233,37 @@ def get_snr_ratio(wave_bundle, excluded_channels=[]):
 
     return snr_ratio 
 
+def get_avg_rms(wave_bundle, excluded_channels=[]):
+
+    """
+    Calculates channel-wise averaged RMS.
+
+    Parameters
+    ----------
+    wave_bundle: dict of TGraphs or np.ndarrays
+        Dictionary of waveform TGraphs or np.ndarrays to be averaged.
+    excluded_channels: list
+        List of dictionary keys to exclude from average.
+
+    Returns
+    -------
+    avg_rms : float
+        The average RMS.
+    """
+    
+    chans = list(wave_bundle.keys())
+
+    rms = []
+    for chan in chans:
+      if(chan in excluded_channels):
+        continue
+
+      waveform = wave_bundle[chan]
+      thisRms = get_min_segmented_rms(waveform)
+      rms.append(thisRms)
+
+    avg_rms = np.mean(rms)
+
+    return avg_rms
 
 
