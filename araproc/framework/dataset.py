@@ -857,7 +857,7 @@ class AnalysisDataset:
                     These are filtered waveforms that are cropped to a time range
                     passed by the user through the crop_times argument. Outside this
                     range the waveform is set to 0. 
-        crop_times : dict of float pairs
+        crop_times : dict of float pairs (keys : int, channel number; values : tuple, time range)
             The time range (tmin, tmax) which traces should be cropped to for each channel. 
             To avoid cropping you can set tmin/tmax to a very negative/positive number. If
             a channel is missing from the dictionary, it will be skipped in the cropping process.  
