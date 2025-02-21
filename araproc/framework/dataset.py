@@ -425,7 +425,10 @@ class SimWrapper:
         self.event_tree = None
         self.sim_tree = None
         self.sim_settings_tree = None
-        self.run_number = -10 # this doesn't make sense for AraSim
+        if '.run' not in path_to_data_file:
+            self.run_number = -10 # if there's no file we will crash anyway
+        else:
+            self.run_number = int(path_to_data_file.split('.run')[-1].split('.root')[0])
         self.station_id = None
         self.num_events = None
         self.config = None
