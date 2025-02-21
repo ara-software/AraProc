@@ -428,6 +428,9 @@ class SimWrapper:
         if '.run' not in path_to_data_file:
             self.run_number = -10 # if there's no file we will crash anyway
         else:
+            # arasim files come in the form /path/AraOut.[setupFile].run[runNo].root so first
+            # split on '.run' and grab the last element to get [runNo].root then split on
+            # '.root' and grab the first element to be left with [runNo]
             self.run_number = int(path_to_data_file.split('.run')[-1].split('.root')[0])
         self.station_id = None
         self.num_events = None
