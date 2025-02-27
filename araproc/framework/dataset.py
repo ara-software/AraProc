@@ -63,7 +63,11 @@ def get_filters(station_id, analysis_config):
             #the_filter.setPeakFindingOption(0) # change to use global max as peak 
             the_filter.setPeakFindingOption(3) # change to only consider peaks above baseline computed by a Savitzky Golay filter 
             ROOT.SetOwnership(the_filter, True) # give python full ownership
-            cw_filters[filter_name] = the_filter
+            cw_filters[filter_name] = {}
+            cw_filters[filter_name]["filter"] = the_filter
+            cw_filters[filter_name]["min_freq"] = config_settings["min_freq"]
+            cw_filters[filter_name]["max_freq"] = config_settings["max_freq"]
+            cw_filters[filter_name]["min_power_ratio"] = config_settings["min_power_ratio"]
 
     file.close()
 
@@ -88,6 +92,10 @@ class DataWrapper:
         the pointer to the ROOT TFile that corresponds to the opened data event file
     event_tree : ROOT TTree
         the sound that the animal makes
+    cw_id_tfile : ROOT TFile
+        the pointer to the ROOT TFile that corresponds to the opened cw id file
+    cw_id_tree : ROOT TTree
+        the sound the the mousetrap makes 
     run_number: int
         ARA run number for this dataset
         This will be inferred from the data itself
@@ -98,10 +106,14 @@ class DataWrapper:
         If True, then you can only access "raw" events, meaning no waveforms.
         If False, then AraProc will ask AraRoot to perform AraCalType::kLatestCalib (pedestals, and timing/volt cal). User will have access to waveforms.
         Most users will leave this False.
+    path_to_cw_ids : str
+        the fulle path to the file containing identified CW frequencies for this data file
     num_events: int
         number of data events in the data ROOT file
     raw_event_ptr : RawAtriStationEvent
         a RawAtriStationEvent ptr from AraRoot
+    cw_id_ptrs : dict of ptrs
+        ptrs to Branches of the cw id ttree
     qual_cuts : AraQualCuts
         An AraRoot AraQualCuts object
     calibrator: AraEventCalibrator
@@ -114,20 +126,25 @@ class DataWrapper:
                  path_to_data_file : str = None,
                  path_to_pedestal_file : str = None,
                  station_id : int = None,
-                 do_not_calibrate : bool = False
+                 do_not_calibrate : bool = False,
+                 path_to_cw_ids : str = None,
                  ):
         
         self.path_to_data_file = None
         self.path_to_pedestal_file = None
         self.do_not_calibrate = do_not_calibrate
+        self.path_to_cw_ids = None
         self.root_tfile = None
         self.event_tree = None
+        self.cw_id_tfile = None
+        self.cw_id_tree = None
         self.run_number = None
         self.station_id = None
         self.data_station_id = None
         self.num_events = None
         self.calibrator = None
         self.raw_event_ptr = None
+        self.cw_id_ptrs = None
         self.config = None
 
         if station_id not in const.valid_station_ids:
@@ -159,6 +176,11 @@ class DataWrapper:
             self.__load_pedestal(path_to_pedestal_file) # load the pedestals
         else:
             logging.warning(f"do_not_calibrate = {self.do_not_calibrate}. Data will not be calibrated...")
+        
+        # now load identified CW frequencies
+        self.path_to_cw_ids = path_to_cw_ids
+        self.__load_cw_ids(path_to_cw_ids)
+
 
     def __open_tfile_load_ttree(self):
 
@@ -232,7 +254,7 @@ class DataWrapper:
             self.data_station_id = int(np.frombuffer(self.event_tree.GetV1(), np.dtype('float'), test)[0])
             logging.debug(f"Got the station id {self.station_id}")
         except:
-            logging.critical("Gettig the station id from the eventTree failed")
+            logging.critical("Getting the station id from the eventTree failed")
             raise
 
     def __assign_config(self):
@@ -244,7 +266,7 @@ class DataWrapper:
         # find the right pedestal
         # if the user provided one, then choose that
         # otherwise, try to find it in cvmfs
-        # and if that doesn't work, raie an error
+        # and if that doesn't work, raise an error
         if path_to_pedestal_file is not None:
             if futil.file_is_safe(path_to_pedestal_file):
                 logging.info(f"Will try to load custom ped file: {path_to_pedestal_file}")
@@ -275,6 +297,70 @@ class DataWrapper:
         except:
             logging.critical("Setting the AtriPedFile failed")
             raise
+
+    def __load_cw_ids(self, path_to_cw_ids = None):
+
+        # find the right cw id file
+        # if the user provided one, then choose that
+        # otherwise, try to find it in cvmfs
+        # and if that doesn't work, raise an error
+        if path_to_cw_ids is not None:
+            if futil.file_is_sage(path_to_cw_ids):
+                logging.info(f"Will try to load cw id file: {path_to_cw_ids}")
+                self.path_to_cw_ids = path_to_cw_ids
+            else:
+                raise Exception(f"{path_to_cw_ids} has a problem!")
+ 
+        else:
+            print("Automatic loading of cw id files is not yet implemented. Please pass a file path.")
+            print("Continuing without CW ID info...")
+            return
+
+        # now try to load the file
+        try:
+            self.cw_id_tfile = ROOT.TFile(self.path_to_cw_ids, "READ")
+            logging.debug(f"Successfully opened {self.path_to_cw_ids}")
+        except:
+            logging.critical(f"Opening {self.path_to_cw_ids} failed")
+            raise
+
+        # set the TTree
+        try:
+            self.cw_id_tree = self.cw_id_tfile.Get("NewCWTree")
+            logging.debug("Successfully got NewCWTree")
+        except:
+            logging.critical("Loading the NewCWTree failed")
+            self.cw_id_tfile.Close() # close the file
+            raise
+        
+        # build the cw id index on event numbers
+        if self.cw_id_tree.BuildIndex("event_num") >= 0:
+            logging.debug("Successfully built cw id tree index on event_num")
+        else:
+            logging.critical("Building cw id tree index on event_num failed")
+
+        # load up the cw id info
+        self.cw_id_ptrs = {}
+        cw_id_info = ["badFreqs", "badSigmas"]
+        scan_directions = ["fwd", "bwd"]
+        polarizations = ["v", "h"]
+        for info in cw_id_info
+            for direction in scan_directions:
+                for pol in polarizations:
+
+                    try:
+                        key = f"{info}_{direction}_{pol}"
+                        self.cw_id_ptrs[key] = ROOT.std.vector('double')()
+                   
+                        self.cw_id_tree.SetBranchAddress(key, ROOT.AddressOf(self.cw_id_ptrs[key])) 
+                        logging.debug(f"Successfully assigned cw id {key} branch")
+                
+                    except:
+                        logging.critical(f"Assigning the {key} in the newCWTree failed")
+                        self.cw_id_tfile.Close() # close the file
+                        raise
+
+        logging.debug("Successfully assigned all newCWTree branches")
 
     def get_raw_event(self, event_idx):
         """
@@ -314,6 +400,13 @@ class DataWrapper:
             logging.critical(f"Copying Raw event index {event_idx} failed.")
             raise 
         ROOT.SetOwnership(raw_event, True)
+       
+        # if we have cw ids loaded, get the corresponding entry to this event 
+        if self.cw_id_tree is not None:
+            event_number = raw_event.eventNumber
+            if self.cw_id_tree.GetEntryWithIndex(event_number) < 0:
+                logging.critical(f"Unable to get corresponding cw id entry for {event_idx}.")
+        
         return raw_event
 
     def get_useful_event(self, event_idx):
@@ -358,7 +451,26 @@ class DataWrapper:
             logging.critical(f"Calibrating event index {event_idx} failed.")
             raise 
         ROOT.SetOwnership(useful_event, True)
+        
+        # if we have cw ids loaded, get the corresponding entry to this event 
+        if self.cw_id_tree is not None:
+            event_number = raw_event.eventNumber
+            if self.cw_id_tree.GetEntryWithIndex(event_number) < 0:
+                logging.critical(f"Unable to get corresponding cw id entry for {event_idx}.")
+        
         return useful_event
+
+    def get_cw_ids(self):
+        """
+        Get CW ID info for the loaded event.
+
+        Returns
+        -------
+        cw_id_ptrs : dict
+            Dictionary containing cw id info for event.
+        """
+
+        return self.cw_id_ptrs
 
     def get_event_index(self, event_number):
         """
@@ -692,7 +804,7 @@ class AnalysisDataset:
             raise Exception(f"Simulation (is_simulation = {self.is_simulation}) and uncalibrated data (do_not_calibrate = {self.do_not_calibrate}) are incompatible settings")
 
         self.path_to_data_file = None
-        self.pedestal_file = None # not requried if simulation
+        self.pedestal_file = None # not required if simulation
         self.run_number = None
         self.station_id = None
         self.data_station_id = None
@@ -806,7 +918,15 @@ class AnalysisDataset:
         useful_event = self.dataset_wrapper.get_useful_event(event_idx)
         
         return useful_event
-    
+   
+    def get_cw_ids(self)
+
+        # CW ids currently not supported for simulation
+        if self.is_simulation:
+            return None 
+
+        return self.dataset_wrapper.get_cw_ids()
+ 
     def get_event_index(self, 
                             event_number : int = None):
 
@@ -850,7 +970,7 @@ class AnalysisDataset:
                     The interpoaltion timestep is given by "self.interp_tstep"
                     (the time step is set when the dataset object was created)
                 "dedispersed" : 
-                    These are interpoltaed waves with dedispersion applied.
+                    These are interpolated waves with dedispersion applied.
                     For the dedispersion, we assume the phase response
                     of the ARA system as found in AraSim, specifically
                     the "ARA_Electronics_TotalGain_TwoFilters.txt" file.
@@ -948,7 +1068,8 @@ class AnalysisDataset:
             return wavepacket
     
         # and if they want filtered waves
-        filtered_waves = cwf.apply_filters(self.__cw_filters, dedispersed_waves)
+        cw_ids = self.get_cw_ids()
+        filtered_waves = cwf.apply_filters(self.__cw_filters, dedispersed_waves, cw_ids)
 
         # and finally, apply some bandpass cleanup filters
         for chan_key in list(filtered_waves.keys()):
