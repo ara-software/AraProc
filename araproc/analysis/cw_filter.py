@@ -133,7 +133,7 @@ def get_active_filters(cw_filters, cw_ids, chan):
     # filters are applied in order they appear in dict
     # there's some advantage to apply them in order of descending 
     # min_power_ratio, so let's quickly enforce that
-    active_filters = {k : v for k, v in sorted(active_filters.items(), key=lambda x: x[1]["min_power_ratio"])}
+    active_filters = {k : v for k, v in sorted(active_filters.items(), key=lambda x: x[1]["min_power_ratio"], reverse=True)}
 
     return active_filters
 
