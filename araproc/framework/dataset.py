@@ -341,7 +341,7 @@ class DataWrapper:
 
         # load up the cw id info
         self.cw_id_ptrs = {}
-        cw_id_info = ["badFreqs"] #, "badSigmas"]
+        cw_id_info = ["badFreqs", "badSigmas"]
         scan_directions = ["fwd", "bwd"]
         polarizations = ["v", "h"]
         for info in cw_id_info:
@@ -405,7 +405,7 @@ class DataWrapper:
         if self.cw_id_tree is not None:
             event_number = raw_event.eventNumber
             if self.cw_id_tree.GetEntryWithIndex(event_number) < 0:
-                logging.critical(f"Unable to get corresponding cw id entry for {event_number}.")
+                raise Exception(f"Unable to get corresponding cw id entry for {event_number}.")
         
         return raw_event
 
@@ -456,7 +456,7 @@ class DataWrapper:
         if self.cw_id_tree is not None:
             event_number = useful_event.eventNumber
             if self.cw_id_tree.GetEntryWithIndex(event_number) < 0:
-                logging.critical(f"Unable to get corresponding cw id entry for {event_number}.")
+                raise Exception(f"Unable to get corresponding cw id entry for {event_number}.")
  
         return useful_event
 

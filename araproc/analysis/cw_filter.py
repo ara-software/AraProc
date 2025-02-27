@@ -117,7 +117,6 @@ def get_active_filters(cw_filters, cw_ids, chan):
         badFreqs = cw_ids[key]
 
         for freq in badFreqs:
-            freq /= 1e3 # convert to GHz
             for filter_i, filter in cw_filters.items():
                 # this filter is already activated
                 if filter_i in active_filters: 
