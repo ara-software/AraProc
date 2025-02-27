@@ -117,6 +117,7 @@ def get_active_filters(cw_filters, cw_ids, chan):
         badFreqs = cw_ids[key]
 
         for freq in badFreqs:
+            freq /= 1e3 # convert to GHz
             for filter_i, filter in cw_filters.items():
                 # this filter is already activated
                 if filter_i in active_filters: 
@@ -130,7 +131,7 @@ def get_active_filters(cw_filters, cw_ids, chan):
                     active_filters[filter_i] = filter
 
     # filters are applied in order they appear in dict
-    # there's some advantage to apply the in order of descending 
+    # there's some advantage to apply them in order of descending 
     # min_power_ratio, so let's quickly enforce that
     active_filters = {k : v for k, v in sorted(active_filters.items(), key=lambda x: x[1]["min_power_ratio"])}
 

@@ -107,7 +107,7 @@ class DataWrapper:
         If False, then AraProc will ask AraRoot to perform AraCalType::kLatestCalib (pedestals, and timing/volt cal). User will have access to waveforms.
         Most users will leave this False.
     path_to_cw_ids : str
-        the fulle path to the file containing identified CW frequencies for this data file
+        the full path to the file containing identified CW frequencies for this data file
     num_events: int
         number of data events in the data ROOT file
     raw_event_ptr : RawAtriStationEvent
@@ -305,7 +305,7 @@ class DataWrapper:
         # otherwise, try to find it in cvmfs
         # and if that doesn't work, raise an error
         if path_to_cw_ids is not None:
-            if futil.file_is_sage(path_to_cw_ids):
+            if futil.file_is_safe(path_to_cw_ids):
                 logging.info(f"Will try to load cw id file: {path_to_cw_ids}")
                 self.path_to_cw_ids = path_to_cw_ids
             else:
@@ -341,10 +341,10 @@ class DataWrapper:
 
         # load up the cw id info
         self.cw_id_ptrs = {}
-        cw_id_info = ["badFreqs", "badSigmas"]
+        cw_id_info = ["badFreqs"] #, "badSigmas"]
         scan_directions = ["fwd", "bwd"]
         polarizations = ["v", "h"]
-        for info in cw_id_info
+        for info in cw_id_info:
             for direction in scan_directions:
                 for pol in polarizations:
 
@@ -405,7 +405,7 @@ class DataWrapper:
         if self.cw_id_tree is not None:
             event_number = raw_event.eventNumber
             if self.cw_id_tree.GetEntryWithIndex(event_number) < 0:
-                logging.critical(f"Unable to get corresponding cw id entry for {event_idx}.")
+                logging.critical(f"Unable to get corresponding cw id entry for {event_number}.")
         
         return raw_event
 
@@ -454,10 +454,10 @@ class DataWrapper:
         
         # if we have cw ids loaded, get the corresponding entry to this event 
         if self.cw_id_tree is not None:
-            event_number = raw_event.eventNumber
+            event_number = useful_event.eventNumber
             if self.cw_id_tree.GetEntryWithIndex(event_number) < 0:
-                logging.critical(f"Unable to get corresponding cw id entry for {event_idx}.")
-        
+                logging.critical(f"Unable to get corresponding cw id entry for {event_number}.")
+ 
         return useful_event
 
     def get_cw_ids(self):
@@ -757,6 +757,8 @@ class AnalysisDataset:
         If True, then you can only access "raw" events, meaning no waveforms.
         If False, then AraProc will ask AraRoot to perform AraCalType::kLatestCalib (pedestals, and timing/volt cal). User will have access to waveforms.
         Most users will leave this False.
+    path_to_cw_ids : str
+        the full path to the file containing identified CW frequencies for this data file
     run_number: int
         ARA run number for this dataset
         This will be inferred from the data itself
@@ -794,14 +796,18 @@ class AnalysisDataset:
                  path_to_pedestal_file : str = None,
                  interp_tstep : float = 0.5 ,
                  is_simulation : bool = False,
-                 do_not_calibrate : bool = False
+                 do_not_calibrate : bool = False,
+                 path_to_cw_ids : str = None,
                  ):
     
         self.is_simulation = is_simulation
         self.do_not_calibrate = do_not_calibrate
+        self.path_to_cw_ids = path_to_cw_ids
 
         if self.is_simulation and self.do_not_calibrate:
             raise Exception(f"Simulation (is_simulation = {self.is_simulation}) and uncalibrated data (do_not_calibrate = {self.do_not_calibrate}) are incompatible settings")
+        if self.is_simulation and self.path_to_cw_ids:
+            raise Exception(f"Simulation (is_simulation = {self.is_simulation}) and IDed CW filtering (path_to_cw_ids = {self.path_to_cw_ids}) are incompatible settings")
 
         self.path_to_data_file = None
         self.pedestal_file = None # not required if simulation
@@ -834,7 +840,8 @@ class AnalysisDataset:
             self.dataset_wrapper = DataWrapper(path_to_data_file,
                                                  path_to_pedestal_file,
                                                  station_id=station_id,
-                                                 do_not_calibrate = self.do_not_calibrate
+                                                 do_not_calibrate = self.do_not_calibrate,
+                                                 path_to_cw_ids = self.path_to_cw_ids
                                              )
         else:
             self.dataset_wrapper = SimWrapper(path_to_data_file,
@@ -919,7 +926,7 @@ class AnalysisDataset:
         
         return useful_event
    
-    def get_cw_ids(self)
+    def get_cw_ids(self):
 
         # CW ids currently not supported for simulation
         if self.is_simulation:
