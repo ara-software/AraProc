@@ -96,6 +96,76 @@ def get_min_segmented_rms(waveform, nsegs=8):
 
     return rms
 
+def get_jackknife_rms(waveform, nSamples=50):
+
+    """
+    Calculates the RMS of a voltage trace via a sort-of jackknife technique,
+    which attempts to identify the parts of the trace which do not contain 
+    signal with the goal of using as much of the trace to estimate the RMS 
+    as possible. The RMS is then calculated using all parts of the trace which
+    are determined to not be contain signal (ie outlier voltages). The trace
+    is segmented into equal-sample segments to avoid sensitivity to the trace
+    length.
+
+    Parameters
+    ----------
+    waveform: TGraph or np.ndarray
+        A TGraph or np.ndarray of the waveform voltage.
+    nSamples: int
+        Number of samples for each segment.
+
+    Returns
+    -------
+    rms : float
+        The jackknifed RMS in same units as trace.
+    """
+    
+    if(isinstance(waveform, ROOT.TGraph)):
+      _, trace = wfu.tgraph_to_arrays(waveform)
+    elif(isinstance(waveform, np.ndarray)):
+      trace = np.copy(waveform)
+      
+      # don't be bothered by some unused dimensions
+      trace = np.squeeze(trace)
+
+      if(trace.ndim != 1):
+        raise Exception("Trace is not 1d in snr.get_min_segmented_rms. Abort")
+    else:
+      raise Exception("Unsupported data type in snr.get_min_segmented_rms. Abort")
+
+    # first split the trace into segments of nSamples 
+    # then calculate the RMS on the trace _without_ that segment (ie the "all-but RMS")
+    allRms = []
+    traceLen = len(trace)
+    for i in range(0, traceLen, nSamples):
+
+      start = i
+      end = start + nSamples
+
+      subTrace = np.concatenate([trace[:start], trace[end+1:]])
+      thisRms = np.sqrt(np.mean(subTrace**2))
+      allRms.append(thisRms)
+   
+    # segments that have outlier (ie nonthermal) voltages, will have
+    # an all-but RMS that is significantly smaller than others
+    # here we attempt to identify those outlier segments by detecting
+    # all-but RMS values which are smaller than the mean of the other
+    # all-but RMS values by more the 1 standard deviation of the other all-but RMS values 
+    # non-outlier segments are collected to calculate the final RMS
+    allRms = np.asarray(allRms)
+    smoothedTrace = np.empty(0)
+    for i in range(len(allRms)):
+        subRms = np.concatenate([allRms[:i],allRms[i+1:]])
+        subMean = subRms.mean()
+        subStd = subRms.std()
+        if(allRms[i] > subMean-subStd):
+            traceSegment = trace[i*nSamples:(i+1)*nSamples]
+            smoothedTrace = np.concatenate([smoothedTrace, traceSegment]) 
+    
+    rms = np.sqrt(np.mean(smoothedTrace**2))   
+ 
+    return rms
+
 def get_snr(waveform):
 
     """
@@ -113,7 +183,7 @@ def get_snr(waveform):
     """
 
     vpp = get_vpp(waveform)
-    rms = get_min_segmented_rms(waveform)
+    rms = get_jackknife_rms(waveform)
     if(rms == 0.0):
       return 0
 
@@ -259,7 +329,7 @@ def get_avg_rms(wave_bundle, excluded_channels=[]):
         continue
 
       waveform = wave_bundle[chan]
-      thisRms = get_min_segmented_rms(waveform)
+      thisRms = get_jackknife_rms(waveform)
       rms.append(thisRms)
 
     avg_rms = np.mean(rms)
