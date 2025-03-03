@@ -68,6 +68,7 @@ def get_min_segmented_rms(waveform, nsegs=8):
 
       if(trace.ndim != 1):
         raise Exception("Trace is not 1d in snr.get_min_segmented_rms. Abort")
+
     else:
       raise Exception("Unsupported data type in snr.get_min_segmented_rms. Abort")
 
@@ -129,9 +130,10 @@ def get_jackknife_rms(waveform, nSamples=50):
       trace = np.squeeze(trace)
 
       if(trace.ndim != 1):
-        raise Exception("Trace is not 1d in snr.get_min_segmented_rms. Abort")
+        raise Exception("Trace is not 1d in snr.get_jackknife_rms. Abort")
+
     else:
-      raise Exception("Unsupported data type in snr.get_min_segmented_rms. Abort")
+      raise Exception("Unsupported data type in snr.get_jackknife_rms. Abort")
 
     # first split the trace into segments of nSamples 
     # then calculate the RMS on the trace _without_ that segment (ie the "all-but RMS")
