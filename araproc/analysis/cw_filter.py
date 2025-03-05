@@ -2,6 +2,7 @@ import logging
 import ROOT
 import yaml
 import copy
+import numpy as np
 
 from araproc.framework import constants as const
 
@@ -67,6 +68,9 @@ def apply_filters(cw_filters, waveform_bundle, cw_ids = None):
         The keys channel ids.
         The values are TGraphs after the application of all filters.
     """
+
+    # run sanity check to ensure cw id frequencies are reasonable
+    check_cw_ids(cw_ids)
 
     filtered_waveforms = {}
     for ch_id, wave in waveform_bundle.items():
@@ -135,4 +139,28 @@ def get_active_filters(cw_filters, cw_ids, chan):
     active_filters = {k : v for k, v in sorted(active_filters.items(), key=lambda x: x[1]["min_power_ratio"], reverse=True)}
 
     return active_filters
+
+def check_cw_ids(cw_ids):
+    """
+    Do a quick sanity check of the frequencies in the passed cw_ids.
+
+    Parameters
+    ----------
+    cw_ids : dictionary
+        A dictionary of cw id info.
+    """
+
+    if cw_ids is None:
+        return
+
+    for key in cw_ids:
+        if 'badFreqs' not in key:
+            continue 
+
+        badFreqs = np.asarray(cw_ids[key])
+        if np.any(badFreqs < 0.):
+            raise ValueError("Negative frequency detected in CW IDs. Abort.")
+        if np.any(badFreqs > 2.):
+            raise ValueError("Frequency >2 detected in CW IDs. Please ensure units are GHz. Abort.")
+
 
