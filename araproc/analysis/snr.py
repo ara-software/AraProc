@@ -139,15 +139,17 @@ def get_jackknife_rms(waveform, nSamples=50):
     # then calculate the RMS on the trace _without_ that segment (ie the "all-but RMS")
     allRms = []
     traceLen = len(trace)
-    for i in range(0, traceLen, nSamples):
+    trace2 = np.square(trace)
+    trace2Sum = np.sum(trace2)
+    
+    start_idx = np.arange(0, traceLen, nSamples)
+    end_idx = np.clip(start_idx + nSamples, 0, traceLen)
+    segLens = end_idx - start_idx     
+    nSegs = len(segLens)
 
-      start = i
-      end = start + nSamples
-
-      subTrace = np.concatenate([trace[:start], trace[end+1:]])
-      thisRms = np.sqrt(np.mean(subTrace**2))
-      allRms.append(thisRms)
-   
+    segTrace2Sum = np.array([np.sum(trace2[start:end]) for start, end in zip(start_idx, end_idx)])
+    allRms = np.sqrt((trace2Sum-segTrace2Sum)/(traceLen - segLens))
+ 
     # segments that have outlier (ie nonthermal) voltages, will have
     # an all-but RMS that is significantly smaller than others
     # here we attempt to identify those outlier segments by detecting
@@ -155,16 +157,14 @@ def get_jackknife_rms(waveform, nSamples=50):
     # all-but RMS values by more the 1 standard deviation of the other all-but RMS values 
     # non-outlier segments are collected to calculate the final RMS
     allRms = np.asarray(allRms)
-    smoothedTrace = np.empty(0)
-    for i in range(len(allRms)):
-        subRms = np.concatenate([allRms[:i],allRms[i+1:]])
-        subMean = subRms.mean()
-        subStd = subRms.std()
-        if(allRms[i] > subMean-subStd):
-            traceSegment = trace[i*nSamples:(i+1)*nSamples]
-            smoothedTrace = np.concatenate([smoothedTrace, traceSegment]) 
+    subMean = (allRms.sum()-allRms)/(nSegs-1.) # mean of all other all-but RMS values
+    subStd = np.sqrt((np.sum(np.square(allRms-subMean)) - np.square(allRms-subMean))/(nSegs-1.)) # std of all other all-but RMS values
+    mask = np.zeros(traceLen).astype(bool)
+    for i in range(nSegs):
+        mask[i*nSamples:(i+1)*nSamples] = (allRms[i] >  subMean[i] - subStd[i]) # if all-but RMS isn't an outlier mark this segment to be included
     
-    rms = np.sqrt(np.mean(smoothedTrace**2))   
+    # calculate RMS from non-outlier segments
+    rms = np.sqrt(np.mean(trace2[mask]))   
  
     return rms
 
