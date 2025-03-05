@@ -49,6 +49,20 @@ iter_stop = 200
 # iter_start = 20690
 # iter_stop = 20700
 
+################################################################
+################################################################
+# uncomment this one to see an example of CW removal using identified CW 
+################################################################
+################################################################
+
+# d = dataset.AnalysisDataset(
+#     station_id = 100,
+#     path_to_data_file="/data/ana/ARA/processing/data/10pct/L2/station_100/year_2020/station_100_run_00019706.root",
+#     path_to_cw_ids = "/home/brianclark/ARA/FiveStation/scripts/phase_var/CWID_station_100_run_19706.root",
+# )
+# iter_start = 0
+# iter_stop = d.num_events
+
 print(f"Config is {d.config}")
 print(f"Excluded channels are {d.excluded_channels}")
 
