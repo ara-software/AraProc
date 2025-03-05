@@ -140,15 +140,15 @@ def get_jackknife_rms(waveform, nSamples=50):
     allRms = []
     traceLen = len(trace)
     trace2 = np.square(trace)
-    trace2Sum = np.sum(trace2)
+    trace2Sum = np.sum(trace2) # sum of squares of full trace
     
     start_idx = np.arange(0, traceLen, nSamples)
     end_idx = np.clip(start_idx + nSamples, 0, traceLen)
     segLens = end_idx - start_idx     
     nSegs = len(segLens)
 
-    segTrace2Sum = np.array([np.sum(trace2[start:end]) for start, end in zip(start_idx, end_idx)])
-    allRms = np.sqrt((trace2Sum-segTrace2Sum)/(traceLen - segLens))
+    segTrace2Sum = np.array([np.sum(trace2[start:end]) for start, end in zip(start_idx, end_idx)]) # sum of squares in each segment
+    allRms = np.sqrt((trace2Sum-segTrace2Sum)/(traceLen - segLens)) # all-but rms is calculated from sum of full-trace squares _minus_ sum of segment-only squares
  
     # segments that have outlier (ie nonthermal) voltages, will have
     # an all-but RMS that is significantly smaller than others
