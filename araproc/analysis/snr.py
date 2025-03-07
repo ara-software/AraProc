@@ -140,14 +140,15 @@ def get_jackknife_rms(waveform, nSamples=50):
     allRms = []
     traceLen = len(trace)
     trace2 = np.square(trace)
-    trace2Sum = np.sum(trace2) # sum of squares of full trace
+    trace2CumSum = np.cumsum(trace2)
+    trace2Sum = trace2CumSum[-1] # sum of squares of full trace
     
     start_idx = np.arange(0, traceLen, nSamples)
     end_idx = np.clip(start_idx + nSamples, 0, traceLen)
     segLens = end_idx - start_idx     
     nSegs = len(segLens)
 
-    segTrace2Sum = np.array([np.sum(trace2[start:end]) for start, end in zip(start_idx, end_idx)]) # sum of squares in each segment
+    segTrace2Sum = trace2CumSum[end_idx-1] - trace2CumSum[start_idx-1]*(start_idx > 0) # sum of squares in each segment (note: if start == 0, we don't subtract anything)
     allRms = np.sqrt((trace2Sum-segTrace2Sum)/(traceLen - segLens)) # all-but rms is calculated from sum of full-trace squares _minus_ sum of segment-only squares
  
     # segments that have outlier (ie nonthermal) voltages, will have
@@ -159,9 +160,9 @@ def get_jackknife_rms(waveform, nSamples=50):
     allRms = np.asarray(allRms)
     subMean = (allRms.sum()-allRms)/(nSegs-1.) # mean of all other all-but RMS values
     subStd = np.sqrt((np.sum(np.square(allRms-subMean)) - np.square(allRms-subMean))/(nSegs-1.)) # std of all other all-but RMS values
-    mask = np.zeros(traceLen).astype(bool)
-    for i in range(nSegs):
-        mask[i*nSamples:(i+1)*nSamples] = (allRms[i] >  subMean[i] - subStd[i]) # if all-but RMS isn't an outlier mark this segment to be included
+    
+    mask = (allRms >  subMean - subStd) # if all-but RMS isn't an outlier mark this segment to be included
+    mask = np.repeat(mask, nSamples)[:traceLen] # convert from the outlier mask array from being per-segment to per-sample
     
     # calculate RMS from non-outlier segments
     rms = np.sqrt(np.mean(trace2[mask]))   
