@@ -38,7 +38,7 @@ def get_rpr(waveform):
     max_val = channel_wf[max_bin]
 
     # Get noise rms from snr module
-    noise_sigma = snr.get_min_segmented_rms(channel_wf)
+    noise_sigma = snr.get_jackknife_rms(channel_wf)
 
     # Calculate and return the RPR value
     rpr_val = max_val / noise_sigma

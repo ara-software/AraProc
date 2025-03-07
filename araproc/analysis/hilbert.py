@@ -27,7 +27,7 @@ def get_hilbert_snr(waveform):
     hill = wfu.get_hilbert_envelope(waveform)
     hill_max_idx = np.argmax(hill)
     hill_max = hill[hill_max_idx]
-    hill_rms = snr.get_min_segmented_rms(hill)
+    hill_rms = snr.get_jackknife_rms(hill)
 
     if(hill_rms == 0.0):
       return 0
