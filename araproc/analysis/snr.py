@@ -162,7 +162,7 @@ def get_jackknife_rms(waveform, nSamples=50):
     subStd = np.sqrt((np.sum(np.square(allRms-subMean)) - np.square(allRms-subMean))/(nSegs-1.)) # std of all other all-but RMS values
     
     mask = (allRms >  subMean - subStd) # if all-but RMS isn't an outlier mark this segment to be included
-    mask = np.repeat(mask, nSamples)[:traceLen] # convert from the outlier mask array from being per-segment to per-sample
+    mask = np.repeat(mask, nSamples)[:traceLen] # convert the outlier mask array from being per-segment to per-sample
     
     # calculate RMS from non-outlier segments
     rms = np.sqrt(np.mean(trace2[mask]))   
