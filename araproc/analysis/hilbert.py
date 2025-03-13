@@ -71,3 +71,49 @@ def get_avg_hilbert_snr(wave_bundle, excluded_channels = []):
 
     return avg_hill_snr
 
+
+def get_peak_over_avg_power(waveform, fraction=0.5):
+    
+    """
+    Calculates the peak power at maximum of the Hilbert envelope divided
+    by the average power in fraction of the full trace around the peak. 
+
+    Parameters
+    ----------
+    waveform: TGraph
+        A TGraph of the waveform.
+
+    Returns
+    -------
+    peak_over_rms: float
+        The peak power over rms.
+    """
+
+    # calculate the power of the Hilbert envelope
+    h = wfu.get_hilbert_envelope(waveform)
+    envelope_power = np.square(np.abs(h))
+    
+    # find the peak and sort the power enevelope
+    idx_max = np.argmax(envelope_power) 
+    maxPower = envelope_power[idx_max]
+    idx = np.arange(0, len(envelope_power), 1)
+    closeness = abs(idx - idx_max)
+    sorted_idx = np.argsort(closeness)
+    
+    envelope_power = envelope_power[sorted_idx]
+
+    # get the portion of the trace within fraction of the peak
+    fraction_from_peak = np.linspace(0, 1, len(envelope_power))
+    mask = fraction_from_peak > fraction
+    
+    envelope_power = envelope_power[mask]
+
+    # get average within fraction of the peak
+    avg_power = np.mean(envelope_power)
+
+    peak_over_rms = maxPower / avg_power
+
+    return peak_over_rms
+
+
+
