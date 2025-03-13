@@ -72,7 +72,7 @@ def get_avg_hilbert_snr(wave_bundle, excluded_channels = []):
     return avg_hill_snr
 
 
-def get_peak_over_rms(waveform, fraction=0.5):
+def get_peak_over_avg_power(waveform, fraction=0.5):
     
     """
     Calculates the peak power at maximum of the Hilbert envelope divided
