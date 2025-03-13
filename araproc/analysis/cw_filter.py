@@ -121,17 +121,25 @@ def get_active_filters(cw_filters, cw_ids, chan):
         badFreqs = cw_ids[key]
 
         for freq in badFreqs:
+
+            isFiltered = False
             for filter_i, filter in cw_filters.items():
-                # this filter is already activated
-                if filter_i in active_filters: 
-                    continue
 
                 fmin = filter["min_freq"]
                 fmax = filter["max_freq"]
        
                 # if filter covers this frequency, activate it 
                 if freq >= fmin and freq <= fmax: 
+                    isFiltered = True
+                    
+                    # this filter is already activated
+                    if filter_i in active_filters: 
+                        continue
+
                     active_filters[filter_i] = filter
+
+                if not isFiltered:
+                    raise Exception(f"IDed CW at {freq} GHz has no corresponding filter! Please add one and rerun.")
 
     # filters are applied in order they appear in dict
     # there's some advantage to apply them in order of descending 
