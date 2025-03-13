@@ -1,23 +1,29 @@
 import ROOT
 import numpy as np
+from scipy.signal import argrelextrema
 
 from araproc.framework import waveform_utilities as wfu
 
-def get_vpp(waveform):
+def get_vpp(waveform, order = 1, use_local = True):
 
-    """
-    Calculates the peak-to-peak voltage of a voltage trace.
+    """ 
+    Calculates the peak-to-peak voltage of a signal using local (Default) and global extrema.
 
     Parameters
     ----------
     waveform: TGraph or np.ndarray
         A TGraph or np.ndarray of the waveform voltage.
+    order : int, optional (Default = 1)
+        How many points on each side to compare for finding extrema.
+    use_local: bool, optional (Default = True)
+        If True, returns the peak-to-peak voltage based on local extrema. 
+        If False, returns the peak-to-peak voltage based on global extrema.
 
     Returns
     -------
     vpp : float
         Peak-to-peak voltage in same units as trace.
-    """ 
+    """
 
     if(isinstance(waveform, ROOT.TGraph)):
       _, trace = wfu.tgraph_to_arrays(waveform)
@@ -33,9 +39,21 @@ def get_vpp(waveform):
     else:
       raise Exception("Unsupported data type in snr.get_vpp. Abort")
 
-    vMax = trace.max()
-    vMin = trace.min()
-    vpp = vMax - vMin
+    # global extrema case
+    if not use_local:
+      vpp = trace.max() - trace.min()
+      return vpp
+
+    # find local extrema
+    upper_peak_idx = argrelextrema(trace, np.greater_equal, order = order)[0]
+    lower_peak_idx = argrelextrema(trace, np.less_equal, order = order)[0]
+
+    # combine and sort indices (using np.unique)
+    peak_idx = np.unique(np.concatenate((upper_peak_idx, lower_peak_idx)))
+
+    # compute the difference between consecutive extrema and peak directly from indices 
+    diff_peak = np.abs(np.diff(trace[peak_idx]))
+    vpp = diff_peak.max()
 
     return vpp
 
