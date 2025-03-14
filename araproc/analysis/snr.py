@@ -44,12 +44,17 @@ def get_vpp(waveform, order = 1, use_local = True):
       vpp = trace.max() - trace.min()
       return vpp
 
+    # append 0 to the start and end of the trace to handle edge points in 'argrelextrema'
+    trace = np.pad(trace, (1, 1), mode = 'constant', constant_values = 0)
+
     # find local extrema
-    upper_peak_idx = argrelextrema(trace, np.greater_equal, order = order)[0]
-    lower_peak_idx = argrelextrema(trace, np.less_equal, order = order)[0]
+    upper_peak_idx = argrelextrema(trace, np.greater, order = order)[0]
+    lower_peak_idx = argrelextrema(trace, np.less, order = order)[0]
 
     # combine and sort indices (using np.unique)
     peak_idx = np.unique(np.concatenate((upper_peak_idx, lower_peak_idx)))
+    # adjust indices to account for the padding
+    peak_idx = peak_idx - 1
 
     # compute the difference between consecutive extrema and peak directly from indices 
     diff_peak = np.abs(np.diff(trace[peak_idx]))
