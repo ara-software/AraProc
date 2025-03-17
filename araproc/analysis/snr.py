@@ -48,11 +48,15 @@ def get_vpp(waveform, order = 1, use_local = True):
     padded_trace = np.pad(trace, (1, 1), mode = 'constant', constant_values = 0)
 
     # find local extrema
-    upper_peak_idx = argrelextrema(padded_trace, np.greater, order = order)[0]
-    lower_peak_idx = argrelextrema(padded_trace, np.less, order = order)[0]
+    upper_peak_idx = np.squeeze(argrelextrema(padded_trace, np.greater, order = order))
+    lower_peak_idx = np.squeeze(argrelextrema(padded_trace, np.less, order = order))
 
     # combine and sort indices (using np.unique)
     peak_idx = np.unique(np.concatenate((upper_peak_idx, lower_peak_idx)))
+
+    if len(peak_idx) == 0:
+      return 0.0
+
     # adjust indices to account for the padding
     peak_idx = peak_idx - 1
 
