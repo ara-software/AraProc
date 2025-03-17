@@ -4,7 +4,7 @@ from scipy.signal import argrelextrema
 
 from araproc.framework import waveform_utilities as wfu
 
-def get_vpp(waveform, order = 1, use_local = True):
+def get_vpp(waveform, order = 1, use_local = True, time_window = 20, dt = 0.5):
 
     """ 
     Calculates the peak-to-peak voltage of a signal using local (Default) and global extrema.
@@ -18,6 +18,10 @@ def get_vpp(waveform, order = 1, use_local = True):
     use_local: bool, optional (Default = True)
         If True, returns the peak-to-peak voltage based on local extrema. 
         If False, returns the peak-to-peak voltage based on global extrema.
+    time_window: float, optional (Default = 20 ns)
+        Time window in nanoseconds to calculate the peak-to-peak voltage.
+    dt : float, optional (Default = 0.5 ns)
+        Sampling interval in nanoseconds for synthetic time array.
 
     Returns
     -------
@@ -26,7 +30,10 @@ def get_vpp(waveform, order = 1, use_local = True):
     """
 
     if(isinstance(waveform, ROOT.TGraph)):
-      _, trace = wfu.tgraph_to_arrays(waveform)
+      time, trace = wfu.tgraph_to_arrays(waveform)
+      if len(trace) != len(time):
+        raise ValueError("Waveform and time must have the same length.")
+
     elif(isinstance(waveform, np.ndarray)):
       trace = np.copy(waveform)
       
@@ -35,6 +42,9 @@ def get_vpp(waveform, order = 1, use_local = True):
 
       if(trace.ndim != 1):
         raise Exception("Trace is not 1d in snr.get_vpp. Abort")
+
+      # create synthetic time array based on dt = 0.5 ns
+      time = np.arange(len(trace)) * dt
       
     else:
       raise Exception("Unsupported data type in snr.get_vpp. Abort")
@@ -44,8 +54,9 @@ def get_vpp(waveform, order = 1, use_local = True):
       vpp = trace.max() - trace.min()
       return vpp
 
-    # append 0 to the start and end of the trace to handle edge points in 'argrelextrema'
+    # pad trace (with 0 and 0) and time (with t0 and tn) at start and end of the trace to handle edge points in 'argrelextrema'
     padded_trace = np.pad(trace, (1, 1), mode = 'constant', constant_values = 0)
+    padded_time = np.pad(time, (1, 1), mode = 'edge')
 
     # find local extrema
     upper_peak_idx = np.squeeze(argrelextrema(padded_trace, np.greater, order = order))
@@ -54,14 +65,23 @@ def get_vpp(waveform, order = 1, use_local = True):
     # combine and sort indices (using np.unique)
     peak_idx = np.unique(np.concatenate((upper_peak_idx, lower_peak_idx)))
 
+    # if there is no peak
     if len(peak_idx) == 0:
       return 0.0
 
     # adjust indices to account for the padding
     peak_idx = peak_idx - 1
 
+    # filter peak indices within the specified time window
+    time_diff = time[peak_idx] - time[peak_idx[0]] 
+    valid_peak_idx = peak_idx[time_diff <= time_window]
+
+    # if there is not enough peaks in the time window
+    if len(valid_peak_idx) < 2:
+      return 0.0
+
     # compute the difference between consecutive extrema and peak directly from indices 
-    diff_peak = np.abs(np.diff(trace[peak_idx]))
+    diff_peak = np.abs(np.diff(trace[valid_peak_idx]))
     vpp = diff_peak.max()
 
     return vpp
