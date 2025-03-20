@@ -71,24 +71,30 @@ def get_vpp(waveform, order = 1, use_local = True, time_window = 20, dt = 0.5, t
     # combine and sort indices (using np.unique)
     peak_idx = np.unique(np.concatenate((upper_peak_idx, lower_peak_idx)))
 
-    # if there is no peak
-    if len(peak_idx) == 0:
+    # if there aren't at least two extrema
+    if len(peak_idx) < 2:
       return 0.0
 
     # adjust indices to account for the padding
     peak_idx = peak_idx - 1
 
-    # filter peak indices within the specified time window
-    time_diff = time[peak_idx] - time[peak_idx[0]] 
-    valid_peak_idx = peak_idx[time_diff <= time_window]
+    # limit to just the extrema
+    extrema_times = time[peak_idx]
+    extrema_voltages = trace[peak_idx]
 
-    # if there is not enough peaks in the time window
-    if len(valid_peak_idx) < 2:
+    # find differences between all extrema pairs
+    all_dt = np.subtract.outer(extrema_times, extrema_times).flatten()
+    all_vpp = np.subtract.outer(extrema_voltages, extrema_voltages).flatten()
+
+    # limit to extrema within time_window of each other
+    mask = np.abs(all_dt) <= time_window
+    if not mask.any():
       return 0.0
+    
+    valid_vpp = all_vpp[mask]
 
-    # compute the difference between consecutive extrema and peak directly from indices 
-    diff_peak = np.abs(np.diff(trace[valid_peak_idx]))
-    vpp = diff_peak.max()
+    # finally select the max vpp within a time_window
+    vpp = valid_vpp.max()
 
     return vpp
 
