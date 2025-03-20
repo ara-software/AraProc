@@ -4,7 +4,7 @@ from scipy.signal import argrelextrema
 
 from araproc.framework import waveform_utilities as wfu
 
-def get_vpp(waveform, order = 1, use_local = True, time_window = 20, dt = 0.5):
+def get_vpp(waveform, order = 1, use_local = True, time_window = 20, dt = 0.5, time = None):
 
     """ 
     Calculates the peak-to-peak voltage of a signal using local (Default) and global extrema.
@@ -22,6 +22,8 @@ def get_vpp(waveform, order = 1, use_local = True, time_window = 20, dt = 0.5):
         Time window in nanoseconds to calculate the peak-to-peak voltage.
     dt : float, optional (Default = 0.5 ns)
         Sampling interval in nanoseconds for synthetic time array.
+    time : np.ndarray, optional (Default = None)
+        Optional time array to use for waveform. If None, synthetic time will be created.
 
     Returns
     -------
@@ -43,9 +45,13 @@ def get_vpp(waveform, order = 1, use_local = True, time_window = 20, dt = 0.5):
       if(trace.ndim != 1):
         raise Exception("Trace is not 1d in snr.get_vpp. Abort")
 
-      # create synthetic time array based on dt = 0.5 ns
-      time = np.arange(len(trace)) * dt
-      
+      # use provided time or create synthetic time if not given
+      if time is None:
+        time = np.arange(len(trace)) * dt
+      else:
+        if len(trace) != len(time):
+          raise ValueError("Provided time array must match trace length.")
+
     else:
       raise Exception("Unsupported data type in snr.get_vpp. Abort")
 
