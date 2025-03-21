@@ -4,15 +4,15 @@ from scipy.signal import argrelextrema
 
 from araproc.framework import waveform_utilities as wfu
 
-def get_vpp(waveform, order = 1, use_local = True, time_window = 20, dt = 0.5, time = None):
+def get_vpp(waveform, order = 1, use_local = True, time_window = 20):
 
     """ 
     Calculates the peak-to-peak voltage of a signal using local (Default) and global extrema.
 
     Parameters
     ----------
-    waveform: TGraph or np.ndarray
-        A TGraph or np.ndarray of the waveform voltage.
+    waveform: ROOT.TGraph, tuple, or list
+        A TGraph or a tuple/list containing two np.ndarrays: (time, trace).
     order : int, optional (Default = 1)
         How many points on each side to compare for finding extrema.
     use_local: bool, optional (Default = True)
@@ -20,10 +20,6 @@ def get_vpp(waveform, order = 1, use_local = True, time_window = 20, dt = 0.5, t
         If False, returns the peak-to-peak voltage based on global extrema.
     time_window: float, optional (Default = 20 ns)
         Time window in nanoseconds to calculate the peak-to-peak voltage.
-    dt : float, optional (Default = 0.5 ns)
-        Sampling interval in nanoseconds for synthetic time array.
-    time : np.ndarray, optional (Default = None)
-        Optional time array to use for waveform. If None, synthetic time will be created.
 
     Returns
     -------
@@ -34,23 +30,16 @@ def get_vpp(waveform, order = 1, use_local = True, time_window = 20, dt = 0.5, t
     if(isinstance(waveform, ROOT.TGraph)):
       time, trace = wfu.tgraph_to_arrays(waveform)
       if len(trace) != len(time):
-        raise ValueError("Waveform and time must have the same length.")
+        raise ValueError("Trace and time must have the same length.")
 
-    elif(isinstance(waveform, np.ndarray)):
-      trace = np.copy(waveform)
-      
-      # don't be bothered by some unused dimensions
-      trace = np.squeeze(trace)
-
-      if(trace.ndim != 1):
-        raise Exception("Trace is not 1d in snr.get_vpp. Abort")
-
-      # use provided time or create synthetic time if not given
-      if time is None:
-        time = np.arange(len(trace)) * dt
-      else:
-        if len(trace) != len(time):
-          raise ValueError("Provided time array must match trace length.")
+    elif isinstance(waveform, (list, tuple)):
+      if len(waveform) != 2:
+        raise ValueError("Waveform tuple or list must have length 2!")
+      time, trace = waveform
+      if (not isinstance(time, np.ndarray)) or (not isinstance(trace, np.ndarray)):
+        raise ValueError("Waveform must be tuple or list of np.ndarrays!")        
+      if len(trace) != len(time):
+        raise ValueError("Trace and time must have the same length.")
 
     else:
       raise Exception("Unsupported data type in snr.get_vpp. Abort")
