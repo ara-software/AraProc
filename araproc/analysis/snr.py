@@ -1,6 +1,5 @@
 import ROOT
 import numpy as np
-from scipy.signal import argrelextrema
 
 from araproc.framework import waveform_utilities as wfu
 
