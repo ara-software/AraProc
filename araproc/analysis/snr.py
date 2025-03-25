@@ -4,7 +4,7 @@ from scipy.signal import argrelextrema
 
 from araproc.framework import waveform_utilities as wfu
 
-def get_vpp(waveform, order = 1, use_local = True, time_window = 20):
+def get_vpp(waveform, use_local = True, time_window = 20):
 
     """ 
     Calculates the peak-to-peak voltage of a signal using local (Default) and global extrema.
@@ -13,8 +13,6 @@ def get_vpp(waveform, order = 1, use_local = True, time_window = 20):
     ----------
     waveform: ROOT.TGraph, tuple, or list
         A TGraph or a tuple/list containing two np.ndarrays: (time, trace).
-    order : int, optional (Default = 1)
-        How many points on each side to compare for finding extrema.
     use_local: bool, optional (Default = True)
         If True, returns the peak-to-peak voltage based on local extrema. 
         If False, returns the peak-to-peak voltage based on global extrema.
@@ -49,31 +47,24 @@ def get_vpp(waveform, order = 1, use_local = True, time_window = 20):
       vpp = trace.max() - trace.min()
       return vpp
 
-    # pad trace (with 0 and 0) and time (with t0 and tn) at start and end of the trace to handle edge points in 'argrelextrema'
-    padded_trace = np.pad(trace, (1, 1), mode = 'constant', constant_values = 0)
-    padded_time = np.pad(time, (1, 1), mode = 'edge')
-
-    # find local extrema
-    upper_peak_idx = np.squeeze(argrelextrema(padded_trace, np.greater, order = order))
-    lower_peak_idx = np.squeeze(argrelextrema(padded_trace, np.less, order = order))
-
-    # combine and sort indices (using np.unique)
-    peak_idx = np.unique(np.concatenate((upper_peak_idx, lower_peak_idx)))
-
     # if there aren't at least two extrema
-    if len(peak_idx) < 2:
+    if trace.max() == trace.min():
       return 0.0
 
-    # adjust indices to account for the padding
-    peak_idx = peak_idx - 1
+    # find points at least half as large as the global min/max
+    upper_peak_idx = trace > 0.5*trace.max() 
+    lower_peak_idx = trace < 0.5*trace.min() 
 
-    # limit to just the extrema
-    extrema_times = time[peak_idx]
-    extrema_voltages = trace[peak_idx]
+    # limit to just these points
+    upper_peak_times = time[upper_peak_idx]
+    upper_peak_voltages = trace[upper_peak_idx]
+    
+    lower_peak_times = time[lower_peak_idx]
+    lower_peak_voltages = trace[lower_peak_idx]
 
     # find differences between all extrema pairs
-    all_dt = np.subtract.outer(extrema_times, extrema_times).flatten()
-    all_vpp = np.subtract.outer(extrema_voltages, extrema_voltages).flatten()
+    all_dt = upper_peak_times[:, np.newaxis] - lower_peak_times 
+    all_vpp = upper_peak_voltages[:, np.newaxis] - lower_peak_voltages 
 
     # limit to extrema within time_window of each other
     mask = np.abs(all_dt) <= time_window
@@ -83,7 +74,7 @@ def get_vpp(waveform, order = 1, use_local = True, time_window = 20):
     valid_vpp = all_vpp[mask]
 
     # finally select the max vpp within a time_window
-    vpp = valid_vpp.max()
+    vpp = np.max(valid_vpp)
 
     return vpp
 
