@@ -881,7 +881,7 @@ class StandardReco:
            Channel pair correlation SNR.
         """
         
-        _, corr_func = wfu.tgraph_to_arrays(self.__get_correlation_function(ch1, ch2, wave_packet, False))
+        time, corr_func = wfu.tgraph_to_arrays(self.__get_correlation_function(ch1, ch2, wave_packet, False))
 
         # trim correlation function 
         corr_thresh = 1e-3
@@ -892,8 +892,12 @@ class StandardReco:
             return 0
         idxFirst = idxAboveThresh[0] # first above threshold
         idxLast = idxAboveThresh[-1] # last above threshold
-        corr_func = corr_func[idxFirst:idxLast+1] # trim to above threshold region
- 
+        corr_func = corr_func[idxFirst:idxLast+1] # trim correlation function to above threshold region
+        time = time[idxFirst:idxLast+1] # trim time to above threshold region
+
+        # convert the correlation function back to TGraph
+        corr_func = wfu.arrays_to_tgraph(time, corr_func)
+
         # calculate snr
         corr_snr = snr.get_snr(corr_func)
 

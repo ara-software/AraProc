@@ -3,39 +3,77 @@ import numpy as np
 
 from araproc.framework import waveform_utilities as wfu
 
-def get_vpp(waveform):
+def get_vpp(waveform, use_local = True, time_window = 20):
 
-    """
-    Calculates the peak-to-peak voltage of a voltage trace.
+    """ 
+    Calculates the peak-to-peak voltage of a signal using local (Default) and global extrema.
 
     Parameters
     ----------
-    waveform: TGraph or np.ndarray
-        A TGraph or np.ndarray of the waveform voltage.
+    waveform: ROOT.TGraph, tuple, or list
+        A TGraph or a tuple/list containing two np.ndarrays: (time, trace).
+    use_local: bool, optional (Default = True)
+        If True, returns the peak-to-peak voltage based on local extrema. 
+        If False, returns the peak-to-peak voltage based on global extrema.
+    time_window: float, optional (Default = 20 ns)
+        Time window in nanoseconds to calculate the peak-to-peak voltage.
 
     Returns
     -------
     vpp : float
         Peak-to-peak voltage in same units as trace.
-    """ 
+    """
 
     if(isinstance(waveform, ROOT.TGraph)):
-      _, trace = wfu.tgraph_to_arrays(waveform)
-    elif(isinstance(waveform, np.ndarray)):
-      trace = np.copy(waveform)
-      
-      # don't be bothered by some unused dimensions
-      trace = np.squeeze(trace)
+      time, trace = wfu.tgraph_to_arrays(waveform)
+      if len(trace) != len(time):
+        raise ValueError("Trace and time must have the same length.")
 
-      if(trace.ndim != 1):
-        raise Exception("Trace is not 1d in snr.get_vpp. Abort")
-      
+    elif isinstance(waveform, (list, tuple)):
+      if len(waveform) != 2:
+        raise ValueError("Waveform tuple or list must have length 2!")
+      time, trace = waveform
+      if (not isinstance(time, np.ndarray)) or (not isinstance(trace, np.ndarray)):
+        raise ValueError("Waveform must be tuple or list of np.ndarrays!")        
+      if len(trace) != len(time):
+        raise ValueError("Trace and time must have the same length.")
+
     else:
       raise Exception("Unsupported data type in snr.get_vpp. Abort")
 
-    vMax = trace.max()
-    vMin = trace.min()
-    vpp = vMax - vMin
+    # global extrema case
+    if not use_local:
+      vpp = trace.max() - trace.min()
+      return vpp
+
+    # if there aren't at least two extrema
+    if trace.max() == trace.min():
+      return 0.0
+
+    # find points at least half as large as the global min/max
+    upper_peak_idx = trace > 0.5*trace.max() 
+    lower_peak_idx = trace < 0.5*trace.min() 
+
+    # limit to just these points
+    upper_peak_times = time[upper_peak_idx]
+    upper_peak_voltages = trace[upper_peak_idx]
+    
+    lower_peak_times = time[lower_peak_idx]
+    lower_peak_voltages = trace[lower_peak_idx]
+
+    # find differences between all extrema pairs
+    all_dt = upper_peak_times[:, np.newaxis] - lower_peak_times 
+    all_vpp = upper_peak_voltages[:, np.newaxis] - lower_peak_voltages 
+
+    # limit to extrema within time_window of each other
+    mask = np.abs(all_dt) <= time_window
+    if not mask.any():
+      return 0.0
+    
+    valid_vpp = all_vpp[mask]
+
+    # finally select the max vpp within a time_window
+    vpp = np.max(valid_vpp)
 
     return vpp
 
