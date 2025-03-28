@@ -138,8 +138,8 @@ def get_active_filters(cw_filters, cw_ids, chan):
 
                     active_filters[filter_i] = filter
 
-                if not isFiltered:
-                    raise Exception(f"IDed CW at {freq} GHz has no corresponding filter! Please add one and rerun.")
+            if not isFiltered:
+                raise Exception(f"IDed CW at {freq} GHz has no corresponding filter! Please add one and rerun.")
 
     # filters are applied in order they appear in dict
     # there's some advantage to apply them in order of descending 
