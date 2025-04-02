@@ -3,6 +3,7 @@ import ROOT
 
 from araproc.framework import waveform_utilities as wfu
 from araproc.framework import constants as const
+from araproc.analysis import snr
 
 def get_peak_time(waveform):
 
@@ -37,8 +38,7 @@ def get_peak_time(waveform):
     else:
       raise Exception("Unsupported data type in fast_filter.get_peak_time. Abort")
 
-    idxPeak = np.argmax(np.abs(trace))
-    tPeak = time[idxPeak]
+    tPeak, _ = snr.get_windowed_vpp(time, trace)
 
     return tPeak
 

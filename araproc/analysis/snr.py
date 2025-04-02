@@ -3,6 +3,65 @@ import numpy as np
 
 from araproc.framework import waveform_utilities as wfu
 
+def get_windowed_vpp(time, trace, time_window = 20):
+    
+    """ 
+    Calculates the peak-to-peak voltage of a signal using local (Default) and global extrema.
+
+    Parameters
+    ----------
+    time : np.array
+        Time points.
+    trace : np.array
+        Voltages. 
+    time_window: float, optional (Default = 20 ns)
+        Time window in nanoseconds to calculate the peak-to-peak voltage.
+
+    Returns
+    -------
+    t_vpp : float
+        The approximate time of the peak (averaged between extrema).
+    vpp : float
+        Peak-to-peak voltage in same units as trace.
+    """
+
+    # if there aren't at least two extrema
+    if trace.max() == trace.min():
+      return 0.0, 0.0
+
+    # find points at least half as large as the global min/max
+    upper_peak_idx = trace > 0.5*trace.max() 
+    lower_peak_idx = trace < 0.5*trace.min() 
+
+    # limit to just these points
+    upper_peak_times = time[upper_peak_idx]
+    upper_peak_voltages = trace[upper_peak_idx]
+    
+    lower_peak_times = time[lower_peak_idx]
+    lower_peak_voltages = trace[lower_peak_idx]
+
+    # get average time of each extrema pair
+    all_t_vpp = (upper_peak_times[:, np.newaxis] + lower_peak_times)/2.
+
+    # find differences between all extrema pairs
+    all_dt = upper_peak_times[:, np.newaxis] - lower_peak_times 
+    all_vpp = upper_peak_voltages[:, np.newaxis] - lower_peak_voltages 
+
+    # limit to extrema within time_window of each other
+    mask = np.abs(all_dt) <= time_window
+    if not mask.any():
+      return 0.0
+    
+    valid_t = all_t_vpp[mask]
+    valid_vpp = all_vpp[mask]
+
+    # finally select the max vpp within a time_window
+    idxMax = np.argmax(valid_vpp)
+    t_vpp = valid_t[idxMax] 
+    vpp = valid_vpp[idxMax]
+
+    return t_vpp, vpp
+
 def get_vpp(waveform, use_local = True, time_window = 20):
 
     """ 
@@ -46,34 +105,7 @@ def get_vpp(waveform, use_local = True, time_window = 20):
       vpp = trace.max() - trace.min()
       return vpp
 
-    # if there aren't at least two extrema
-    if trace.max() == trace.min():
-      return 0.0
-
-    # find points at least half as large as the global min/max
-    upper_peak_idx = trace > 0.5*trace.max() 
-    lower_peak_idx = trace < 0.5*trace.min() 
-
-    # limit to just these points
-    upper_peak_times = time[upper_peak_idx]
-    upper_peak_voltages = trace[upper_peak_idx]
-    
-    lower_peak_times = time[lower_peak_idx]
-    lower_peak_voltages = trace[lower_peak_idx]
-
-    # find differences between all extrema pairs
-    all_dt = upper_peak_times[:, np.newaxis] - lower_peak_times 
-    all_vpp = upper_peak_voltages[:, np.newaxis] - lower_peak_voltages 
-
-    # limit to extrema within time_window of each other
-    mask = np.abs(all_dt) <= time_window
-    if not mask.any():
-      return 0.0
-    
-    valid_vpp = all_vpp[mask]
-
-    # finally select the max vpp within a time_window
-    vpp = np.max(valid_vpp)
+    _, vpp = get_windowed_vpp(time, trace, time_window)
 
     return vpp
 
