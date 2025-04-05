@@ -73,9 +73,14 @@ def apply_filters(cw_filters, waveform_bundle, cw_ids = None):
     check_cw_ids(cw_ids)
 
     filtered_waveforms = {}
+    active_cw_filters_v = get_active_filters(cw_filters, cw_ids, 0)
+    active_cw_filters_h = get_active_filters(cw_filters, cw_ids, 8)
     for ch_id, wave in waveform_bundle.items():
 
-        active_cw_filters = get_active_filters(cw_filters, cw_ids, ch_id)
+        if ch_id in const.vpol_channel_ids:
+            active_cw_filters = active_cw_filters_v
+        else:
+            active_cw_filters = active_cw_filters_h
         filtered_waveforms[ch_id] = apply_filters_one_channel(active_cw_filters, wave)
 
 
@@ -118,28 +123,25 @@ def get_active_filters(cw_filters, cw_ids, chan):
     for direction in scan_directions:
 
         key = f"badFreqs_{direction}_{pol}"
-        badFreqs = cw_ids[key]
+        badFreqs = np.asarray(cw_ids[key])
 
-        for freq in badFreqs:
+        
+        isFiltered = np.zeros(len(badFreqs)).astype(bool)
+        for filter_i, filter in cw_filters.items():
 
-            isFiltered = False
-            for filter_i, filter in cw_filters.items():
+            fmin = filter["min_freq"]
+            fmax = filter["max_freq"]
+            
+            mask = np.logical_and(badFreqs >= fmin, badFreqs <= fmax) # find frequencies covered by this filter  
+            isFiltered = np.logical_or(isFiltered, mask) # track frequencies that have covered by a filter
+ 
+            # if filter covers any flagged frequency, activate it 
+            if mask.any(): 
+                active_filters[filter_i] = filter
 
-                fmin = filter["min_freq"]
-                fmax = filter["max_freq"]
-       
-                # if filter covers this frequency, activate it 
-                if freq >= fmin and freq <= fmax: 
-                    isFiltered = True
-                    
-                    # this filter is already activated
-                    if filter_i in active_filters: 
-                        continue
-
-                    active_filters[filter_i] = filter
-
-                if not isFiltered:
-                    raise Exception(f"IDed CW at {freq} GHz has no corresponding filter! Please add one and rerun.")
+        if not isFiltered.all():
+            unFilteredFreqs = badFreqs[~isFiltered]
+            raise Exception(f"IDed CW at {unFilteredFreqs} GHz has no corresponding filter! Please add one and rerun.")
 
     # filters are applied in order they appear in dict
     # there's some advantage to apply them in order of descending 
