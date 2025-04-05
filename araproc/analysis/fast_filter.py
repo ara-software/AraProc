@@ -112,7 +112,9 @@ def get_wavefront_rms(wave_bundle, station_id, excluded_channels=[]):
 def get_avg_spacetime_interval(wave_bundle, station_id, excluded_channels=[]):
 
     """
-    Calculates the average spacetime interval, s2 = dr^2 - v^2*dt^2, between peaks in channel-pairs.
+    Calculates the average spacetime interval, s2 = dr^2 - v^2*dt^2, between peaks in channel-pairs, where
+    v is the velocity of light in the medium, which we take to be c/n_avg, where n_avg is the index of
+    refraction at the average depth of the channels.
     Positive values indicate a causal relationship between the signals in each channel.
 
     Parameters
