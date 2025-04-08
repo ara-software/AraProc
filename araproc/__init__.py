@@ -42,3 +42,22 @@ if success_flag_libFFT not in [0, 1]:
 success_flag_FFTinclude = ROOT.gInterpreter.Declare(f'#include "{os.environ.get("ARA_DEPS_INSTALL_DIR")}/include/FFTtools.h"')
 if not success_flag_FFTinclude:
     raise ImportError("Including FFTtools.h failed. Stop all work!")
+
+# Get the directory of ray tracing tables from an environment variable,
+#  with a fallback or error if not set
+ray_trace_tables_dir = os.getenv('RAY_TRACE_TABLES', None)
+
+if not ray_trace_tables_dir:
+    raise EnvironmentError(
+        "The 'RAY_TRACE_TABLES' environment variable is not set. "
+        "Please set it to the path of the runlogs directory."
+    )
+
+# Convert to absolute path
+ray_trace_tables_dir = os.path.abspath(ray_trace_tables_dir)
+
+# Check if the directory exists
+if not os.path.isdir(ray_trace_tables_dir):
+    raise FileNotFoundError(
+        f"The directory '{ray_trace_tables_dir}' does not exist. Please ensure the path is correct."
+    )
