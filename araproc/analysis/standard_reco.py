@@ -116,8 +116,9 @@ class StandardReco:
         self.rtc_wrapper = interf.RayTraceCorrelatorWrapper(self.station_id)
 
         # directory containing timing tables
-        #timing_table_dir = "/cvmfs/icecube.osgstorage.org/icecube/PUBLIC/groups/arasoft/raytrace_timing_tables"
-        timing_table_dir = "/data/ana/ARA/processing/support/raytrace_timing_tables"
+        timing_table_dir = os.getenv("RAY_TRACE_TABLES")
+        if timing_table_dir is None: 
+            raise ImportError("Environment variable RAY_TRACE_TABLES not set.")
 
         # always add a "nearby" correlator for 41m away
         dir_path = os.path.join(timing_table_dir,
