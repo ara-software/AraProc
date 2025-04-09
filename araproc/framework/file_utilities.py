@@ -96,30 +96,30 @@ def guess_location_of_daq_config_file(station_id, run_number):
     return config_file
 
 def parse_run_number(run_file_path):
-  """
-  Helper function to parse the run number from a run file path.
-  Parameters
-  ----------
-  run_file_path : str
-      Path to the run file.
-  
-  Returns
-  -------
-  run_number : int
-      Run number of the run file.
-  """
+    """
+    Helper function to parse the run number from a run file path.
+    Parameters
+    ----------
+    run_file_path : str
+        Path to the run file.
+    
+    Returns
+    -------
+    run_number : int
+        Run number of the run file.
+    """
 
-  # run files have the format [path]/run[run_number]/event[run_number].root
-  # so let's parse it from the file name itself
-  file_suffix = run_file_path.split('event')[-1] # grab everything after 'event', last instance should be the file itself
-  run_number = file_suffix.split('.root')[0] # drop the file extension
+    # run files have the format [path]/run[run_number]/event[run_number].root
+    # so let's parse it from the file name itself
+    file_suffix = run_file_path.split('event')[-1] # grab everything after 'event', last instance should be the file itself
+    run_number = file_suffix.split('.root')[0] # drop the file extension
 
-  # check that what is left is a number
-  try:
-      run_number = int(run_number)
-  except ValueError:
-      raise Exception(f"Run number could not be extracted from passed file: {run_file_path}.") 
+    # check that what is left is a number
+    if not run_number.isdigit():
+        raise Exception(f"Run number could not be extracted from passed file: {run_file_path}.") 
+    
+    run_number = int(run_number)
 
-  return run_number   
+    return run_number   
 
- 
+   
