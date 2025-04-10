@@ -7,7 +7,7 @@ ray_trace_tables_dir = os.getenv('RAY_TRACE_TABLES', None)
 
 # If the environment variable is not set, use a default
 if not ray_trace_tables_dir:
-    ray_trace_tables_dir = "/cvmfs/icecube.osgstorage.org/icecube/PUBLIC/groups/arasoft/raytrace_timing_tables/"
+    ray_trace_tables_dir = "/data/ana/ARA/processing/support/raytrace_timing_tables/"
     warnings.warn(
         "The 'RAY_TRACE_TABLES' environment variable is not set and will use default: "
         + ray_trace_tables_dir
