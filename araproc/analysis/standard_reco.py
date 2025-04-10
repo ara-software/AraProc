@@ -5,6 +5,7 @@ import os
 import ROOT
 from scipy.interpolate import Akima1DInterpolator
 import itertools
+from . import ray_trace_tables_dir  # Import the path from __init__.py
 
 from araproc.analysis import interferometry as interf
 from araproc.framework import constants as const
@@ -115,15 +116,11 @@ class StandardReco:
 
         self.rtc_wrapper = interf.RayTraceCorrelatorWrapper(self.station_id)
 
-        # directory containing timing tables
-        #timing_table_dir = "/cvmfs/icecube.osgstorage.org/icecube/PUBLIC/groups/arasoft/raytrace_timing_tables"
-        timing_table_dir = "/data/ana/ARA/processing/support/raytrace_timing_tables"
-
         # always add a "nearby" correlator for 41m away
-        dir_path = os.path.join(timing_table_dir,
+        dir_path = os.path.join(ray_trace_tables_dir,
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{self.calpulser_r_library[station_id]}_angle_1.00_solution_0_v2.root"
                                 )
-        ref_path = os.path.join(timing_table_dir,
+        ref_path = os.path.join(ray_trace_tables_dir,
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{self.calpulser_r_library[station_id]}_angle_1.00_solution_1_v2.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "nearby",
@@ -133,10 +130,10 @@ class StandardReco:
                 )
 
         # always add a "distant" correlator for 300m away
-        dir_path = os.path.join(timing_table_dir,
+        dir_path = os.path.join(ray_trace_tables_dir,
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_300.00_angle_1.00_solution_0_v2.root"
                                 )
-        ref_path = os.path.join(timing_table_dir,
+        ref_path = os.path.join(ray_trace_tables_dir,
                                 f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_300.00_angle_1.00_solution_1_v2.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "distant",
