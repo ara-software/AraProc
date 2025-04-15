@@ -74,7 +74,7 @@ def apply_filters(cw_filters, waveform_bundle, cw_ids = None, min_cw_id_freq = 0
 
     filtered_waveforms = {}
     active_cw_filters_v = get_active_filters(cw_filters, cw_ids, 0, min_cw_id_freq)
-    active_cw_filters_h = get_active_filters(cw_filters, cw_ids, 8)
+    active_cw_filters_h = get_active_filters(cw_filters, cw_ids, 8, min_cw_id_freq)
     for ch_id, wave in waveform_bundle.items():
 
         if ch_id in const.vpol_channel_ids:
