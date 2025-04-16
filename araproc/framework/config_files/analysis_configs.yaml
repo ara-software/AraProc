@@ -124,33 +124,33 @@ station3:
   config2:
     excluded_channels : []
     filters:
-      filt1 : { min_freq : 0.000, max_freq : 0.126, min_power_ratio : 0.10 }
-      filt2 : { min_freq : 0.124, max_freq : 0.126, min_power_ratio : 0.02 } # ORIG
+      filt1 : { min_freq : 0.000, max_freq : 0.122, min_power_ratio : 0.10 }
+      filt2 : { min_freq : 0.124, max_freq : 0.126, min_power_ratio : 0.02 }
       filt3 : { min_freq : 0.126, max_freq : 0.149, min_power_ratio : 0.10 }
-      filt4 : { min_freq : 0.149, max_freq : 0.151, min_power_ratio : 0.02 } # ORIG
-      filt5 : { min_freq : 0.151, max_freq : 0.249, min_power_ratio : 0.10 } 
-      filt6 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 } # ORIG
+      filt4 : { min_freq : 0.149, max_freq : 0.151, min_power_ratio : 0.02 }
+      filt5 : { min_freq : 0.151, max_freq : 0.249, min_power_ratio : 0.10 }
+      filt6 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 }
       filt7 : { min_freq : 0.251, max_freq : 0.400, min_power_ratio : 0.10 } 
-      filt8 : { min_freq : 0.400, max_freq : 0.406, min_power_ratio : 0.02 } # ORIG
-      filt9 : { min_freq : 0.406, max_freq : 1.000, min_power_ratio : 0.10 } 
+      filt8 : { min_freq : 0.400, max_freq : 0.406, min_power_ratio : 0.02 }
+      filt9 : { min_freq : 0.406, max_freq : 1.000, min_power_ratio : 0.10 }
     readout_limits:
       rf_readout_limit: 20
       soft_readout_limit: 8
   config3:
     excluded_channels : [3, 7, 11, 15]
     filters:
-      filt1 : { min_freq : 0.000, max_freq : 0.124, min_power_ratio : 0.10 }
-      filt2 : { min_freq : 0.124, max_freq : 0.126, min_power_ratio : 0.02 } # ORIG
+      filt1 : { min_freq : 0.000, max_freq : 0.120, min_power_ratio : 0.10 }
+      filt2 : { min_freq : 0.120, max_freq : 0.126, min_power_ratio : 0.02 }
       filt3 : { min_freq : 0.126, max_freq : 0.149, min_power_ratio : 0.10 }
-      filt4 : { min_freq : 0.149, max_freq : 0.151, min_power_ratio : 0.02 } # ORIG
+      filt4 : { min_freq : 0.149, max_freq : 0.151, min_power_ratio : 0.02 }
       filt5 : { min_freq : 0.151, max_freq : 0.249, min_power_ratio : 0.10 } 
-      filt6 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 } # ORIG
+      filt6 : { min_freq : 0.249, max_freq : 0.251, min_power_ratio : 0.02 }
       filt7 : { min_freq : 0.251, max_freq : 0.298, min_power_ratio : 0.10 }
-      filt8 : { min_freq : 0.298, max_freq : 0.302, min_power_ratio : 0.011 } 
+      filt8 : { min_freq : 0.298, max_freq : 0.302, min_power_ratio : 0.011 }
       filt9 : { min_freq : 0.302, max_freq : 0.400, min_power_ratio : 0.10 }
-      filt10 : { min_freq : 0.400, max_freq : 0.406, min_power_ratio : 0.01 } # ORIG 0.02
+      filt10 : { min_freq : 0.400, max_freq : 0.406, min_power_ratio : 0.01 }
       filt11 : { min_freq : 0.406, max_freq : 0.495, min_power_ratio : 0.10 }
-      filt12 : { min_freq : 0.495, max_freq : 0.505, min_power_ratio : 0.01 } 
+      filt12 : { min_freq : 0.495, max_freq : 0.505, min_power_ratio : 0.01 }
       filt13 : { min_freq : 0.505, max_freq : 1.000, min_power_ratio : 0.10 }
     readout_limits:
       rf_readout_limit: 26
