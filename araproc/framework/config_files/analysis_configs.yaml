@@ -124,8 +124,8 @@ station3:
   config2:
     excluded_channels : []
     filters:
-      filt1 : { min_freq : 0.000, max_freq : 0.122, min_power_ratio : 0.10 }
-      filt2 : { min_freq : 0.124, max_freq : 0.126, min_power_ratio : 0.02 }
+      filt1 : { min_freq : 0.000, max_freq : 0.120, min_power_ratio : 0.10 }
+      filt2 : { min_freq : 0.120, max_freq : 0.126, min_power_ratio : 0.02 }
       filt3 : { min_freq : 0.126, max_freq : 0.149, min_power_ratio : 0.10 }
       filt4 : { min_freq : 0.149, max_freq : 0.151, min_power_ratio : 0.02 }
       filt5 : { min_freq : 0.151, max_freq : 0.249, min_power_ratio : 0.10 }
