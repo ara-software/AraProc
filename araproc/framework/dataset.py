@@ -457,12 +457,26 @@ class DataWrapper:
         ROOT.SetOwnership(useful_event, True)
         
         # if we have cw ids loaded, get the corresponding entry to this event 
-        if self.cw_id_tree is not None:
-            event_number = useful_event.eventNumber
-            if self.cw_id_tree.GetEntryWithIndex(event_number) < 0:
-                raise Exception(f"Unable to get corresponding cw id entry for {event_number}.")
+        event_number = useful_event.eventNumber
+        self.get_cw_id_entry(event_number)
  
         return useful_event
+
+    def get_cw_id_entry(self, event_number):
+        """
+        Get the CW ID tree entry for an event.
+
+        Parameters
+        ----------
+        event_number : int
+          Event number to load CW ID for.
+        """
+
+        if self.cw_id_tree is not None:
+            if self.cw_id_tree.GetEntryWithIndex(event_number) < 0:
+                raise Exception(f"Unable to get corresponding cw id entry for {event_number}.")
+        
+        return 
 
     def get_cw_ids(self):
         """
@@ -475,6 +489,49 @@ class DataWrapper:
         """
 
         return self.cw_id_ptrs
+        
+    def get_event_cw(self, useful_event):
+        """
+        Get the IDed CW frequencies in each polarization for the loaded event.
+
+        Parameters
+        ----------
+        useful_event : UsefulAtriStationEvent
+            The pointer to the UsefulAtriStationEvent
+
+        Returns
+        -------
+        cw_v, cw_h : numpy arrays
+            Arrays of the IDed frequencies in both scan directions for each polarization.
+
+        """
+        
+        # if we have cw ids loaded, get the corresponding entry to this event 
+        event_number = useful_event.eventNumber
+        self.get_cw_id_entry(event_number)
+  
+        cw_ids = self.get_cw_ids()
+        if cw_ids is None:
+             raise Exception("No event loaded, so CW frequencies can't be determined!")
+
+        # collect frequencies in each polarization (v & h) identified 
+        # when calculating phase variance with events
+        # behind (bwd) and ahead (fwd) of this one
+        cw = {"v" : [],
+              "h" : []}
+        scan_directions = ["fwd", "bwd"]
+        for direction in scan_directions:
+            for pol in cw.keys():
+                key = f"badFreqs_{direction}_{pol}"
+                badFreqs = np.asarray(cw_ids[key])
+        
+                cw[pol].extend(badFreqs)
+
+        cw["v"] = np.unique(np.asarray(cw["v"]))
+        cw["h"] = np.unique(np.asarray(cw["h"]))
+
+        return cw["v"], cw["h"]
+ 
 
     def get_event_index(self, event_number):
         """
@@ -942,7 +999,14 @@ class AnalysisDataset:
             return None 
 
         return self.dataset_wrapper.get_cw_ids()
- 
+
+    def get_event_cw(self, useful_event): 
+
+        if self.is_simulation:
+            return [], []
+
+        return self.dataset_wrapper.get_event_cw(useful_event)
+       
     def get_event_index(self, 
                             event_number : int = None):
 
@@ -1091,7 +1155,12 @@ class AnalysisDataset:
             return wavepacket
     
         # and if they want filtered waves
+        event_number = useful_event.eventNumber
+        if not self.is_simulation: # if this is real data, ensure the right cw IDs are loaded
+            self.dataset_wrapper.get_cw_id_entry(event_number)
+
         if which_traces != "bandpassed": # if we're not only bandpassing, apply CW filters
+            
             cw_ids = self.get_cw_ids()
             filtered_waves = cwf.apply_filters(self.__cw_filters, dedispersed_waves, cw_ids, self.min_cw_id_freq)
             

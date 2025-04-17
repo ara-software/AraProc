@@ -109,8 +109,9 @@ def get_active_filters(cw_filters, cw_ids, chan, min_cw_id_freq):
         A dictionary of sine subtract filters to be applied for this event and channel.
     """
 
-    if cw_ids is None:
-        return cw_filters
+    if cw_ids is None: # if cw id isn't present activate all filters
+        active_filters = sort_filters(cw_filters)
+        return active_filters
 
     active_filters = {}
 
@@ -152,10 +153,7 @@ def get_active_filters(cw_filters, cw_ids, chan, min_cw_id_freq):
             unFilteredFreqs = badFreqs[~isFiltered]
             raise Exception(f"IDed CW at {unFilteredFreqs} GHz has no corresponding filter! Please add one and rerun.")
 
-    # filters are applied in order they appear in dict
-    # there's some advantage to apply them in order of descending 
-    # min_power_ratio, so let's quickly enforce that
-    active_filters = {k : v for k, v in sorted(active_filters.items(), key=lambda x: x[1]["min_power_ratio"], reverse=True)}
+    active_filters = sort_filters(active_filters)
 
     return active_filters
 
@@ -182,4 +180,26 @@ def check_cw_ids(cw_ids):
         if np.any(badFreqs > 2.):
             raise ValueError("Frequency >2 detected in CW IDs. Please ensure units are GHz. Abort.")
 
+    return
+
+def sort_filters(filters):
+    """
+    Helper function to sort filters in order of descending
+    min_power_ratio, which appears to have some advantage 
+    (filters are applied in order they are inserted into dict)
+
+    Parameters
+    ----------
+    filters : dict
+        Dictionary of filters to sort
+
+    Returns
+    -------
+    sorted_filters : dict
+        Dictionary of sorted filters
+    """
+
+    sorted_filters = {k : v for k, v in sorted(filters.items(), key=lambda x: x[1]["min_power_ratio"], reverse=True)}
+
+    return sorted_filters
 
