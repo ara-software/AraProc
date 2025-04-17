@@ -510,12 +510,15 @@ class DataWrapper:
         event_number = useful_event.eventNumber
         self.get_cw_id_entry(event_number)
   
-        cw = {"v" : [],
-              "h" : []}
         cw_ids = self.get_cw_ids()
         if cw_ids is None:
-             raise Exception("No event loaded, so I can't tell you what the CW frequencies are!")
+             raise Exception("No event loaded, so CW frequencies can't be determined!")
 
+        # collect frequencies in each polarization (v & h) identified 
+        # when calculating phase variance with events
+        # behind (bwd) and ahead (fwd) of this one
+        cw = {"v" : [],
+              "h" : []}
         scan_directions = ["fwd", "bwd"]
         for direction in scan_directions:
             for pol in cw.keys():
