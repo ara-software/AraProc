@@ -99,7 +99,7 @@ def get_active_filters(cw_filters, cw_ids, chan, min_cw_id_freq):
     cw_filters : dictionary
         A dictionary of sine subtract filters available to be applied..
         Key is a string, and is the name of the filter from the config file.
-        Value is the sine subtract filter to applied.
+        Value is the sine subtract filter to be applied.
     cw_ids : tuple
         A tuple of numpy arrays containing cw id info.
         If None, all available CW filters are activated. Otherwise, only those 
@@ -132,9 +132,9 @@ def get_active_filters(cw_filters, cw_ids, chan, min_cw_id_freq):
     # grab the relevant bad frequencies for this polarization
     # the tuple has the bad frequencies ordered as (v, h) 
     if chan in const.vpol_channel_ids:
-      badFreqs, _ = cw_ids
+      badFreqs = cw_ids[0]
     else: 
-      _, badFreqs = cw_ids
+      badFreqs = cw_ids[1]
 
     isFiltered = np.zeros(len(badFreqs)).astype(bool)
     for filter_i, filter in cw_filters.items():
@@ -142,11 +142,11 @@ def get_active_filters(cw_filters, cw_ids, chan, min_cw_id_freq):
         fmin = filter["min_freq"]
         fmax = filter["max_freq"]
         
-        mask = np.logical_and(badFreqs >= fmin, badFreqs <= fmax) # find frequencies covered by this filter  
-        isFiltered = np.logical_or(isFiltered, mask) # track frequencies that have covered by a filter
+        badFreqsFiltered = np.logical_and(badFreqs >= fmin, badFreqs <= fmax) # array of booleans to indicate which badFreqs are covered by this filter  
+        isFiltered = np.logical_or(isFiltered, badFreqsFiltered) # track frequencies that have been covered by a filter
 
         # if filter covers any flagged frequency, activate it 
-        if mask.any(): 
+        if badFreqsFiltered.any(): 
             active_filters[filter_i] = True
 
     if not isFiltered.all():

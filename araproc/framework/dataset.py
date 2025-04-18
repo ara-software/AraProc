@@ -116,7 +116,7 @@ class DataWrapper:
         number of data events in the data ROOT file
     raw_event_ptr : RawAtriStationEvent
         a RawAtriStationEvent ptr from AraRoot
-    cw_id_reader_vals : dict
+    cw_id_reader_vals : dict of TTreeReaderValues
         dictionary of reader values for different branches
     qual_cuts : AraQualCuts
         An AraRoot AraQualCuts object
