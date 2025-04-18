@@ -129,7 +129,8 @@ def get_active_filters(cw_filters, cw_ids, chan, min_cw_id_freq):
         if fmax < min_cw_id_freq:
             active_filters[filter_i] = True
             
-    
+    # grab the relevant bad frequencies for this polarization
+    # the tuple has the bad frequencies ordered as (v, h) 
     if chan in const.vpol_channel_ids:
       badFreqs, _ = cw_ids
     else: 
