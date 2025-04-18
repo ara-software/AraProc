@@ -13,8 +13,8 @@ station100:
       filt9 : { min_freq : 0.395, max_freq : 0.410, min_power_ratio : 0.01 } # CW @403 MHz (from radiosonde)
       filt10 : { min_freq : 0.410, max_freq : 0.645, min_power_ratio : 0.02 }
       filt11 : { min_freq : 0.645, max_freq : 0.655, min_power_ratio : 0.02 } # CW @650 MHz
-      filt12 : { min_freq : 0.655, max_freq : 0.790, min_power_ratio : 0.02 }
-      filt13 : { min_freq : 0.790, max_freq : 0.820, min_power_ratio : 0.02 } # CW @809 MHz
+      filt12 : { min_freq : 0.655, max_freq : 0.790, min_power_ratio : 0.01 }
+      filt13 : { min_freq : 0.790, max_freq : 0.820, min_power_ratio : 0.01 } # CW @809 MHz
       filt14 : { min_freq : 0.820, max_freq : 1.000, min_power_ratio : 0.02 }
     readout_limits:
       rf_readout_limit: 20
@@ -33,8 +33,8 @@ station100:
       filt9 : { min_freq : 0.395, max_freq : 0.410, min_power_ratio : 0.01 } # CW @403 MHz (from radiosonde)
       filt10 : { min_freq : 0.410, max_freq : 0.645, min_power_ratio : 0.02 }
       filt11 : { min_freq : 0.645, max_freq : 0.655, min_power_ratio : 0.02 } # CW @650 MHz
-      filt12 : { min_freq : 0.655, max_freq : 0.790, min_power_ratio : 0.02 }
-      filt13 : { min_freq : 0.790, max_freq : 0.820, min_power_ratio : 0.02 } # CW @809 MHz
+      filt12 : { min_freq : 0.655, max_freq : 0.790, min_power_ratio : 0.01 }
+      filt13 : { min_freq : 0.790, max_freq : 0.820, min_power_ratio : 0.01 } # CW @809 MHz
       filt14 : { min_freq : 0.820, max_freq : 1.000, min_power_ratio : 0.02 }
     readout_limits:
       rf_readout_limit: 26
@@ -53,8 +53,8 @@ station100:
       filt9 : { min_freq : 0.395, max_freq : 0.410, min_power_ratio : 0.01 } # CW @403 MHz (from radiosonde)
       filt10 : { min_freq : 0.410, max_freq : 0.645, min_power_ratio : 0.02 }
       filt11 : { min_freq : 0.645, max_freq : 0.655, min_power_ratio : 0.02 } # CW @650 MHz
-      filt12 : { min_freq : 0.655, max_freq : 0.790, min_power_ratio : 0.02 }
-      filt13 : { min_freq : 0.790, max_freq : 0.820, min_power_ratio : 0.02 } # CW @809 MHz
+      filt12 : { min_freq : 0.655, max_freq : 0.790, min_power_ratio : 0.01 }
+      filt13 : { min_freq : 0.790, max_freq : 0.820, min_power_ratio : 0.01 } # CW @809 MHz
       filt14 : { min_freq : 0.820, max_freq : 1.000, min_power_ratio : 0.02 }
     readout_limits:
       rf_readout_limit: 28
