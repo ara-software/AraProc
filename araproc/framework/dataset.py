@@ -96,6 +96,8 @@ class DataWrapper:
         the pointer to the ROOT TFile that corresponds to the opened cw id file
     cw_id_tree : ROOT TTree
         the sound the the mousetrap makes 
+    min_cw_id_freq : float
+        minimum frequency for CW ID (in GHz), all filters below this frequency are always activated
     run_number: int
         ARA run number for this dataset
         This will be inferred from the data itself
@@ -128,12 +130,14 @@ class DataWrapper:
                  station_id : int = None,
                  do_not_calibrate : bool = False,
                  path_to_cw_ids : str = None,
+                 min_cw_id_freq : float = 0.120,
                  ):
         
         self.path_to_data_file = None
         self.path_to_pedestal_file = None
         self.do_not_calibrate = do_not_calibrate
         self.path_to_cw_ids = None
+        self.min_cw_id_freq = 0.120
         self.root_tfile = None
         self.event_tree = None
         self.cw_id_tfile = None
@@ -453,12 +457,26 @@ class DataWrapper:
         ROOT.SetOwnership(useful_event, True)
         
         # if we have cw ids loaded, get the corresponding entry to this event 
-        if self.cw_id_tree is not None:
-            event_number = useful_event.eventNumber
-            if self.cw_id_tree.GetEntryWithIndex(event_number) < 0:
-                raise Exception(f"Unable to get corresponding cw id entry for {event_number}.")
+        event_number = useful_event.eventNumber
+        self.get_cw_id_entry(event_number)
  
         return useful_event
+
+    def get_cw_id_entry(self, event_number):
+        """
+        Get the CW ID tree entry for an event.
+
+        Parameters
+        ----------
+        event_number : int
+          Event number to load CW ID for.
+        """
+
+        if self.cw_id_tree is not None:
+            if self.cw_id_tree.GetEntryWithIndex(event_number) < 0:
+                raise Exception(f"Unable to get corresponding cw id entry for {event_number}.")
+        
+        return 
 
     def get_cw_ids(self):
         """
@@ -471,6 +489,49 @@ class DataWrapper:
         """
 
         return self.cw_id_ptrs
+        
+    def get_event_cw(self, useful_event):
+        """
+        Get the IDed CW frequencies in each polarization for the loaded event.
+
+        Parameters
+        ----------
+        useful_event : UsefulAtriStationEvent
+            The pointer to the UsefulAtriStationEvent
+
+        Returns
+        -------
+        cw_v, cw_h : numpy arrays
+            Arrays of the IDed frequencies in both scan directions for each polarization.
+
+        """
+        
+        # if we have cw ids loaded, get the corresponding entry to this event 
+        event_number = useful_event.eventNumber
+        self.get_cw_id_entry(event_number)
+  
+        cw_ids = self.get_cw_ids()
+        if cw_ids is None:
+             raise Exception("No event loaded, so CW frequencies can't be determined!")
+
+        # collect frequencies in each polarization (v & h) identified 
+        # when calculating phase variance with events
+        # behind (bwd) and ahead (fwd) of this one
+        cw = {"v" : [],
+              "h" : []}
+        scan_directions = ["fwd", "bwd"]
+        for direction in scan_directions:
+            for pol in cw.keys():
+                key = f"badFreqs_{direction}_{pol}"
+                badFreqs = np.asarray(cw_ids[key])
+        
+                cw[pol].extend(badFreqs)
+
+        cw["v"] = np.unique(np.asarray(cw["v"]))
+        cw["h"] = np.unique(np.asarray(cw["h"]))
+
+        return cw["v"], cw["h"]
+ 
 
     def get_event_index(self, event_number):
         """
@@ -759,6 +820,8 @@ class AnalysisDataset:
         Most users will leave this False.
     path_to_cw_ids : str
         the full path to the file containing identified CW frequencies for this data file
+    min_cw_id_freq : float
+        minimum frequency for CW ID (in GHz), all filters below this frequency are always activated
     run_number: int
         ARA run number for this dataset
         This will be inferred from the data itself
@@ -798,11 +861,13 @@ class AnalysisDataset:
                  is_simulation : bool = False,
                  do_not_calibrate : bool = False,
                  path_to_cw_ids : str = None,
+                 min_cw_id_freq : float = 0.120,
                  ):
     
         self.is_simulation = is_simulation
         self.do_not_calibrate = do_not_calibrate
         self.path_to_cw_ids = path_to_cw_ids
+        self.min_cw_id_freq = min_cw_id_freq
 
         if self.is_simulation and self.do_not_calibrate:
             raise Exception(f"Simulation (is_simulation = {self.is_simulation}) and uncalibrated data (do_not_calibrate = {self.do_not_calibrate}) are incompatible settings")
@@ -841,7 +906,8 @@ class AnalysisDataset:
                                                  path_to_pedestal_file,
                                                  station_id=station_id,
                                                  do_not_calibrate = self.do_not_calibrate,
-                                                 path_to_cw_ids = self.path_to_cw_ids
+                                                 path_to_cw_ids = self.path_to_cw_ids,
+                                                 min_cw_id_freq = self.min_cw_id_freq,
                                              )
         else:
             self.dataset_wrapper = SimWrapper(path_to_data_file,
@@ -933,7 +999,14 @@ class AnalysisDataset:
             return None 
 
         return self.dataset_wrapper.get_cw_ids()
- 
+
+    def get_event_cw(self, useful_event): 
+
+        if self.is_simulation:
+            return [], []
+
+        return self.dataset_wrapper.get_event_cw(useful_event)
+       
     def get_event_index(self, 
                             event_number : int = None):
 
@@ -966,7 +1039,8 @@ class AnalysisDataset:
         
         which_traces : str
             The type of traces you want.
-            Currently supports "calibrated", "interpolated", "dedispersed", and "filtered."
+            Currently supports "calibrated", "interpolated", "dedispersed", "cw_filtered",
+            "bandpassed", "filtered", and "cropped".
             
                 "calibrated" : 
                     These are the waveforms direct from AraRoot,
@@ -982,6 +1056,12 @@ class AnalysisDataset:
                     of the ARA system as found in AraSim, specifically
                     the "ARA_Electronics_TotalGain_TwoFilters.txt" file.
                     The same response is assumed for all channels.
+                "cw_filtered" :
+                    These are dedispersed waves that are additionally
+                    filtered of CW via the FFTtools SineSubtract filter.
+                "bandpassed" :
+                    These are dedispersed waves that are additionally
+                    bandpass filtered to remove out of band noise. 
                 "filtered" : 
                     These are dedispersed waves that are additionally
                     filtered of CW via the FFTtools SineSubtract filter.
@@ -1014,7 +1094,7 @@ class AnalysisDataset:
         if useful_event is None:
             raise KeyError("Passed useful event is None for some reason")
 
-        if which_traces not in ["calibrated", "interpolated", "dedispersed", "filtered", "cropped"]:
+        if which_traces not in ["calibrated", "interpolated", "dedispersed", "cw_filtered", "bandpassed", "filtered", "cropped"]:
             raise KeyError(f"Requested waveform treatment ({which_traces}) is not supported")
 
         wavepacket = {}
@@ -1075,47 +1155,54 @@ class AnalysisDataset:
             return wavepacket
     
         # and if they want filtered waves
-        cw_ids = self.get_cw_ids()
-        filtered_waves = cwf.apply_filters(self.__cw_filters, dedispersed_waves, cw_ids)
+        event_number = useful_event.eventNumber
+        if not self.is_simulation: # if this is real data, ensure the right cw IDs are loaded
+            self.dataset_wrapper.get_cw_id_entry(event_number)
 
-        # and finally, apply some bandpass cleanup filters
-        for chan_key in list(filtered_waves.keys()):
-
-            """
-            This takes some explaining, why I'm not just calling
-                digitalFilter.filterGraph(...)
+        if which_traces != "bandpassed": # if we're not only bandpassing, apply CW filters
             
-            Basically, the DigitalFilter class function `filterGraph` calls
-            the function `filter()`. The `filter` function calls the function
-            `filterOut`, which returns a POINTER to the filtered array.
-            Pyroot doesn't know how to clean this up properly.
-            So here, I create a pointer to an array via `array.array`,
-            and pass that pointer myself via the `filterOut` function.
-            That way python has proper ownership of it, and can destroy it
-            and avoid a memory leak.
+            cw_ids = self.get_cw_ids()
+            filtered_waves = cwf.apply_filters(self.__cw_filters, dedispersed_waves, cw_ids, self.min_cw_id_freq)
+            
+        # and finally, apply some bandpass cleanup filters
+        if which_traces != "cw_filtered": # if we're not only CW filtering, apply bandpass
+            for chan_key in list(filtered_waves.keys()):
 
-            I discovered this leak because when I called `filterGraph`,
-            I ended up with a huge memory leak.
-            Beware these python <-> c++ interfaces, especially around pointers...
-            """
+                """
+                This takes some explaining, why I'm not just calling
+                    digitalFilter.filterGraph(...)
+                
+                Basically, the DigitalFilter class function `filterGraph` calls
+                the function `filter()`. The `filter` function calls the function
+                `filterOut`, which returns a POINTER to the filtered array.
+                Pyroot doesn't know how to clean this up properly.
+                So here, I create a pointer to an array via `array.array`,
+                and pass that pointer myself via the `filterOut` function.
+                That way python has proper ownership of it, and can destroy it
+                and avoid a memory leak.
 
-            wave = filtered_waves[chan_key]
-            n = wave.GetN()
-            x = wave.GetX()
-            y = wave.GetY()
-            y_filt_lp = array.array("d", [0]*len(y))
-            y_filt_hp = array.array("d", [0]*len(y))
-            self.__lowpass_filter.filterOut(n, y, y_filt_lp)
-            self.__highpass_filter.filterOut(n, y_filt_lp, y_filt_hp)
+                I discovered this leak because when I called `filterGraph`,
+                I ended up with a huge memory leak.
+                Beware these python <-> c++ interfaces, especially around pointers...
+                """
 
-            filt_graph = ROOT.TGraph(n, x, y_filt_hp)
-            ROOT.SetOwnership(filt_graph, True)
+                wave = filtered_waves[chan_key]
+                n = wave.GetN()
+                x = wave.GetX()
+                y = wave.GetY()
+                y_filt_lp = array.array("d", [0]*len(y))
+                y_filt_hp = array.array("d", [0]*len(y))
+                self.__lowpass_filter.filterOut(n, y, y_filt_lp)
+                self.__highpass_filter.filterOut(n, y_filt_lp, y_filt_hp)
 
-            del wave
-            del filtered_waves[chan_key]
-            filtered_waves[chan_key] = filt_graph
+                filt_graph = ROOT.TGraph(n, x, y_filt_hp)
+                ROOT.SetOwnership(filt_graph, True)
 
-        if which_traces == "filtered":
+                del wave
+                del filtered_waves[chan_key]
+                filtered_waves[chan_key] = filt_graph
+
+        if which_traces in ["cw_filtered", "bandpassed", "filtered"]:
             wavepacket["waveforms"] = filtered_waves
             return wavepacket
 
