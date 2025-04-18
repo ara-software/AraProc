@@ -1126,12 +1126,14 @@ class AnalysisDataset:
             return wavepacket
     
         # and if they want filtered waves
+        filtered_waves = dedispersed_waves
         if which_traces != "bandpassed": # if we're not only bandpassing, apply CW filters
             
             event_number = useful_event.eventNumber
             cw_ids = self.get_cw_ids(event_number)
-            filtered_waves = cwf.apply_filters(self.__cw_filters, dedispersed_waves, cw_ids, self.min_cw_id_freq)
+            filtered_waves = cwf.apply_filters(self.__cw_filters, filtered_waves, cw_ids, self.min_cw_id_freq)
  
+
         # and finally, apply some bandpass cleanup filters
         if which_traces != "cw_filtered": # if we're not only CW filtering, apply bandpass
             for chan_key in list(filtered_waves.keys()):
