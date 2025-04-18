@@ -29,29 +29,43 @@ def get_windowed_vpp(time, trace, time_window = 20):
     if trace.max() == trace.min():
       return 0.0, 0.0
 
-    # find points at least half as large as the global min/max
-    upper_peak_idx = trace > 0.5*trace.max() 
-    lower_peak_idx = trace < 0.5*trace.min() 
+    # to speed up computation, we only consider points beyond some threshold
+    # initially, this threshold is set to 0.5 of the max/min value, which nearly 
+    # always is sufficient to find the right Vpp, but in the rare case it's not
+    # we lower the threshold by half and try again
+    foundInWindowPeak = False
+    thresh = 0.5
+    iteration = 0
+    maxIter = 10
+    while not foundInWindowPeak:
+        # find points at least half as large as the global min/max
+        upper_peak_idx = trace > thresh*trace.max() 
+        lower_peak_idx = trace < thresh*trace.min() 
 
-    # limit to just these points
-    upper_peak_times = time[upper_peak_idx]
-    upper_peak_voltages = trace[upper_peak_idx]
-    
-    lower_peak_times = time[lower_peak_idx]
-    lower_peak_voltages = trace[lower_peak_idx]
+        # limit to just these points
+        upper_peak_times = time[upper_peak_idx]
+        upper_peak_voltages = trace[upper_peak_idx]
+        
+        lower_peak_times = time[lower_peak_idx]
+        lower_peak_voltages = trace[lower_peak_idx]
 
-    # get average time of each extrema pair
-    all_t_vpp = (upper_peak_times[:, np.newaxis] + lower_peak_times)/2.
+        # get average time of each extrema pair
+        all_t_vpp = (upper_peak_times[:, np.newaxis] + lower_peak_times)/2.
 
-    # find differences between all extrema pairs
-    all_dt = upper_peak_times[:, np.newaxis] - lower_peak_times 
-    all_vpp = upper_peak_voltages[:, np.newaxis] - lower_peak_voltages 
+        # find differences between all extrema pairs
+        all_dt = upper_peak_times[:, np.newaxis] - lower_peak_times 
+        all_vpp = upper_peak_voltages[:, np.newaxis] - lower_peak_voltages 
 
-    # limit to extrema within time_window of each other
-    mask = np.abs(all_dt) <= time_window
-    if not mask.any():
-      return 0.0
-    
+        # limit to extrema within time_window of each other
+        mask = np.abs(all_dt) <= time_window
+        foundInWindowPeak = mask.any()
+
+        # update for next iteration 
+        thresh /= 2.   
+        iteration += 1
+        if iteration >= maxIter and not foundInWindowPeak:
+            raise Exception(f"Cannot find in-window Vpp after {maxIter} iterations!")
+ 
     valid_t = all_t_vpp[mask]
     valid_vpp = all_vpp[mask]
 
