@@ -6,7 +6,7 @@ import numpy as np
 
 from araproc.framework import constants as const
 
-def apply_filters_one_channel(cw_filters, waveform_in):
+def apply_filters_one_channel(cw_filters, active_cw_filters, waveform_in):
     """
     Apply CW filters to a single waveform.
     This function will not delete `waveform` for you,
@@ -19,6 +19,8 @@ def apply_filters_one_channel(cw_filters, waveform_in):
         A dictionary of sine subtract filters to be applied.
         Key is a string, and is the name of the filter from the config file.
         Value is the sine subtract filter to applied.
+    active_cw_filters : dictionary
+        A dictionary of booleans tracking which filters are activated.
     waveform_in : ROOT.TGraph
         A single waveform to be filtered.
     
@@ -32,8 +34,10 @@ def apply_filters_one_channel(cw_filters, waveform_in):
     ROOT.SetOwnership(latest_waveform, True) # take posession
 
     if len(cw_filters) > 0:
-        for filter_i, filter in cw_filters.items():
-            local_waveform = filter["filter"].subtractCW(latest_waveform, -1)
+        for filter_i, isActive in active_cw_filters.items():
+            if not isActive:
+                continue
+            local_waveform = cw_filters[filter_i]["filter"].subtractCW(latest_waveform, -1)
             ROOT.SetOwnership(local_waveform, True) # take posession 
             del latest_waveform
             latest_waveform = local_waveform # update the latest waveform
@@ -56,8 +60,8 @@ def apply_filters(cw_filters, waveform_bundle, cw_ids = None, min_cw_id_freq = 0
         A dictionary of waveforms to be processed.
         Key is channel id.
         Value is the TGraph to be filtered.
-    cw_ids : dictionary
-        A dictionary of cw id info.
+    cw_ids : tuple
+        A tuple of numpy arrays containing cw id info.
         If None, all set CW filters allowed to filter. Otherwise, only those 
         covering frequencies in the cw id info will be allowed to filter.
 
@@ -81,7 +85,7 @@ def apply_filters(cw_filters, waveform_bundle, cw_ids = None, min_cw_id_freq = 0
             active_cw_filters = active_cw_filters_v
         else:
             active_cw_filters = active_cw_filters_h
-        filtered_waveforms[ch_id] = apply_filters_one_channel(active_cw_filters, wave)
+        filtered_waveforms[ch_id] = apply_filters_one_channel(cw_filters, active_cw_filters, wave)
 
 
     return filtered_waveforms
@@ -96,8 +100,8 @@ def get_active_filters(cw_filters, cw_ids, chan, min_cw_id_freq):
         A dictionary of sine subtract filters available to be applied..
         Key is a string, and is the name of the filter from the config file.
         Value is the sine subtract filter to applied.
-    cw_ids : dictionary
-        A dictionary of cw id info.
+    cw_ids : tuple
+        A tuple of numpy arrays containing cw id info.
         If None, all available CW filters are activated. Otherwise, only those 
         covering frequencies in the cw id info will be activated.
     chan : int
@@ -106,54 +110,47 @@ def get_active_filters(cw_filters, cw_ids, chan, min_cw_id_freq):
     Returns
     -------
     active_filters : dictionary
-        A dictionary of sine subtract filters to be applied for this event and channel.
+        A dictionary of booleans tracking which filters are activated.
     """
 
     if cw_ids is None: # if cw id isn't present activate all filters
-        active_filters = sort_filters(cw_filters)
+        active_filters = get_sorted_filter_activity(cw_filters, active=True)
+        
         return active_filters
 
-    active_filters = {}
-
+    # initialize all filters to inactive
+    active_filters = get_sorted_filter_activity(cw_filters, active=False)
+    
     # turn on all filters below the cw id freq threshold
     for filter_i, filter in cw_filters.items():
         fmax = filter["max_freq"]
 
         # if filter covers region below cw id threshold, activate it 
         if fmax < min_cw_id_freq:
-            active_filters[filter_i] = filter
+            active_filters[filter_i] = True
             
     
     if chan in const.vpol_channel_ids:
-      pol = "v"
+      badFreqs, _ = cw_ids
     else: 
-      pol = "h"
+      _, badFreqs = cw_ids
 
-    scan_directions = ["fwd", "bwd"]
-    for direction in scan_directions:
+    isFiltered = np.zeros(len(badFreqs)).astype(bool)
+    for filter_i, filter in cw_filters.items():
 
-        key = f"badFreqs_{direction}_{pol}"
-        badFreqs = np.asarray(cw_ids[key])
-
+        fmin = filter["min_freq"]
+        fmax = filter["max_freq"]
         
-        isFiltered = np.zeros(len(badFreqs)).astype(bool)
-        for filter_i, filter in cw_filters.items():
+        mask = np.logical_and(badFreqs >= fmin, badFreqs <= fmax) # find frequencies covered by this filter  
+        isFiltered = np.logical_or(isFiltered, mask) # track frequencies that have covered by a filter
 
-            fmin = filter["min_freq"]
-            fmax = filter["max_freq"]
-            
-            mask = np.logical_and(badFreqs >= fmin, badFreqs <= fmax) # find frequencies covered by this filter  
-            isFiltered = np.logical_or(isFiltered, mask) # track frequencies that have covered by a filter
- 
-            # if filter covers any flagged frequency, activate it 
-            if mask.any(): 
-                active_filters[filter_i] = filter
+        # if filter covers any flagged frequency, activate it 
+        if mask.any(): 
+            active_filters[filter_i] = True
 
-        if not isFiltered.all():
-            unFilteredFreqs = badFreqs[~isFiltered]
-            raise Exception(f"IDed CW at {unFilteredFreqs} GHz has no corresponding filter! Please add one and rerun.")
-
-    active_filters = sort_filters(active_filters)
+    if not isFiltered.all():
+        unFilteredFreqs = badFreqs[~isFiltered]
+        raise Exception(f"IDed CW at {unFilteredFreqs} GHz has no corresponding filter! Please add one and rerun.")
 
     return active_filters
 
@@ -182,9 +179,10 @@ def check_cw_ids(cw_ids):
 
     return
 
-def sort_filters(filters):
+def get_sorted_filter_activity(filters, active):
     """
-    Helper function to sort filters in order of descending
+    Helper function to create a dictionary of activity states
+    for the CW filters, sorted in order of descending
     min_power_ratio, which appears to have some advantage 
     (filters are applied in order they are inserted into dict)
 
@@ -192,14 +190,16 @@ def sort_filters(filters):
     ----------
     filters : dict
         Dictionary of filters to sort
+    active : bool
+        Whether the filters should be initialized to active.
 
     Returns
     -------
     sorted_filters : dict
-        Dictionary of sorted filters
+        Dictionary of booleans (indicating activity) sorted by filter min_power_ratio
     """
 
-    sorted_filters = {k : v for k, v in sorted(filters.items(), key=lambda x: x[1]["min_power_ratio"], reverse=True)}
+    sorted_filters = {k : active for k, v in sorted(filters.items(), key=lambda x: x[1]["min_power_ratio"], reverse=True)}
 
     return sorted_filters
 

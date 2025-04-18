@@ -354,9 +354,11 @@ class DataWrapper:
 
                     try:
                         key = f"{info}_{direction}_{pol}"
-                        self.cw_id_ptrs[key] = ROOT.std.vector('double')()
-                   
-                        self.cw_id_tree.SetBranchAddress(key, ROOT.AddressOf(self.cw_id_ptrs[key])) 
+                        vec = ROOT.std.vector('double')()
+                        ROOT.SetOwnership(vec, False)                
+                        self.cw_id_ptrs[key] = vec 
+
+                        self.cw_id_tree.SetBranchAddress(key, vec) 
                         logging.debug(f"Successfully assigned cw id {key} branch")
                 
                     except:
@@ -473,6 +475,8 @@ class DataWrapper:
         """
 
         if self.cw_id_tree is not None:
+            for v in self.cw_id_ptrs.values():
+                v.clear()
             if self.cw_id_tree.GetEntryWithIndex(event_number) < 0:
                 raise Exception(f"Unable to get corresponding cw id entry for {event_number}.")
         
@@ -484,11 +488,32 @@ class DataWrapper:
 
         Returns
         -------
-        cw_id_ptrs : dict
-            Dictionary containing cw id info for event.
+        cw_id_ptrs : tuple of numpy arrays
+           Tuple of numpy arrays containing identified bad frequencies in each
+           polarization (aggregated over scan direction) 
         """
 
-        return self.cw_id_ptrs
+        if self.cw_id_ptrs is None:
+            return None
+
+        cw_ids_v = []
+        cw_ids_h = []       
+ 
+        scan_directions = ["fwd", "bwd"]
+        for direction in scan_directions:
+            key = f"badFreqs_{direction}_v"
+            badFreqs = np.array(self.cw_id_ptrs[key], dtype=float)
+            cw_ids_v.extend(badFreqs)
+            
+            key = f"badFreqs_{direction}_h"
+            badFreqs = np.array(self.cw_id_ptrs[key], dtype=float)
+            cw_ids_h.extend(badFreqs)
+
+        cw_ids_v = np.unique(np.asarray(cw_ids_v))
+        cw_ids_h = np.unique(np.asarray(cw_ids_h))
+        cw_ids = (cw_ids_v, cw_ids_h)
+
+        return cw_ids
         
     def get_event_cw(self, useful_event):
         """
@@ -1003,7 +1028,7 @@ class AnalysisDataset:
     def get_event_cw(self, useful_event): 
 
         if self.is_simulation:
-            return [], []
+            return None
 
         return self.dataset_wrapper.get_event_cw(useful_event)
        
@@ -1163,7 +1188,7 @@ class AnalysisDataset:
             
             cw_ids = self.get_cw_ids()
             filtered_waves = cwf.apply_filters(self.__cw_filters, dedispersed_waves, cw_ids, self.min_cw_id_freq)
-            
+ 
         # and finally, apply some bandpass cleanup filters
         if which_traces != "cw_filtered": # if we're not only CW filtering, apply bandpass
             for chan_key in list(filtered_waves.keys()):
