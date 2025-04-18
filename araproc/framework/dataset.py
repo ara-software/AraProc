@@ -96,6 +96,8 @@ class DataWrapper:
         the pointer to the ROOT TFile that corresponds to the opened cw id file
     cw_id_tree : ROOT TTree
         the sound the the mousetrap makes 
+    cw_id_reader : ROOT TTreeReader
+        the ROOT TTreeReader of the cw id tree
     min_cw_id_freq : float
         minimum frequency for CW ID (in GHz), all filters below this frequency are always activated
     run_number: int
@@ -114,8 +116,8 @@ class DataWrapper:
         number of data events in the data ROOT file
     raw_event_ptr : RawAtriStationEvent
         a RawAtriStationEvent ptr from AraRoot
-    cw_id_ptrs : dict of ptrs
-        ptrs to Branches of the cw id ttree
+    cw_id_reader_vals : dict of TTreeReaderValues
+        dictionary of reader values for different branches
     qual_cuts : AraQualCuts
         An AraRoot AraQualCuts object
     calibrator: AraEventCalibrator
@@ -142,13 +144,14 @@ class DataWrapper:
         self.event_tree = None
         self.cw_id_tfile = None
         self.cw_id_tree = None
+        self.cw_id_reader = None
         self.run_number = None
         self.station_id = None
         self.data_station_id = None
         self.num_events = None
         self.calibrator = None
         self.raw_event_ptr = None
-        self.cw_id_ptrs = None
+        self.cw_id_readers = None
         self.config = None
 
         if station_id not in const.valid_station_ids:
@@ -336,15 +339,16 @@ class DataWrapper:
             logging.critical("Loading the NewCWTree failed")
             self.cw_id_tfile.Close() # close the file
             raise
+       
+        # Make the reader and store it
+        self.cw_id_reader = ROOT.TTreeReader(self.cw_id_tree)
+        # Dictionary to hold branch readers
+        self.cw_id_reader_vals = {}
         
-        # build the cw id index on event numbers
-        if self.cw_id_tree.BuildIndex("event_num") >= 0:
-            logging.debug("Successfully built cw id tree index on event_num")
-        else:
-            logging.critical("Building cw id tree index on event_num failed")
+        # load up the event number info
+        self.cw_id_reader_vals['event_num'] = ROOT.TTreeReaderValue["int"](self.cw_id_reader, "event_num")
 
         # load up the cw id info
-        self.cw_id_ptrs = {}
         cw_id_info = ["badFreqs", "badSigmas"]
         scan_directions = ["fwd", "bwd"]
         polarizations = ["v", "h"]
@@ -354,11 +358,9 @@ class DataWrapper:
 
                     try:
                         key = f"{info}_{direction}_{pol}"
-                        self.cw_id_ptrs[key] = ROOT.std.vector('double')()
-                   
-                        self.cw_id_tree.SetBranchAddress(key, ROOT.AddressOf(self.cw_id_ptrs[key])) 
+                        self.cw_id_reader_vals[key] = ROOT.TTreeReaderArray["double"](self.cw_id_reader, key)
+                        
                         logging.debug(f"Successfully assigned cw id {key} branch")
-                
                     except:
                         logging.critical(f"Assigning the {key} in the newCWTree failed")
                         self.cw_id_tfile.Close() # close the file
@@ -404,12 +406,6 @@ class DataWrapper:
             logging.critical(f"Copying Raw event index {event_idx} failed.")
             raise 
         ROOT.SetOwnership(raw_event, True)
-       
-        # if we have cw ids loaded, get the corresponding entry to this event 
-        if self.cw_id_tree is not None:
-            event_number = raw_event.eventNumber
-            if self.cw_id_tree.GetEntryWithIndex(event_number) < 0:
-                raise Exception(f"Unable to get corresponding cw id entry for {event_number}.")
         
         return raw_event
 
@@ -455,83 +451,58 @@ class DataWrapper:
             logging.critical(f"Calibrating event index {event_idx} failed.")
             raise 
         ROOT.SetOwnership(useful_event, True)
-        
-        # if we have cw ids loaded, get the corresponding entry to this event 
-        event_number = useful_event.eventNumber
-        self.get_cw_id_entry(event_number)
  
         return useful_event
 
-    def get_cw_id_entry(self, event_number):
+    def get_cw_ids(self, event_number):
         """
-        Get the CW ID tree entry for an event.
+        Get CW ID info for the loaded event.
 
         Parameters
         ----------
         event_number : int
           Event number to load CW ID for.
-        """
-
-        if self.cw_id_tree is not None:
-            if self.cw_id_tree.GetEntryWithIndex(event_number) < 0:
-                raise Exception(f"Unable to get corresponding cw id entry for {event_number}.")
         
-        return 
-
-    def get_cw_ids(self):
-        """
-        Get CW ID info for the loaded event.
-
         Returns
         -------
-        cw_id_ptrs : dict
-            Dictionary containing cw id info for event.
+        cw_ids : tuple of numpy arrays (vpol, hpol)
+           Tuple of numpy arrays containing identified bad frequencies in each
+           polarization (aggregated over scan direction) 
         """
 
-        return self.cw_id_ptrs
+        cw_ids_v = []
+        cw_ids_h = []       
+
+        if self.cw_id_reader is None:
+            return None
+
+        # reset reader -- reader MUST move sequentially thru TTree
+        self.cw_id_reader.Restart()
         
-    def get_event_cw(self, useful_event):
-        """
-        Get the IDed CW frequencies in each polarization for the loaded event.
+        # iterate thru reader until we find the right entry
+        # we need to IMMEDIATELY readout the reader data, otherwise there's
+        # no guarantee the reader will point to the right (or any) entry
+        while self.cw_id_reader.Next():
+            if self.cw_id_reader_vals["event_num"].Get()[0] == event_number:        
+                scan_directions = ["fwd", "bwd"]
+                for direction in scan_directions:
+                    key = f"badFreqs_{direction}_v"
+                    cw_ids_v.extend(self.cw_id_reader_vals[key])            
 
-        Parameters
-        ----------
-        useful_event : UsefulAtriStationEvent
-            The pointer to the UsefulAtriStationEvent
+                    key = f"badFreqs_{direction}_h"
+                    cw_ids_h.extend(self.cw_id_reader_vals[key])            
 
-        Returns
-        -------
-        cw_v, cw_h : numpy arrays
-            Arrays of the IDed frequencies in both scan directions for each polarization.
+                cw_ids_v = np.unique(np.asarray(cw_ids_v))
+                cw_ids_h = np.unique(np.asarray(cw_ids_h))
+                cw_ids = (cw_ids_v, cw_ids_h)
 
-        """
-        
-        # if we have cw ids loaded, get the corresponding entry to this event 
-        event_number = useful_event.eventNumber
-        self.get_cw_id_entry(event_number)
+                return cw_ids
   
-        cw_ids = self.get_cw_ids()
-        if cw_ids is None:
-             raise Exception("No event loaded, so CW frequencies can't be determined!")
+        # if we get to this point, it means the requested event number was 
+        # not in the cw id file
+        raise Exception(f"Event number {event_number} was not found in the CW ID file!")
 
-        # collect frequencies in each polarization (v & h) identified 
-        # when calculating phase variance with events
-        # behind (bwd) and ahead (fwd) of this one
-        cw = {"v" : [],
-              "h" : []}
-        scan_directions = ["fwd", "bwd"]
-        for direction in scan_directions:
-            for pol in cw.keys():
-                key = f"badFreqs_{direction}_{pol}"
-                badFreqs = np.asarray(cw_ids[key])
-        
-                cw[pol].extend(badFreqs)
-
-        cw["v"] = np.unique(np.asarray(cw["v"]))
-        cw["h"] = np.unique(np.asarray(cw["h"]))
-
-        return cw["v"], cw["h"]
- 
+        return
 
     def get_event_index(self, event_number):
         """
@@ -992,18 +963,18 @@ class AnalysisDataset:
         
         return useful_event
    
-    def get_cw_ids(self):
+    def get_cw_ids(self, event_number):
 
         # CW ids currently not supported for simulation
         if self.is_simulation:
             return None 
 
-        return self.dataset_wrapper.get_cw_ids()
+        return self.dataset_wrapper.get_cw_ids(event_number)
 
     def get_event_cw(self, useful_event): 
 
         if self.is_simulation:
-            return [], []
+            return None
 
         return self.dataset_wrapper.get_event_cw(useful_event)
        
@@ -1156,15 +1127,13 @@ class AnalysisDataset:
     
         # and if they want filtered waves
         filtered_waves = dedispersed_waves
-        event_number = useful_event.eventNumber
-        if not self.is_simulation: # if this is real data, ensure the right cw IDs are loaded
-            self.dataset_wrapper.get_cw_id_entry(event_number)
-
         if which_traces != "bandpassed": # if we're not only bandpassing, apply CW filters
             
-            cw_ids = self.get_cw_ids()
+            event_number = useful_event.eventNumber
+            cw_ids = self.get_cw_ids(event_number)
             filtered_waves = cwf.apply_filters(self.__cw_filters, filtered_waves, cw_ids, self.min_cw_id_freq)
-            
+ 
+
         # and finally, apply some bandpass cleanup filters
         if which_traces != "cw_filtered": # if we're not only CW filtering, apply bandpass
             for chan_key in list(filtered_waves.keys()):
