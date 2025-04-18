@@ -1155,6 +1155,7 @@ class AnalysisDataset:
             return wavepacket
     
         # and if they want filtered waves
+        filtered_waves = dedispersed_waves
         event_number = useful_event.eventNumber
         if not self.is_simulation: # if this is real data, ensure the right cw IDs are loaded
             self.dataset_wrapper.get_cw_id_entry(event_number)
@@ -1162,7 +1163,7 @@ class AnalysisDataset:
         if which_traces != "bandpassed": # if we're not only bandpassing, apply CW filters
             
             cw_ids = self.get_cw_ids()
-            filtered_waves = cwf.apply_filters(self.__cw_filters, dedispersed_waves, cw_ids, self.min_cw_id_freq)
+            filtered_waves = cwf.apply_filters(self.__cw_filters, filtered_waves, cw_ids, self.min_cw_id_freq)
             
         # and finally, apply some bandpass cleanup filters
         if which_traces != "cw_filtered": # if we're not only CW filtering, apply bandpass
