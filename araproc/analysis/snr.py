@@ -32,7 +32,7 @@ def get_windowed_vpp(time, trace, time_window = 20):
     # to speed up computation, we only consider points beyond some threshold
     # initially, this threshold is set to 0.5 of the max/min value, which nearly 
     # always is sufficient to find the right Vpp, but in the rare case it's not
-    # we lower the threshold and try again
+    # we lower the threshold by half and try again
     foundInWindowPeak = False
     thresh = 0.5
     iteration = 0
