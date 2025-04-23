@@ -298,6 +298,6 @@ station5:
       filt3 : { min_freq : 0.140, max_freq : 0.495, min_power_ratio : 0.10 }
       filt4 : { min_freq : 0.495, max_freq : 0.510, min_power_ratio : 0.02 }
       filt5 : { min_freq : 0.510, max_freq : 1.000, min_power_ratio : 0.10 }
-   readout_limits:
+    readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 10
