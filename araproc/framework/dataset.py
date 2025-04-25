@@ -758,7 +758,9 @@ class SimWrapper:
 
         sim_info = {}
         sim_info["weight"] = self.event_ptr.Nu_Interaction[0].weight
-        sim_info["enu"] = self.event_ptr.pnu
+        sim_info["enu"] = self.event_ptr.nu_prim_energy
+        sim_info["evid"] = self.event_ptr.event_ID
+        sim_info["pid"] = self.event_ptr.prim_particle_type
 
         return sim_info
 
