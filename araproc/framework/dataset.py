@@ -11,6 +11,7 @@ from araproc.framework import constants as const
 from araproc.framework import file_utilities as futil
 from araproc.analysis import dedisperse as dd
 from araproc.analysis import cw_filter as cwf
+from araproc.analysis.snr import get_vpp, get_jackknife_rms
 
 import importlib.resources as pkg_resources
 from . import config_files
@@ -72,6 +73,142 @@ def get_filters(station_id, analysis_config):
     file.close()
 
     return cw_filters
+
+def get_best_antenna(file):
+    """
+    Returns the string and antenna indices for the triggering antenna with 
+      the greatest SNR along with the antenna's SNR
+
+    Parameters
+    ----------
+    file : AraSim ROOT.TFile
+        The AraSim output file where the appropriate entry of file.AraTree2 
+          is already loaded into memory.
+    
+    Returns
+    -------
+    best_ant : tuple
+        Tuple containing the index of this antenna in the 
+        `file.AraTree2.report.stations[0].strings` and the 
+        `file.AraTree2.report.stations[0].strings[string_index].antennas`
+        objects, respectively
+    """
+
+    # Alias the station we're analyzing as it is in the report and detector class
+    station_r = file.AraTree2.report.stations[0]
+    station_d = file.AraTree.detector.stations[0]
+
+    # Get the string and antenna index for each triggered antenna
+    trig_ants = [
+        (s, a) 
+        for s in range(len(station_r.strings)) 
+        for a in range(len(station_r.strings[s].antennas)) 
+        if station_r.strings[s].antennas[a].Trig_Pass]
+    
+    # Get triggered antenna polarization type
+    trig_ant_types = [station_d.strings[s].antennas[a].type for s, a in trig_ants]
+
+    # Determine how many vpols and hpols triggered
+    trig_ant_types_counts = np.unique(trig_ant_types, return_counts=True)
+    n_trig_vpols = 0
+    n_trig_hpols = 0
+    if len(trig_ant_types_counts[0]) == 2:
+        # Both Hpols and Vpols triggered
+        n_trig_vpols, n_trig_hpols = trig_ant_types_counts[1]
+    elif 0 in trig_ant_types: 
+        # Only Vpols triggered
+        n_trig_vpols = trig_ant_types_counts[1][0]
+        n_trig_hpols = 0
+    elif 1 in trig_ant_types:
+        # Only Hpols triggered
+        n_trig_vpols = 0
+        n_trig_hpols = trig_ant_types_counts[1][0]
+    
+    # Based on if there are 3 Vpols and/or 3 Hpols that triggered, determine
+    #   if the Vpol and/or Hpol triggering channel was activated and indicate
+    #   which corresponding antennas we should analyze for greatest SNR 
+    if n_trig_vpols==3 and n_trig_hpols==3: 
+        # Event triggered on both VPols and Hpols, analyze all triggering
+        #   antennas for the one with the highest SNR regardless of antenna type
+        ants_to_analyze = np.arange(len(trig_ants))
+    elif n_trig_vpols == 3:
+        # Event triggered on VPols, analyze triggering Vpols for greatest SNR
+        ants_to_analyze = np.where(np.asarray(trig_ant_types) == 0)[0]
+    else: 
+        # Event triggered on HPols, analyze triggering Hpols for greatest SNR
+        ants_to_analyze = np.where(np.asarray(trig_ant_types) == 1)[0]
+
+    # Get the string index, antenna index, and SNR of the antenna with the 
+    #   greatest SNR of antennas that activated the station trigger
+    best_SNR = 0
+    best_ant = (-1, -1)
+    for ant_idx in ants_to_analyze: 
+
+        # Get the string and antenna index
+        s, a = trig_ants[ant_idx]
+
+        # Get the SNR of this antenna's waveform
+        waveform = [
+            np.asarray(file.AraTree2.report.stations[0].strings[s].antennas[a].time_mimic), 
+            np.asarray(file.AraTree2.report.stations[0].strings[s].antennas[a].V_mimic),
+        ]
+        vpp = get_vpp(waveform)
+        rms = get_jackknife_rms(waveform[1])
+        SNR = vpp/rms/2.0
+
+        # If this antenna's waveform is greater than the saved SNR, save this 
+        #   antennas string index, antenna index, and SNR as the best
+        if SNR > best_SNR: 
+            best_SNR = SNR
+            best_ant = (s, a)
+
+    # Return the triggering antenna with the greatest SNR
+    return best_ant
+
+def get_AraSim_xyz_position(source, target, icemodel):
+    """
+    Return the XY displacement of a source and its depth with respect to
+      the surface of the ice. 
+
+    Parameters
+    ----------
+    target : AraSim::Position
+        Location to measure `source` X-Y displacement with respect to. 
+        Usually the station.
+    source : AraSim::Position
+        Location to measure X-Y displacement from `target` and depth from ice surface.
+        Usually a cascade.
+    icemodel : AraSim::IceModel
+        IceModel used
+
+    Returns
+    -------
+    dx : float
+        X displacement from `target` to `source` in meters
+    dy : float
+        X displacement from `target` to `source` in meters
+    depth : float
+        Depth of `source` with respect to the surface of the ice defined by `icemodel`
+    """
+    # Convert target coordintarget
+    r_from_pole_target = np.sqrt(target.GetX()**2 + target.GetY()**2)
+    lon_target = np.radians(target.Lon())
+    lat_target = np.radians(target.Lat())
+    x_target = r_from_pole_target * np.cos(lon_target)
+    y_target = r_from_pole_target * np.sin(lon_target)
+
+    # Get coordinates of provided source
+    r_from_pole_source = np.sqrt(source.GetX()**2 + source.GetY()**2)
+    lon_source = np.radians(source.Lon())
+    x_source = r_from_pole_source * np.cos(lon_source)
+    y_source = r_from_pole_source * np.sin(lon_source)
+
+    target_depth = icemodel.Surface( target.Lon(), target.Lat()) - target.R()
+    ang_diff = target.Angle(source)
+    depth_diff = target.R() - source.R()*np.cos(ang_diff)
+    z_source = -target_depth - depth_diff
+
+    return x_source-x_target, y_source-y_target, z_source
 
 class DataWrapper:
 
@@ -636,6 +773,7 @@ class SimWrapper:
             self.event_tree.SetBranchAddress("UsefulAtriStationEvent",ROOT.AddressOf(self.useful_event_ptr))
             self.sim_tree.SetBranchAddress("report", ROOT.AddressOf(self.report_ptr))
             self.sim_tree.SetBranchAddress("event", ROOT.AddressOf(self.event_ptr))
+            self.root_tfile.AraTree.GetEntry(0)
             self.sim_settings_tree.SetBranchAddress("settings", ROOT.AddressOf(self.settings_ptr))
             logging.debug("Successfully assigned UsefulAtriStationEvent, report, event, and settings branch")
         except:
@@ -756,11 +894,26 @@ class SimWrapper:
             logging.critical(f"Getting entry {event_idx} in sim_tree failed.")
             raise 
 
+        # Identify the triggering antenna with the greatest SNR and extract 
+        #   AraSim's guess for the interaction that triggered this antenna
+        string, antenna = get_best_antenna(self.root_tfile)
+        likely_interaction = int( np.asarray(
+            self.report_ptr.stations[0].strings[string].antennas[antenna].Likely_Sol)[0] )
+
         sim_info = {}
         sim_info["weight"] = self.event_ptr.Nu_Interaction[0].weight
         sim_info["enu"] = self.event_ptr.nu_prim_energy
+        sim_info["pid"] = self.event_ptr.nu_prim_pid
         sim_info["evid"] = self.event_ptr.event_ID
-        sim_info["pid"] = self.event_ptr.prim_particle_type
+        sim_info["vertex"] = get_AraSim_xyz_position(
+            self.event_ptr.Nu_Interaction[likely_interaction].posnu, 
+            self.root_tfile.AraTree.detector.stations[0],
+            self.root_tfile.AraTree.icemodel)
+        sim_info["direction"] = (
+            self.event_ptr.Nu_Interaction[likely_interaction].nnu.Theta(),
+            self.event_ptr.Nu_Interaction[likely_interaction].nnu.Phi()
+        ) # Although this references the mostly likely triggering interaction, 
+        # the direction of all particles in the same event should be the same
 
         return sim_info
 
