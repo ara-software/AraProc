@@ -862,7 +862,6 @@ class SimWrapper:
             waveform = ROOT.TGraph(len(t), t.data(), v.data())
             ROOT.SetOwnership(waveform, True) # python's responsibility
 
-            #waveform = wu.arrays_to_tgraph(np.linspace(0, 1, 100), np.random.normal(size=100))
             SNR = get_snr(waveform)
   
             # If this antenna's waveform is greater than the saved SNR, save this 
