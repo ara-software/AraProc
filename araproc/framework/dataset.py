@@ -870,48 +870,48 @@ class SimWrapper:
         # Return the triggering antenna with the greatest SNR
         return best_ant
 
-    def get_AraSim_xyz_position(self, source, target):
+    def get_AraSim_xyz_position(self, origin, position):
         """
-        Return the XY displacement of a source and its depth with respect to
+        Return the XY displacement of a origin and its depth with respect to
         the surface of the ice. 
 
         Parameters
         ----------
-        target : AraSim::Position
-            Location to measure `source` X-Y displacement with respect to. 
-            Usually the station.
-        source : AraSim::Position
-            Location to measure X-Y displacement from `target` and depth from ice surface.
+        origin : AraSim::Position
+            Location to measure X-Y displacement from `position` and depth from ice surface.
             Usually a cascade.
+        position : AraSim::Position
+            Location to measure `origin` X-Y displacement with respect to. 
+            Usually the station.
 
         Returns
         -------
         dx : float
-            X displacement from `target` to `source` in meters
+            X displacement from `position` to `origin` in meters
         dy : float
-            X displacement from `target` to `source` in meters
+            X displacement from `position` to `origin` in meters
         depth : float
-            Depth of `source` with respect to the surface of the ice defined by `ROOT::IceModel`
+            Depth of `origin` with respect to the surface of the ice defined by `ROOT::IceModel`
         """
-        # Convert target coordintarget
-        r_from_pole_target = np.sqrt(target.GetX()**2 + target.GetY()**2)
-        lon_target = np.radians(target.Lon())
-        lat_target = np.radians(target.Lat())
-        x_target = r_from_pole_target * np.cos(lon_target)
-        y_target = r_from_pole_target * np.sin(lon_target)
+        # Convert XY position coordinates
+        r_from_pole_position = np.sqrt(position.GetX()**2 + position.GetY()**2)
+        lon_position = np.radians(position.Lon())
+        x_position = r_from_pole_position * np.cos(lon_position)
+        y_position = r_from_pole_position * np.sin(lon_position)
 
-        # Get coordinates of provided source
-        r_from_pole_source = np.sqrt(source.GetX()**2 + source.GetY()**2)
-        lon_source = np.radians(source.Lon())
-        x_source = r_from_pole_source * np.cos(lon_source)
-        y_source = r_from_pole_source * np.sin(lon_source)
+        # Get XY coordinates of provided origin
+        r_from_pole_origin = np.sqrt(origin.GetX()**2 + origin.GetY()**2)
+        lon_origin = np.radians(origin.Lon())
+        x_origin = r_from_pole_origin * np.cos(lon_origin)
+        y_origin = r_from_pole_origin * np.sin(lon_origin)
 
-        target_depth = self.icemodel_ptr.Surface( target.Lon(), target.Lat()) - target.R()
-        ang_diff = target.Angle(source)
-        depth_diff = target.R() - source.R()*np.cos(ang_diff)
-        z_source = -target_depth - depth_diff
+        # Get depth of the position
+        position_depth = self.icemodel_ptr.Surface( position.Lon(), position.Lat()) - position.R()
+        ang_diff = position.Angle(origin)
+        depth_diff = position.R() - origin.R()*np.cos(ang_diff)
+        z_origin = -position_depth - depth_diff
 
-        return x_source-x_target, y_source-y_target, z_source
+        return x_origin-x_position, y_origin-y_position, z_origin
 
 
 class AnalysisDataset:
