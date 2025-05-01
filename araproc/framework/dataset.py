@@ -856,11 +856,11 @@ class SimWrapper:
 
             # Get the SNR of this antenna's waveform
             t = self.report_ptr.stations[0].strings[s].antennas[a].time_mimic    
-            ROOT.SetOwnership(t, False) # give python full ownership (see README.md for more info)
+            ROOT.SetOwnership(t, False) # ROOT's responsibility 
             v = self.report_ptr.stations[0].strings[s].antennas[a].V_mimic
-            ROOT.SetOwnership(v, False)
+            ROOT.SetOwnership(v, False) # ROOT's responsibility
             waveform = ROOT.TGraph(len(t), t.data(), v.data())
-            ROOT.SetOwnership(waveform, True)
+            ROOT.SetOwnership(waveform, True) # python's responsibility
 
             #waveform = wu.arrays_to_tgraph(np.linspace(0, 1, 100), np.random.normal(size=100))
             SNR = get_snr(waveform)
