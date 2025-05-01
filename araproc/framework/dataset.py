@@ -632,16 +632,22 @@ class SimWrapper:
         self.useful_event_ptr = ROOT.UsefulAtriStationEvent()
         self.report_ptr = ROOT.Report()
         self.event_ptr = ROOT.Event()
+        self.detector_ptr = ROOT.Detector()
+        self.icemodel_ptr = ROOT.IceModel()
         self.settings_ptr = ROOT.Settings()
         try:
             self.event_tree.SetBranchAddress("UsefulAtriStationEvent",ROOT.AddressOf(self.useful_event_ptr))
             self.sim_tree.SetBranchAddress("report", ROOT.AddressOf(self.report_ptr))
             self.sim_tree.SetBranchAddress("event", ROOT.AddressOf(self.event_ptr))
-            self.root_tfile.AraTree.GetEntry(0)
+            self.sim_settings_tree.SetBranchAddress("detector", ROOT.AddressOf(self.detector_ptr))
+            self.sim_settings_tree.SetBranchAddress("icemodel", ROOT.AddressOf(self.icemodel_ptr))
             self.sim_settings_tree.SetBranchAddress("settings", ROOT.AddressOf(self.settings_ptr))
-            logging.debug("Successfully assigned UsefulAtriStationEvent, report, event, and settings branch")
+            self.event_tree.GetEntry(0)
+            self.sim_tree.GetEntry(0)
+            self.sim_settings_tree.GetEntry(0)
+            logging.debug("Successfully assigned UsefulAtriStationEvent, report, event, detector, icemodel, and settings branch")
         except:
-            logging.critical("Assigning the useful_event_ptr, report_ptr, settings_ptr, or event_ptr failed")
+            logging.critical("Assigning the useful_event_ptr, report_ptr, detector_ptr, icemodel_ptr, settings_ptr, or event_ptr failed")
             self.root_tfile.Close() # close the file
             raise
 
@@ -771,7 +777,7 @@ class SimWrapper:
         sim_info["evid"] = self.event_ptr.event_ID
         sim_info["vertex"] = self.get_AraSim_xyz_position(
             self.event_ptr.Nu_Interaction[likely_interaction].posnu, 
-            self.root_tfile.AraTree.detector.stations[0])
+            self.detector_ptr.stations[0])
         sim_info["direction"] = (
             self.event_ptr.Nu_Interaction[likely_interaction].nnu.Theta(),
             self.event_ptr.Nu_Interaction[likely_interaction].nnu.Phi()
@@ -796,8 +802,8 @@ class SimWrapper:
         """
 
         # Alias the station we're analyzing as it is in the report and detector class
-        station_r = self.root_tfile.AraTree2.report.stations[0]
-        station_d = self.root_tfile.AraTree.detector.stations[0]
+        station_r = self.report_ptr.stations[0]
+        station_d = self.detector_ptr.stations[0]
 
         # Get the string and antenna index for each triggered antenna
         trig_ants = [
@@ -850,8 +856,8 @@ class SimWrapper:
 
             # Get the SNR of this antenna's waveform
             waveform = wu.arrays_to_tgraph(
-                np.asarray(self.root_tfile.AraTree2.report.stations[0].strings[s].antennas[a].time_mimic), 
-                np.asarray(self.root_tfile.AraTree2.report.stations[0].strings[s].antennas[a].V_mimic),
+                np.asarray(self.report_ptr.stations[0].strings[s].antennas[a].time_mimic), 
+                np.asarray(self.report_ptr.stations[0].strings[s].antennas[a].V_mimic),
             )
             SNR = get_snr(waveform)
 
@@ -885,7 +891,7 @@ class SimWrapper:
         dy : float
             X displacement from `target` to `source` in meters
         depth : float
-            Depth of `source` with respect to the surface of the ice defined by `self.root_tfile.AraTree.icemodel`
+            Depth of `source` with respect to the surface of the ice defined by `ROOT::IceModel`
         """
         # Convert target coordintarget
         r_from_pole_target = np.sqrt(target.GetX()**2 + target.GetY()**2)
@@ -900,7 +906,7 @@ class SimWrapper:
         x_source = r_from_pole_source * np.cos(lon_source)
         y_source = r_from_pole_source * np.sin(lon_source)
 
-        target_depth = self.root_tfile.AraTree.icemodel.Surface( target.Lon(), target.Lat()) - target.R()
+        target_depth = self.icemodel_ptr.Surface( target.Lon(), target.Lat()) - target.R()
         ang_diff = target.Angle(source)
         depth_diff = target.R() - source.R()*np.cos(ang_diff)
         z_source = -target_depth - depth_diff
