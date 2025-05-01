@@ -1,6 +1,24 @@
 import logging
 import ROOT
 import os
+import subprocess
+
+# set the git hash
+try:
+    path = os.path.abspath(os.path.dirname(__file__))
+
+    # Walk up the directory tree to find .git
+    while path != "/" and not os.path.isdir(os.path.join(path, ".git")):
+        path = os.path.dirname(path)
+
+    if os.path.isdir(os.path.join(path, ".git")):
+        git_hash = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=path,
+            stderr=subprocess.DEVNULL
+        ).strip().decode("utf-8")
+except Exception:
+    raise ValueError("Could not determine git hash")
 
 # libAraEvent
 try:
