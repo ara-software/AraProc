@@ -776,8 +776,8 @@ class SimWrapper:
         sim_info["pid"] = self.event_ptr.nu_prim_pid
         sim_info["evid"] = self.event_ptr.event_ID
         sim_info["vertex"] = self.get_AraSim_xyz_position(
-            self.event_ptr.Nu_Interaction[likely_interaction].posnu, 
-            self.detector_ptr.stations[0])
+            self.detector_ptr.stations[0],
+            self.event_ptr.Nu_Interaction[likely_interaction].posnu)
         sim_info["direction"] = (
             self.event_ptr.Nu_Interaction[likely_interaction].nnu.Theta(),
             self.event_ptr.Nu_Interaction[likely_interaction].nnu.Phi()
@@ -879,10 +879,10 @@ class SimWrapper:
         ----------
         origin : AraSim::Position
             Location to measure X-Y displacement from `position` and depth from ice surface.
-            Usually a cascade.
+            Usually the station.
         position : AraSim::Position
             Location to measure `origin` X-Y displacement with respect to. 
-            Usually the station.
+            Usually a cascade.
 
         Returns
         -------
@@ -893,11 +893,6 @@ class SimWrapper:
         depth : float
             Depth of `origin` with respect to the surface of the ice defined by `ROOT::IceModel`
         """
-        # Convert XY position coordinates
-        r_from_pole_position = np.sqrt(position.GetX()**2 + position.GetY()**2)
-        lon_position = np.radians(position.Lon())
-        x_position = r_from_pole_position * np.cos(lon_position)
-        y_position = r_from_pole_position * np.sin(lon_position)
 
         # Get XY coordinates of provided origin
         r_from_pole_origin = np.sqrt(origin.GetX()**2 + origin.GetY()**2)
@@ -905,13 +900,19 @@ class SimWrapper:
         x_origin = r_from_pole_origin * np.cos(lon_origin)
         y_origin = r_from_pole_origin * np.sin(lon_origin)
 
-        # Get depth of the position
-        position_depth = self.icemodel_ptr.Surface( position.Lon(), position.Lat()) - position.R()
-        ang_diff = position.Angle(origin)
-        depth_diff = position.R() - origin.R()*np.cos(ang_diff)
-        z_origin = -position_depth - depth_diff
+        # Convert XY position coordinates
+        r_from_pole_position = np.sqrt(position.GetX()**2 + position.GetY()**2)
+        lon_position = np.radians(position.Lon())
+        x_position = r_from_pole_position * np.cos(lon_position)
+        y_position = r_from_pole_position * np.sin(lon_position)
 
-        return x_origin-x_position, y_origin-y_position, z_origin
+        # Get depth of the position
+        origin_depth = self.icemodel_ptr.Surface( origin.Lon(), origin.Lat()) - origin.R()
+        ang_diff = origin.Angle(position)
+        depth_diff = origin.R() - position.R()*np.cos(ang_diff)
+        z_position = -origin_depth - depth_diff
+
+        return x_position-x_origin, y_position-y_origin, z_position
 
 
 class AnalysisDataset:
