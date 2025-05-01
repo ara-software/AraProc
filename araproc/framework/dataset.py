@@ -855,12 +855,16 @@ class SimWrapper:
             s, a = trig_ants[ant_idx]
 
             # Get the SNR of this antenna's waveform
-            waveform = wu.arrays_to_tgraph(
-                np.asarray(self.report_ptr.stations[0].strings[s].antennas[a].time_mimic), 
-                np.asarray(self.report_ptr.stations[0].strings[s].antennas[a].V_mimic),
-            )
-            SNR = get_snr(waveform)
+            t = self.report_ptr.stations[0].strings[s].antennas[a].time_mimic    
+            ROOT.SetOwnership(t, False) # give python full ownership (see README.md for more info)
+            v = self.report_ptr.stations[0].strings[s].antennas[a].V_mimic
+            ROOT.SetOwnership(v, False)
+            waveform = ROOT.TGraph(len(t), t.data(), v.data())
+            ROOT.SetOwnership(waveform, True)
 
+            #waveform = wu.arrays_to_tgraph(np.linspace(0, 1, 100), np.random.normal(size=100))
+            SNR = get_snr(waveform)
+  
             # If this antenna's waveform is greater than the saved SNR, save this 
             #   antennas string index, antenna index, and SNR as the best
             if SNR > best_SNR: 
