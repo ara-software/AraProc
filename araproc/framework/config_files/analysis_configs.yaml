@@ -74,8 +74,8 @@ station2:
       filt9 : { min_freq : 0.254, max_freq : 0.376, min_power_ratio : 0.10 }
       filt10 : { min_freq : 0.376, max_freq : 0.382, min_power_ratio : 0.02 } # Targeting 379 MHz
       filt11 : { min_freq : 0.382, max_freq : 0.400, min_power_ratio : 0.10 } 
-      filt12 : { min_freq : 0.400, max_freq : 0.415, min_power_ratio : 0.02 } # Targeting 404 MHz
-      filt13 : { min_freq : 0.415, max_freq : 1.000, min_power_ratio : 0.10 } 
+      filt12 : { min_freq : 0.400, max_freq : 0.410, min_power_ratio : 0.02 } # Targeting 404 MHz
+      filt13 : { min_freq : 0.410, max_freq : 1.000, min_power_ratio : 0.10 } 
     readout_limits:
       rf_readout_limit: 20
       soft_readout_limit: 8
@@ -93,8 +93,8 @@ station2:
       filt9 : { min_freq : 0.254, max_freq : 0.376, min_power_ratio : 0.10 }
       filt10 : { min_freq : 0.376, max_freq : 0.382, min_power_ratio : 0.02 } # Targeting 379 MHz
       filt11 : { min_freq : 0.382, max_freq : 0.400, min_power_ratio : 0.10 } 
-      filt12 : { min_freq : 0.400, max_freq : 0.415, min_power_ratio : 0.02 } # Targeting 404 MHz
-      filt13 : { min_freq : 0.415, max_freq : 1.000, min_power_ratio : 0.10 } 
+      filt12 : { min_freq : 0.400, max_freq : 0.410, min_power_ratio : 0.02 } # Targeting 404 MHz
+      filt13 : { min_freq : 0.410, max_freq : 1.000, min_power_ratio : 0.10 } 
     readout_limits:
       rf_readout_limit: 20
       soft_readout_limit: 8
@@ -112,8 +112,8 @@ station2:
       filt9 : { min_freq : 0.254, max_freq : 0.376, min_power_ratio : 0.10 }
       filt10 : { min_freq : 0.376, max_freq : 0.382, min_power_ratio : 0.02 } # Targeting 379 MHz
       filt11 : { min_freq : 0.382, max_freq : 0.400, min_power_ratio : 0.10 } 
-      filt12 : { min_freq : 0.400, max_freq : 0.415, min_power_ratio : 0.02 } # Targeting 404 MHz
-      filt13 : { min_freq : 0.415, max_freq : 1.000, min_power_ratio : 0.10 } 
+      filt12 : { min_freq : 0.400, max_freq : 0.410, min_power_ratio : 0.02 } # Targeting 404 MHz
+      filt13 : { min_freq : 0.410, max_freq : 1.000, min_power_ratio : 0.10 } 
     readout_limits:
       rf_readout_limit: 20
       soft_readout_limit: 8
@@ -131,8 +131,8 @@ station2:
       filt9 : { min_freq : 0.254, max_freq : 0.376, min_power_ratio : 0.10 }
       filt10 : { min_freq : 0.376, max_freq : 0.382, min_power_ratio : 0.10 } # Targeting 379 MHz
       filt11 : { min_freq : 0.382, max_freq : 0.400, min_power_ratio : 0.10 } 
-      filt12 : { min_freq : 0.400, max_freq : 0.415, min_power_ratio : 0.02 } # Targeting 404 MHz
-      filt13 : { min_freq : 0.415, max_freq : 1.000, min_power_ratio : 0.10 } 
+      filt12 : { min_freq : 0.400, max_freq : 0.410, min_power_ratio : 0.02 } # Targeting 404 MHz
+      filt13 : { min_freq : 0.410, max_freq : 1.000, min_power_ratio : 0.10 } 
     readout_limits:
       rf_readout_limit: 26
       soft_readout_limit: 8
@@ -150,8 +150,8 @@ station2:
       filt9 : { min_freq : 0.254, max_freq : 0.376, min_power_ratio : 0.10 }
       filt10 : { min_freq : 0.376, max_freq : 0.382, min_power_ratio : 0.02 } # Targeting 379 MHz
       filt11 : { min_freq : 0.382, max_freq : 0.400, min_power_ratio : 0.10 } 
-      filt12 : { min_freq : 0.400, max_freq : 0.415, min_power_ratio : 0.02 } # Targeting 404 MHz
-      filt13 : { min_freq : 0.415, max_freq : 0.495, min_power_ratio : 0.10 } 
+      filt12 : { min_freq : 0.400, max_freq : 0.410, min_power_ratio : 0.02 } # Targeting 404 MHz
+      filt13 : { min_freq : 0.410, max_freq : 0.495, min_power_ratio : 0.10 } 
       filt14 : { min_freq : 0.495, max_freq : 1.000, min_power_ratio : 0.10 } 
     readout_limits:
       rf_readout_limit: 26
@@ -170,8 +170,8 @@ station2:
       filt9 : { min_freq : 0.254, max_freq : 0.376, min_power_ratio : 0.10 }
       filt10 : { min_freq : 0.376, max_freq : 0.382, min_power_ratio : 0.02 } # Targeting 379 MHz
       filt11 : { min_freq : 0.382, max_freq : 0.400, min_power_ratio : 0.10 } 
-      filt12 : { min_freq : 0.400, max_freq : 0.415, min_power_ratio : 0.02 } # Targeting 404 MHz
-      filt13 : { min_freq : 0.415, max_freq : 1.000, min_power_ratio : 0.10 } 
+      filt12 : { min_freq : 0.400, max_freq : 0.410, min_power_ratio : 0.02 } # Targeting 404 MHz
+      filt13 : { min_freq : 0.410, max_freq : 1.000, min_power_ratio : 0.10 } 
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 12
@@ -189,8 +189,8 @@ station2:
       filt9 : { min_freq : 0.254, max_freq : 0.376, min_power_ratio : 0.10 }
       filt10 : { min_freq : 0.376, max_freq : 0.382, min_power_ratio : 0.02 } # Targeting 379 MHz
       filt11 : { min_freq : 0.382, max_freq : 0.400, min_power_ratio : 0.10 } 
-      filt12 : { min_freq : 0.400, max_freq : 0.415, min_power_ratio : 0.02 } # Targeting 404 MHz
-      filt13 : { min_freq : 0.415, max_freq : 0.440, min_power_ratio : 0.10 } 
+      filt12 : { min_freq : 0.400, max_freq : 0.410, min_power_ratio : 0.02 } # Targeting 404 MHz
+      filt13 : { min_freq : 0.410, max_freq : 0.440, min_power_ratio : 0.10 } 
       filt14 : { min_freq : 0.440, max_freq : 0.470, min_power_ratio : 0.02 }
       filt15 : { min_freq : 0.470, max_freq : 1.000, min_power_ratio : 0.10 }
     readout_limits:
