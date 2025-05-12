@@ -44,7 +44,7 @@ def apply_filters_one_channel(cw_filters, active_cw_filters, waveform_in):
     
     return latest_waveform
 
-def apply_filters(cw_filters, waveform_bundle, cw_ids = None, min_cw_id_freq = 0.0):
+def apply_filters(cw_filters, waveform_bundle, cw_ids = None, min_cw_id_freq = 0.0, max_cw_id_freq = 1.0):
 
     """
     Apply CW filters to a bundle of waveforms.
@@ -64,6 +64,10 @@ def apply_filters(cw_filters, waveform_bundle, cw_ids = None, min_cw_id_freq = 0
         A tuple of numpy arrays containing cw id info.
         If None, all set CW filters allowed to filter. Otherwise, only those 
         covering frequencies in the cw id info will be allowed to filter.
+    min_cw_id_freq : float
+        minimum frequency for CW ID (in GHz), all filters below this frequency are always activated
+    max_cw_id_freq : float
+        maximum frequency for CW ID (in GHz), all filters above this frequency are always activated
 
     Returns
     -------
@@ -77,8 +81,8 @@ def apply_filters(cw_filters, waveform_bundle, cw_ids = None, min_cw_id_freq = 0
     check_cw_ids(cw_ids)
 
     filtered_waveforms = {}
-    active_cw_filters_v = get_active_filters(cw_filters, cw_ids, 0, min_cw_id_freq)
-    active_cw_filters_h = get_active_filters(cw_filters, cw_ids, 8, min_cw_id_freq)
+    active_cw_filters_v = get_active_filters(cw_filters, cw_ids, 0, min_cw_id_freq, max_cw_id_freq)
+    active_cw_filters_h = get_active_filters(cw_filters, cw_ids, 8, min_cw_id_freq, max_cw_id_freq)
     for ch_id, wave in waveform_bundle.items():
 
         if ch_id in const.vpol_channel_ids:
@@ -90,7 +94,7 @@ def apply_filters(cw_filters, waveform_bundle, cw_ids = None, min_cw_id_freq = 0
 
     return filtered_waveforms
 
-def get_active_filters(cw_filters, cw_ids, chan, min_cw_id_freq):
+def get_active_filters(cw_filters, cw_ids, chan, min_cw_id_freq, max_cw_id_freq):
     """
     Apply CW filters to a bundle of waveforms.
 
@@ -123,10 +127,11 @@ def get_active_filters(cw_filters, cw_ids, chan, min_cw_id_freq):
     
     # turn on all filters below the cw id freq threshold
     for filter_i, filter in cw_filters.items():
+        fmin = filter["min_freq"]
         fmax = filter["max_freq"]
 
-        # if filter covers region below cw id threshold, activate it 
-        if fmax < min_cw_id_freq:
+        # if filter covers region outside cw id band, activate it 
+        if fmax < min_cw_id_freq or fmin > max_cw_id_freq:
             active_filters[filter_i] = True
             
     # grab the relevant bad frequencies for this polarization
