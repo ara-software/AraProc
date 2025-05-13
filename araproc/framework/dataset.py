@@ -99,8 +99,10 @@ class DataWrapper:
         the sound the the mousetrap makes 
     cw_id_reader : ROOT TTreeReader
         the ROOT TTreeReader of the cw id tree
-    min_cw_id_freq : float
+    always_on_min_cw_id_freq : float
         minimum frequency for CW ID (in GHz), all filters below this frequency are always activated
+    always_on_max_cw_id_freq : float
+        maximum frequency for CW ID (in GHz), all filters above this frequency are always activated
     run_number: int
         ARA run number for this dataset
         This will be inferred from the data itself
@@ -133,14 +135,16 @@ class DataWrapper:
                  station_id : int = None,
                  do_not_calibrate : bool = False,
                  path_to_cw_ids : str = None,
-                 min_cw_id_freq : float = 0.120,
+                 always_on_min_cw_id_freq : float = 0.120,
+                 always_on_max_cw_id_freq : float = 0.350,
                  ):
         
         self.path_to_data_file = None
         self.path_to_pedestal_file = None
         self.do_not_calibrate = do_not_calibrate
         self.path_to_cw_ids = None
-        self.min_cw_id_freq = 0.120
+        self.always_on_min_cw_id_freq = always_on_min_cw_id_freq
+        self.always_on_max_cw_id_freq = always_on_max_cw_id_freq
         self.root_tfile = None
         self.event_tree = None
         self.cw_id_tfile = None
@@ -947,8 +951,10 @@ class AnalysisDataset:
         Most users will leave this False.
     path_to_cw_ids : str
         the full path to the file containing identified CW frequencies for this data file
-    min_cw_id_freq : float
+    always_on_min_cw_id_freq : float
         minimum frequency for CW ID (in GHz), all filters below this frequency are always activated
+    always_on_max_cw_id_freq : float
+        maximum frequency for CW ID (in GHz), all filters above this frequency are always activated
     run_number: int
         ARA run number for this dataset
         This will be inferred from the data itself
@@ -988,13 +994,15 @@ class AnalysisDataset:
                  is_simulation : bool = False,
                  do_not_calibrate : bool = False,
                  path_to_cw_ids : str = None,
-                 min_cw_id_freq : float = 0.120,
+                 always_on_min_cw_id_freq : float = 0.120,
+                 always_on_max_cw_id_freq : float = 0.350,
                  ):
     
         self.is_simulation = is_simulation
         self.do_not_calibrate = do_not_calibrate
         self.path_to_cw_ids = path_to_cw_ids
-        self.min_cw_id_freq = min_cw_id_freq
+        self.always_on_min_cw_id_freq = always_on_min_cw_id_freq
+        self.always_on_max_cw_id_freq = always_on_max_cw_id_freq
 
         if self.is_simulation and self.do_not_calibrate:
             raise Exception(f"Simulation (is_simulation = {self.is_simulation}) and uncalibrated data (do_not_calibrate = {self.do_not_calibrate}) are incompatible settings")
@@ -1034,7 +1042,8 @@ class AnalysisDataset:
                                                  station_id=station_id,
                                                  do_not_calibrate = self.do_not_calibrate,
                                                  path_to_cw_ids = self.path_to_cw_ids,
-                                                 min_cw_id_freq = self.min_cw_id_freq,
+                                                 always_on_min_cw_id_freq = self.always_on_min_cw_id_freq,
+                                                 always_on_max_cw_id_freq = self.always_on_max_cw_id_freq,
                                              )
         else:
             self.dataset_wrapper = SimWrapper(path_to_data_file,
@@ -1287,7 +1296,7 @@ class AnalysisDataset:
             
             event_number = useful_event.eventNumber
             cw_ids = self.get_cw_ids(event_number)
-            filtered_waves = cwf.apply_filters(self.__cw_filters, filtered_waves, cw_ids, self.min_cw_id_freq)
+            filtered_waves = cwf.apply_filters(self.__cw_filters, filtered_waves, cw_ids, self.always_on_min_cw_id_freq, self.always_on_max_cw_id_freq)
  
 
         # and finally, apply some bandpass cleanup filters
