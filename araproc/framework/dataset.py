@@ -136,7 +136,7 @@ class DataWrapper:
                  do_not_calibrate : bool = False,
                  path_to_cw_ids : str = None,
                  min_cw_id_freq : float = 0.120,
-                 max_cw_id_freq : float = 0.500,
+                 max_cw_id_freq : float = 0.350,
                  ):
         
         self.path_to_data_file = None
@@ -995,7 +995,7 @@ class AnalysisDataset:
                  do_not_calibrate : bool = False,
                  path_to_cw_ids : str = None,
                  min_cw_id_freq : float = 0.120,
-                 max_cw_id_freq : float = 0.500,
+                 max_cw_id_freq : float = 0.350,
                  ):
     
         self.is_simulation = is_simulation
