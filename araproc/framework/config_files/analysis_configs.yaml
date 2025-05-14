@@ -454,7 +454,7 @@ station4:
       filt7 : { min_freq : 0.376, max_freq : 0.400, min_power_ratio : 0.01 } # Major few peaks seen before 400 MHz
       filt8 : { min_freq : 0.400, max_freq : 0.408, min_power_ratio : 0.01 } # Major Radiosonde
       filt9 : { min_freq : 0.408, max_freq : 0.420, min_power_ratio : 0.02 }
-      filt10 : { min_freq : 0.420, max_freq : 0.428, min_power_ratio : 0.10 } # Major unknown 425ish MHz signal
+      filt10 : { min_freq : 0.420, max_freq : 0.428, min_power_ratio : 0.01 } # Major unknown 425ish MHz signal
       filt11 : { min_freq : 0.428, max_freq : 0.449, min_power_ratio : 0.02 }
       filt12 : { min_freq : 0.449, max_freq : 0.460, min_power_ratio : 0.01 } # Major unknown
       filt13 : { min_freq : 0.460, max_freq : 0.650, min_power_ratio : 0.01 }
