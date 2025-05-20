@@ -132,7 +132,11 @@ class AraGeom:
         if elevation is not None:
             return np.asarray([easting, northing, elevation]) - self.SUR_TO_GLOB
         return np.asarray([easting, northing]) - self.SUR_TO_GLOB[:2]
-
+    
+    def get_array_from_lat_long(self,latitude,longitude):
+        easting = self.geomTool.getEastingFromLatLong(latitude,longitude)
+        northing = self.geomTool.getNorthingFromLatLong(latitude,longitude)
+        return np.array([northing, easting,0])
 
     def get_global_to_station_centric(self, array_coords):
         """
@@ -180,6 +184,8 @@ class AraGeom:
             for i in range(3, 4):
                 corner = self.geomTool.getWindTurbine(i)
                 landmarks.append([corner[0], corner[1], corner[2]])
+        elif landmark_type == "SPRESSO":
+            landmarks.append(self.get_array_from_lat_long(-89.93120, 144.51249))
         elif landmark_type == "SPT":
             corner = self.geomTool.getSouthPoleTelescope()
             landmarks.append([corner[0], corner[1], corner[2]])
@@ -292,9 +298,9 @@ class AraGeom:
         """
 
         if list_of_landmarks is None:
-            list_of_landmarks = ["IC22S", "ICL"]
+            list_of_landmarks = ["IC22S", "ICL", "SPRESSO"]
         elif list_of_landmarks == ['all']:
-             list_of_landmarks = ['ICL','IC22S','SPT','IC1S','WT']   
+             list_of_landmarks = ['ICL','IC22S','SPT','IC1S','WT','SPRESSO']   
         if list_of_cal_pulser_indices is None:
             list_of_cal_pulser_indices = [1,3]
         elif list_of_cal_pulser_indices == ['all']:
@@ -318,7 +324,7 @@ class AraGeom:
                 collect[pulser] = [r, t, p]
                 del r,t,p 
 
-        for known_loc in ["ICL", "WT", "SPT"]:
+        for known_loc in ["ICL", "WT", "SPRESSO", "SPT"]:
             if known_loc in list_of_landmarks:
                 this_loc = self.get_southpole_landmarks(known_loc)
                 this_loc = np.array(this_loc)[0]
