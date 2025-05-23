@@ -406,15 +406,17 @@ station4:
       filt4 : { min_freq : 0.156, max_freq : 0.197, min_power_ratio : 0.01 }
       filt5 : { min_freq : 0.197, max_freq : 0.226, min_power_ratio : 0.01 }
       filt6 : { min_freq : 0.226, max_freq : 0.350, min_power_ratio : 0.02 }
-      filt7 : { min_freq : 0.350, max_freq : 0.400, min_power_ratio : 0.02 } # Major few peaks seen before 400 MHz
-      filt8 : { min_freq : 0.400, max_freq : 0.408, min_power_ratio : 0.01 } # Major Radiosonde
-      filt9 : { min_freq : 0.408, max_freq : 0.420, min_power_ratio : 0.02 }
-      filt10 : { min_freq : 0.420, max_freq : 0.428, min_power_ratio : 0.001 } # Major unknown 425ish MHz signal
-      filt11 : { min_freq : 0.428, max_freq : 0.449, min_power_ratio : 0.01 }
-      filt12 : { min_freq : 0.449, max_freq : 0.460, min_power_ratio : 0.01 } # Major unknown
-      filt13 : { min_freq : 0.460, max_freq : 0.650, min_power_ratio : 0.01 }
-      filt14 : { min_freq : 0.650, max_freq : 0.660, min_power_ratio : 0.006 } # Major A4's private property
-      filt15 : { min_freq : 0.660, max_freq : 1.000, min_power_ratio : 0.02 }
+      filt7 : { min_freq : 0.350, max_freq : 0.375, min_power_ratio : 0.02 } # Major few peaks seen before 400 MHz
+      filt8 : { min_freq : 0.375, max_freq : 0.385, min_power_ratio : 0.001 }
+      filt9 : { min_freq : 0.385, max_freq : 0.400, min_power_ratio : 0.02 }
+      filt10 : { min_freq : 0.400, max_freq : 0.408, min_power_ratio : 0.01 } # Major Radiosonde
+      filt11 : { min_freq : 0.408, max_freq : 0.420, min_power_ratio : 0.02 }
+      filt12 : { min_freq : 0.420, max_freq : 0.428, min_power_ratio : 0.001 } # Major unknown 425ish MHz signal
+      filt13 : { min_freq : 0.428, max_freq : 0.449, min_power_ratio : 0.01 }
+      filt14 : { min_freq : 0.449, max_freq : 0.460, min_power_ratio : 0.01 } # Major unknown
+      filt15 : { min_freq : 0.460, max_freq : 0.650, min_power_ratio : 0.01 }
+      filt16 : { min_freq : 0.650, max_freq : 0.660, min_power_ratio : 0.006 } # Major A4's private property
+      filt17 : { min_freq : 0.660, max_freq : 1.000, min_power_ratio : 0.02 }
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 10
@@ -427,15 +429,17 @@ station4:
       filt4 : { min_freq : 0.156, max_freq : 0.197, min_power_ratio : 0.01 }
       filt5 : { min_freq : 0.197, max_freq : 0.226, min_power_ratio : 0.01 }
       filt6 : { min_freq : 0.226, max_freq : 0.350, min_power_ratio : 0.02 }
-      filt7 : { min_freq : 0.350, max_freq : 0.400, min_power_ratio : 0.02 } # Major few peaks seen before 400 MHz
-      filt8 : { min_freq : 0.400, max_freq : 0.408, min_power_ratio : 0.01 } # Major Radiosonde
-      filt9 : { min_freq : 0.408, max_freq : 0.420, min_power_ratio : 0.02 }
-      filt10 : { min_freq : 0.420, max_freq : 0.428, min_power_ratio : 0.001 } # Major unknown 425ish MHz signal
-      filt11 : { min_freq : 0.428, max_freq : 0.449, min_power_ratio : 0.01 }
-      filt12 : { min_freq : 0.449, max_freq : 0.460, min_power_ratio : 0.01 } # Major unknown
-      filt13 : { min_freq : 0.460, max_freq : 0.650, min_power_ratio : 0.01 }
-      filt14 : { min_freq : 0.650, max_freq : 0.660, min_power_ratio : 0.006 } # Major A4's private property
-      filt15 : { min_freq : 0.660, max_freq : 1.000, min_power_ratio : 0.02 }
+      filt7 : { min_freq : 0.350, max_freq : 0.375, min_power_ratio : 0.02 } # Major few peaks seen before 400 MHz
+      filt8 : { min_freq : 0.375, max_freq : 0.385, min_power_ratio : 0.001 }
+      filt9 : { min_freq : 0.385, max_freq : 0.400, min_power_ratio : 0.02 }
+      filt10 : { min_freq : 0.400, max_freq : 0.408, min_power_ratio : 0.01 } # Major Radiosonde
+      filt11 : { min_freq : 0.408, max_freq : 0.420, min_power_ratio : 0.02 }
+      filt12 : { min_freq : 0.420, max_freq : 0.428, min_power_ratio : 0.001 } # Major unknown 425ish MHz signal
+      filt13 : { min_freq : 0.428, max_freq : 0.449, min_power_ratio : 0.01 }
+      filt14 : { min_freq : 0.449, max_freq : 0.460, min_power_ratio : 0.01 } # Major unknown
+      filt15 : { min_freq : 0.460, max_freq : 0.650, min_power_ratio : 0.01 }
+      filt16 : { min_freq : 0.650, max_freq : 0.660, min_power_ratio : 0.006 } # Major A4's private property
+      filt17 : { min_freq : 0.660, max_freq : 1.000, min_power_ratio : 0.02 }
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 10
@@ -448,15 +452,17 @@ station4:
       filt4 : { min_freq : 0.156, max_freq : 0.197, min_power_ratio : 0.01 }
       filt5 : { min_freq : 0.197, max_freq : 0.226, min_power_ratio : 0.01 }
       filt6 : { min_freq : 0.226, max_freq : 0.350, min_power_ratio : 0.02 }
-      filt7 : { min_freq : 0.350, max_freq : 0.400, min_power_ratio : 0.02 } # Major few peaks seen before 400 MHz
-      filt8 : { min_freq : 0.400, max_freq : 0.408, min_power_ratio : 0.01 } # Major Radiosonde
-      filt9 : { min_freq : 0.408, max_freq : 0.420, min_power_ratio : 0.02 }
-      filt10 : { min_freq : 0.420, max_freq : 0.428, min_power_ratio : 0.001 } # Major unknown 425ish MHz signal
-      filt11 : { min_freq : 0.428, max_freq : 0.449, min_power_ratio : 0.01 }
-      filt12 : { min_freq : 0.449, max_freq : 0.460, min_power_ratio : 0.01 } # Major unknown
-      filt13 : { min_freq : 0.460, max_freq : 0.650, min_power_ratio : 0.01 }
-      filt14 : { min_freq : 0.650, max_freq : 0.660, min_power_ratio : 0.006 } # Major A4's private property
-      filt15 : { min_freq : 0.660, max_freq : 1.000, min_power_ratio : 0.02 }
+      filt7 : { min_freq : 0.350, max_freq : 0.375, min_power_ratio : 0.02 } # Major few peaks seen before 400 MHz
+      filt8 : { min_freq : 0.375, max_freq : 0.385, min_power_ratio : 0.001 }
+      filt9 : { min_freq : 0.385, max_freq : 0.400, min_power_ratio : 0.02 }
+      filt10 : { min_freq : 0.400, max_freq : 0.408, min_power_ratio : 0.01 } # Major Radiosonde
+      filt11 : { min_freq : 0.408, max_freq : 0.420, min_power_ratio : 0.02 }
+      filt12 : { min_freq : 0.420, max_freq : 0.428, min_power_ratio : 0.001 } # Major unknown 425ish MHz signal
+      filt13 : { min_freq : 0.428, max_freq : 0.449, min_power_ratio : 0.01 }
+      filt14 : { min_freq : 0.449, max_freq : 0.460, min_power_ratio : 0.01 } # Major unknown
+      filt15 : { min_freq : 0.460, max_freq : 0.650, min_power_ratio : 0.01 }
+      filt16 : { min_freq : 0.650, max_freq : 0.660, min_power_ratio : 0.006 } # Major A4's private property
+      filt17 : { min_freq : 0.660, max_freq : 1.000, min_power_ratio : 0.02 }
     readout_limits:
       rf_readout_limit: 32
       soft_readout_limit: 10
@@ -469,15 +475,17 @@ station4:
       filt4 : { min_freq : 0.156, max_freq : 0.197, min_power_ratio : 0.01 }
       filt5 : { min_freq : 0.197, max_freq : 0.226, min_power_ratio : 0.01 }
       filt6 : { min_freq : 0.226, max_freq : 0.350, min_power_ratio : 0.02 }
-      filt7 : { min_freq : 0.350, max_freq : 0.400, min_power_ratio : 0.02 } # Major few peaks seen before 400 MHz
-      filt8 : { min_freq : 0.400, max_freq : 0.408, min_power_ratio : 0.01 } # Major Radiosonde
-      filt9 : { min_freq : 0.408, max_freq : 0.420, min_power_ratio : 0.02 }
-      filt10 : { min_freq : 0.420, max_freq : 0.428, min_power_ratio : 0.001 } # Major unknown 425ish MHz signal
-      filt11 : { min_freq : 0.428, max_freq : 0.449, min_power_ratio : 0.01 }
-      filt12 : { min_freq : 0.449, max_freq : 0.460, min_power_ratio : 0.01 } # Major unknown
-      filt13 : { min_freq : 0.460, max_freq : 0.650, min_power_ratio : 0.01 }
-      filt14 : { min_freq : 0.650, max_freq : 0.660, min_power_ratio : 0.006 } # Major A4's private property
-      filt15 : { min_freq : 0.660, max_freq : 1.000, min_power_ratio : 0.02 }
+      filt7 : { min_freq : 0.350, max_freq : 0.375, min_power_ratio : 0.02 } # Major few peaks seen before 400 MHz
+      filt8 : { min_freq : 0.375, max_freq : 0.385, min_power_ratio : 0.001 }
+      filt9 : { min_freq : 0.385, max_freq : 0.400, min_power_ratio : 0.02 }
+      filt10 : { min_freq : 0.400, max_freq : 0.408, min_power_ratio : 0.01 } # Major Radiosonde
+      filt11 : { min_freq : 0.408, max_freq : 0.420, min_power_ratio : 0.02 }
+      filt12 : { min_freq : 0.420, max_freq : 0.428, min_power_ratio : 0.001 } # Major unknown 425ish MHz signal
+      filt13 : { min_freq : 0.428, max_freq : 0.449, min_power_ratio : 0.01 }
+      filt14 : { min_freq : 0.449, max_freq : 0.460, min_power_ratio : 0.01 } # Major unknown
+      filt15 : { min_freq : 0.460, max_freq : 0.650, min_power_ratio : 0.01 }
+      filt16 : { min_freq : 0.650, max_freq : 0.660, min_power_ratio : 0.006 } # Major A4's private property
+      filt17 : { min_freq : 0.660, max_freq : 1.000, min_power_ratio : 0.02 }
     readout_limits:
       rf_readout_limit: 32
       soft_readout_limit: 10
