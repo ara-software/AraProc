@@ -532,3 +532,4 @@ station5:
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 10
+
