@@ -489,7 +489,7 @@ station5:
       filt20 : { min_freq : 0.510, max_freq : 0.570, min_power_ratio : 0.10 }
       filt21 : { min_freq : 0.570, max_freq : 0.590, min_power_ratio : 0.02 }
       filt22 : { min_freq : 0.590, max_freq : 1.000, min_power_ratio : 0.10 }
-    radout_limits:
+    readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 10
   config2:
