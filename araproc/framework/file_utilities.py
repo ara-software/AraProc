@@ -45,14 +45,17 @@ def guess_location_of_hk_files(station_id, run_number):
     You need to be at the WIPAC datawarehosue for this to work.
     """
 
-    inpath = f"/data/exp/ARA/*/L1/100pct/ARA0{station_id}/*/run{run_number:06d}/"
+    if station_id==100:
+        local_station_id=1
+
+    inpath = f"/data/exp/ARA/*/L1/100pct/ARA0{local_station_id}/*/run{run_number:06d}/"
 
     # first the sensor hk file
     sensor_hk_file = f"sensorHk{run_number:06d}.root"
     sensor_hk_full_path = inpath + sensor_hk_file
     files = glob.glob(sensor_hk_full_path)
     if not files:
-        raise Exception(f"Requested run file not found: {fullpath}. Abort.")
+        raise Exception(f"Requested run file not found: {sensor_hk_full_path}. Abort.")
     if len(files) > 1:
         raise Exception(f"Requested run found in more than one directory!\n{files}")
     
