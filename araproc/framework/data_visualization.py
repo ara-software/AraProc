@@ -131,6 +131,8 @@ def plot_waveform_bundle(
             ax2.set_ylabel("lg(Fractional Power)")
       else:
           axd[ch].set_ylim(ymin, ymax)
+          axd[ch].set_ylim(-1000, 1000)
+          axd[ch].set_xlim(-200,200)
 
     # save figure
     fig.savefig(output_file_path)
