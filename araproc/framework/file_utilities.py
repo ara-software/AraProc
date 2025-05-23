@@ -47,6 +47,8 @@ def guess_location_of_hk_files(station_id, run_number):
 
     if station_id==100:
         local_station_id=1
+    else:
+        local_station_id = station_id
 
     inpath = f"/data/exp/ARA/*/L1/100pct/ARA0{local_station_id}/*/run{run_number:06d}/"
 
