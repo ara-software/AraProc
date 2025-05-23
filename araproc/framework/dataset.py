@@ -662,7 +662,7 @@ class SimWrapper:
         # we temporariliy redirect that ouput to /dev/null.
         # Sorry to be so convoluted...
         ROOT.gSystem.RedirectOutput("/dev/null");
-        self.sim_settings_tree.Scan("DETECTOR_STATION_LIVETIME_CONFIG")
+        self.sim_settings_tree.Scan("DETECTOR_STATION_LIVETIME_CONFIG", "", "", 1) # only scan first entry to prevent full file from being loaded
         self.config = int(self.settings_ptr.DETECTOR_STATION_LIVETIME_CONFIG)
         ROOT.gROOT.ProcessLine("gSystem->RedirectOutput(0);")
 
