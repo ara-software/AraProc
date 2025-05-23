@@ -1271,9 +1271,21 @@ class AnalysisDataset:
             wavepacket["waveforms"] = interp_waves
             return wavepacket
 
+        # and if they want filtered waves
+        if which_traces != "bandpassed":
+            event_number = useful_event.eventNumber
+            cw_ids = self.get_cw_ids(event_number)
+            filtered_waves = cwf.apply_filters(self.__cw_filters, interp_waves, cw_ids, self.always_on_min_cw_id_freq, self.always_on_max_cw_id_freq)
+        else:
+            filtered_waves = interp_waves
+
+        if which_traces == "cw_filtered":
+            wavepacket["waveforms"] = filtered_waves
+            return wavepacket
+
         # and if they want a dedispersed wave, do that too
         dedispersed_waves = {}
-        for chan_key, wave in interp_waves.items():
+        for chan_key, wave in filtered_waves.items():
             try:
                 times, volts = wu.tgraph_to_arrays(wave)
                 times_dd, volts_dd = dd.dedisperse_wave(times, 
@@ -1290,18 +1302,11 @@ class AnalysisDataset:
             wavepacket["waveforms"] = dedispersed_waves
             return wavepacket
     
-        # and if they want filtered waves
-        filtered_waves = dedispersed_waves
-        if which_traces != "bandpassed": # if we're not only bandpassing, apply CW filters
-            
-            event_number = useful_event.eventNumber
-            cw_ids = self.get_cw_ids(event_number)
-            filtered_waves = cwf.apply_filters(self.__cw_filters, filtered_waves, cw_ids, self.always_on_min_cw_id_freq, self.always_on_max_cw_id_freq)
- 
 
         # and finally, apply some bandpass cleanup filters
-        if which_traces != "cw_filtered": # if we're not only CW filtering, apply bandpass
-            for chan_key in list(filtered_waves.keys()):
+        if which_traces != "cw_filtered":
+            bandpassed_waves = {}
+            for chan_key in list(dedispersed_waves.keys()):
 
                 """
                 This takes some explaining, why I'm not just calling
@@ -1321,7 +1326,7 @@ class AnalysisDataset:
                 Beware these python <-> c++ interfaces, especially around pointers...
                 """
 
-                wave = filtered_waves[chan_key]
+                wave = dedispersed_waves[chan_key]
                 n = wave.GetN()
                 x = wave.GetX()
                 y = wave.GetY()
@@ -1334,11 +1339,12 @@ class AnalysisDataset:
                 ROOT.SetOwnership(filt_graph, True)
 
                 del wave
-                del filtered_waves[chan_key]
-                filtered_waves[chan_key] = filt_graph
+                bandpassed_waves[chan_key] = filt_graph
+        else:
+            bandpassed_waves = dedispersed_waves
 
-        if which_traces in ["cw_filtered", "bandpassed", "filtered"]:
-            wavepacket["waveforms"] = filtered_waves
+        if which_traces in ["bandpassed", "filtered"]:
+            wavepacket["waveforms"] = bandpassed_waves
             return wavepacket
 
         # crop waveforms
