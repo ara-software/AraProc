@@ -67,84 +67,84 @@ station2:
   config1:
     excluded_channels : [15] # always exclude channel 15
     filters:
-      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } ## Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
+      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } # Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
       filt2 : { min_freq : 0.248, max_freq : 0.254, min_power_ratio : 0.005 } # Targeting 251 MHz
       filt3 : { min_freq : 0.376, max_freq : 0.410, min_power_ratio : 0.02  } # Targeting 379 MHz and 404 MHz
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
-      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001  } # Targeting 502 MHz and 528 MHz
-      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10 } 
+      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
+      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
     readout_limits:
       rf_readout_limit: 20
       soft_readout_limit: 8
   config2:
     excluded_channels : [15] # always exclude channel 15
     filters:
-      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } ## Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
+      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } # Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
       filt2 : { min_freq : 0.248, max_freq : 0.254, min_power_ratio : 0.005 } # Targeting 251 MHz
       filt3 : { min_freq : 0.376, max_freq : 0.410, min_power_ratio : 0.02  } # Targeting 379 MHz and 404 MHz
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
-      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001  } # Targeting 502 MHz and 528 MHz
-      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10 } 
+      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
+      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
     readout_limits:
       rf_readout_limit: 20
       soft_readout_limit: 8
   config3:
     excluded_channels : [15] # always exclude channel 15
     filters:
-      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } ## Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
+      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } # Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
       filt2 : { min_freq : 0.248, max_freq : 0.254, min_power_ratio : 0.005 } # Targeting 251 MHz
       filt3 : { min_freq : 0.376, max_freq : 0.410, min_power_ratio : 0.02  } # Targeting 379 MHz and 404 MHz
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
-      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001  } # Targeting 502 MHz and 528 MHz
-      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10 } 
+      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
+      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
     readout_limits:
       rf_readout_limit: 20
       soft_readout_limit: 8
   config4:
     excluded_channels : [15] # always exclude channel 15
     filters:
-      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } ## Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
+      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } # Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
       filt2 : { min_freq : 0.248, max_freq : 0.254, min_power_ratio : 0.005 } # Targeting 251 MHz
       filt3 : { min_freq : 0.376, max_freq : 0.410, min_power_ratio : 0.02  } # Targeting 379 MHz and 404 MHz
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
-      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001  } # Targeting 502 MHz and 528 MHz
-      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10 } 
+      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
+      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
     readout_limits:
       rf_readout_limit: 26
       soft_readout_limit: 8
   config5:
     excluded_channels : [15] # always exclude channel 15
     filters:
-      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } ## Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
+      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } # Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
       filt2 : { min_freq : 0.248, max_freq : 0.254, min_power_ratio : 0.005 } # Targeting 251 MHz
       filt3 : { min_freq : 0.376, max_freq : 0.410, min_power_ratio : 0.02  } # Targeting 379 MHz and 404 MHz
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
-      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001  } # Targeting 502 MHz and 528 MHz
-      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10 } 
+      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
+      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
     readout_limits:
       rf_readout_limit: 26
       soft_readout_limit: 8
   config6:
     excluded_channels : [15] # always exclude channel 15
     filters:
-      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } ## Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
+      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } # Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
       filt2 : { min_freq : 0.248, max_freq : 0.254, min_power_ratio : 0.005 } # Targeting 251 MHz
       filt3 : { min_freq : 0.376, max_freq : 0.410, min_power_ratio : 0.02  } # Targeting 379 MHz and 404 MHz
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
-      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001  } # Targeting 502 MHz and 528 MHz
-      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10 } 
+      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
+      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 12
   config7:
     excluded_channels : [15] # always exclude channel 15
     filters:
-      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } ## Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
+      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } # Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
       filt2 : { min_freq : 0.248, max_freq : 0.254, min_power_ratio : 0.005 } # Targeting 251 MHz
       filt3 : { min_freq : 0.376, max_freq : 0.410, min_power_ratio : 0.02  } # Targeting 379 MHz and 404 MHz
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
-      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001  } # Targeting 502 MHz and 528 MHz
-      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10 } 
+      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
+      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 12
