@@ -53,7 +53,7 @@ def dedisperse_wave(
         times, # in nanoseconds,
         volts, # in volts,
         phase_spline, # the phase spline
-        pre_pad_ns=40.0,  # amount of zero padding before dedispersion (ns)
+        pre_pad_ns=40.0,  # amount of zero prepadding before dedispersion (ns)
         final_crop_ns=10.0  # amount of padding to keep after dedispersion (ns)
         ):
     
@@ -97,7 +97,7 @@ def dedisperse_wave(
     dt = times[1] - times[0]  # assuming uniform sampling
     
     # Calculate number of padding samples needed
-    n_pad_samples = int(pre_pad_ns / dt)
+    n_pad_samples = int(np.round(pre_pad_ns / dt))
     
     # Create padded time array: from (t_i - pre_pad_ns) to t_f
     t_start_padded = times[0] - pre_pad_ns
@@ -105,7 +105,7 @@ def dedisperse_wave(
     
     # Create padded voltage array with zeros at the beginning
     padded_volts = np.zeros(len(padded_times))
-    padded_volts[n_pad_samples:n_pad_samples+len(volts)] = volts
+    padded_volts[n_pad_samples:] = volts
     
     # Get the frequency domain representation of the padded trace
     freqs, spectrum = wu.time2freq(padded_times, padded_volts)
@@ -123,10 +123,10 @@ def dedisperse_wave(
     dedispersed_times, dedispersed_volts = wu.freq2time(padded_times, spectrum)
     
     # Crop the result: keep from (t_i - final_crop_ns) to t_f
-    t_start_final = times[0] - final_crop_ns
+    t_start_after_pad_and_crop = times[0] - final_crop_ns
     
     # Find the indices for cropping
-    crop_start_idx = np.argmin(np.abs(dedispersed_times - t_start_final))
+    crop_start_idx = np.argmin(np.abs(dedispersed_times - t_start_after_pad_and_crop))
     original_end_idx = np.argmin(np.abs(dedispersed_times - times[-1]))
     
     # Crop to final desired range
