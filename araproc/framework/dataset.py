@@ -1186,18 +1186,18 @@ class AnalysisDataset:
                     These are calibrated waves with interpolation applied.
                     The interpoaltion timestep is given by "self.interp_tstep"
                     (the time step is set when the dataset object was created)
+                "cw_filtered" :
+                    These are NOT dedispersed waves and are only 
+                    filtered of CW via the FFTtools SineSubtract filter.
                 "dedispersed" : 
-                    These are interpolated waves with dedispersion applied.
+                    These are interpolated & CW filtered waves with dedispersion applied.
                     For the dedispersion, we assume the phase response
                     of the ARA system as found in AraSim, specifically
                     the "ARA_Electronics_TotalGain_TwoFilters.txt" file.
                     The same response is assumed for all channels.
-                "cw_filtered" :
-                    These are dedispersed waves that are additionally
-                    filtered of CW via the FFTtools SineSubtract filter.
                 "bandpassed" :
                     These are dedispersed waves that are additionally
-                    bandpass filtered to remove out of band noise. 
+                    bandpass filtered to remove out of band noise, but are NOT cw filtered. 
                 "filtered" : 
                     These are dedispersed waves that are additionally
                     filtered of CW via the FFTtools SineSubtract filter.
@@ -1208,6 +1208,15 @@ class AnalysisDataset:
                     These are filtered waveforms that are cropped to a time range
                     passed by the user through the crop_times argument. Outside this
                     range the waveform is set to 0. 
+            As a cheat sheet, here are the steps each comprise:
+                "calibrated" : cal
+                "interpolated" : cal + int
+                "cw_filtered" : cal + int + cwf
+                "dedispersed" : cal + int + cwf + dd
+                "bandpassed" : cal + int + dd + bp
+                "filtered" : cal + int + cwf + dd + bp 
+                "cropped" : cal + int + cwf + dd + bp + CROP
+
         crop_times : dict of float pairs (keys : int, channel number; values : tuple, time range)
             The time range (tmin, tmax) which traces should be cropped to for each channel. 
             To avoid cropping you can set tmin/tmax to a very negative/positive number. If
@@ -1271,9 +1280,21 @@ class AnalysisDataset:
             wavepacket["waveforms"] = interp_waves
             return wavepacket
 
+        # and if they want filtered waves
+        if which_traces != "bandpassed":
+            event_number = useful_event.eventNumber
+            cw_ids = self.get_cw_ids(event_number)
+            filtered_waves = cwf.apply_filters(self.__cw_filters, interp_waves, cw_ids, self.always_on_min_cw_id_freq, self.always_on_max_cw_id_freq)
+        else:
+            filtered_waves = interp_waves
+
+        if which_traces == "cw_filtered":
+            wavepacket["waveforms"] = filtered_waves
+            return wavepacket
+
         # and if they want a dedispersed wave, do that too
         dedispersed_waves = {}
-        for chan_key, wave in interp_waves.items():
+        for chan_key, wave in filtered_waves.items():
             try:
                 times, volts = wu.tgraph_to_arrays(wave)
                 times_dd, volts_dd = dd.dedisperse_wave(times, 
@@ -1290,55 +1311,46 @@ class AnalysisDataset:
             wavepacket["waveforms"] = dedispersed_waves
             return wavepacket
     
-        # and if they want filtered waves
-        filtered_waves = dedispersed_waves
-        if which_traces != "bandpassed": # if we're not only bandpassing, apply CW filters
-            
-            event_number = useful_event.eventNumber
-            cw_ids = self.get_cw_ids(event_number)
-            filtered_waves = cwf.apply_filters(self.__cw_filters, filtered_waves, cw_ids, self.always_on_min_cw_id_freq, self.always_on_max_cw_id_freq)
- 
 
         # and finally, apply some bandpass cleanup filters
-        if which_traces != "cw_filtered": # if we're not only CW filtering, apply bandpass
-            for chan_key in list(filtered_waves.keys()):
+        bandpassed_waves = {}
+        for chan_key in list(dedispersed_waves.keys()):
 
-                """
-                This takes some explaining, why I'm not just calling
-                    digitalFilter.filterGraph(...)
-                
-                Basically, the DigitalFilter class function `filterGraph` calls
-                the function `filter()`. The `filter` function calls the function
-                `filterOut`, which returns a POINTER to the filtered array.
-                Pyroot doesn't know how to clean this up properly.
-                So here, I create a pointer to an array via `array.array`,
-                and pass that pointer myself via the `filterOut` function.
-                That way python has proper ownership of it, and can destroy it
-                and avoid a memory leak.
+            """
+            This takes some explaining, why I'm not just calling
+                digitalFilter.filterGraph(...)
+            
+            Basically, the DigitalFilter class function `filterGraph` calls
+            the function `filter()`. The `filter` function calls the function
+            `filterOut`, which returns a POINTER to the filtered array.
+            Pyroot doesn't know how to clean this up properly.
+            So here, I create a pointer to an array via `array.array`,
+            and pass that pointer myself via the `filterOut` function.
+            That way python has proper ownership of it, and can destroy it
+            and avoid a memory leak.
 
-                I discovered this leak because when I called `filterGraph`,
-                I ended up with a huge memory leak.
-                Beware these python <-> c++ interfaces, especially around pointers...
-                """
+            I discovered this leak because when I called `filterGraph`,
+            I ended up with a huge memory leak.
+            Beware these python <-> c++ interfaces, especially around pointers...
+            """
 
-                wave = filtered_waves[chan_key]
-                n = wave.GetN()
-                x = wave.GetX()
-                y = wave.GetY()
-                y_filt_lp = array.array("d", [0]*len(y))
-                y_filt_hp = array.array("d", [0]*len(y))
-                self.__lowpass_filter.filterOut(n, y, y_filt_lp)
-                self.__highpass_filter.filterOut(n, y_filt_lp, y_filt_hp)
+            wave = dedispersed_waves[chan_key]
+            n = wave.GetN()
+            x = wave.GetX()
+            y = wave.GetY()
+            y_filt_lp = array.array("d", [0]*len(y))
+            y_filt_hp = array.array("d", [0]*len(y))
+            self.__lowpass_filter.filterOut(n, y, y_filt_lp)
+            self.__highpass_filter.filterOut(n, y_filt_lp, y_filt_hp)
 
-                filt_graph = ROOT.TGraph(n, x, y_filt_hp)
-                ROOT.SetOwnership(filt_graph, True)
+            filt_graph = ROOT.TGraph(n, x, y_filt_hp)
+            ROOT.SetOwnership(filt_graph, True)
 
-                del wave
-                del filtered_waves[chan_key]
-                filtered_waves[chan_key] = filt_graph
+            del wave
+            bandpassed_waves[chan_key] = filt_graph
 
-        if which_traces in ["cw_filtered", "bandpassed", "filtered"]:
-            wavepacket["waveforms"] = filtered_waves
+        if which_traces in ["bandpassed", "filtered"]:
+            wavepacket["waveforms"] = bandpassed_waves
             return wavepacket
 
         # crop waveforms

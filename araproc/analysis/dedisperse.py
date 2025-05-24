@@ -53,7 +53,7 @@ def dedisperse_wave(
         times, # in nanoseconds,
         volts, # in volts,
         phase_spline, # the phase spline
-        pre_pad_ns=40.0,  # amount of zero prepadding before dedispersion (ns)
+        pre_pad_ns=1000.0,  # amount of zero prepadding before dedispersion (ns)
         final_crop_ns=10.0  # amount of prepadding to keep after dedispersion (ns)
         ):
     
