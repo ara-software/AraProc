@@ -296,9 +296,12 @@ station3:
     filters:
       filt1 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10 }
       filt2 : { min_freq : 0.120, max_freq : 0.210, min_power_ratio : 0.02 }
-      filt3 : { min_freq : 0.245, max_freq : 0.305, min_power_ratio : 0.005 }
-      filt4 : { min_freq : 0.370, max_freq : 0.385, min_power_ratio : 0.02 }
-      filt5 : { min_freq : 0.385, max_freq : 0.510, min_power_ratio : 0.005 }
+      filt3 : { min_freq : 0.245, max_freq : 0.280, min_power_ratio : 0.01 }
+      filt4 : { min_freq : 0.295, max_freq : 0.305, min_power_ratio : 0.005 }
+      filt5 : { min_freq : 0.370, max_freq : 0.385, min_power_ratio : 0.02 }
+      filt6 : { min_freq : 0.385, max_freq : 0.410, min_power_ratio : 0.005 }
+      filt7 : { min_freq : 0.430, max_freq : 0.470, min_power_ratio : 0.01 }
+      filt8 : { min_freq : 0.495, max_freq : 0.510, min_power_ratio : 0.005 }
     readout_limits:
       rf_readout_limit: 28
       soft_readout_limit: 12
