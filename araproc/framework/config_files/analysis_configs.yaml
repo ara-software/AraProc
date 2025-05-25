@@ -137,7 +137,7 @@ station2:
       rf_readout_limit: 28
       soft_readout_limit: 12
   config7:
-    excluded_channels : [15] # always exclude channel 15
+    excluded_channels : [0, 4, 8, 12, 15] # always exclude channel 15, also exclude string 1 for duplication issue and misreconstructing calpulsers
     filters:
       filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } # Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
       filt2 : { min_freq : 0.248, max_freq : 0.254, min_power_ratio : 0.005 } # Targeting 251 MHz
