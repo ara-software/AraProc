@@ -173,7 +173,7 @@ def get_rsd_peak_over_avg_power(wave_bundle, excluded_channels=[]):
    
     mean_poap, std_poap = get_moments_peak_over_avg_power(wave_bundle, excluded_channels=excluded_channels)
 
-    if mean_poap == 0:
+    if np.isclose(mean_poap, 0):
         return 0. 
 
     rsd_poap = std_poap / mean_poap

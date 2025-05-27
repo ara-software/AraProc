@@ -859,7 +859,7 @@ class StandardReco:
         corr_map : dict
             Dictionary containing:
             - 'map': ROOT.TH2D histogram with correlation values mapped by theta and phi.
-            - 'corr': Overall peak correlation value.
+            - 'corr': Overall peak correlation value for this map.
             - 'radius': Correlation radius for the station (in meters).
 
         Returns

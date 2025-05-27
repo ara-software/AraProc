@@ -393,7 +393,7 @@ def get_snr_ratio(wave_bundle, excluded_channels=[]):
 def get_snr_variance(wave_bundle, excluded_channels=[]):
 
     """
-    Calculates channel-wise averaged SNR.
+    Calculates channel-wise variance of the SNR.
 
     Parameters
     ----------
@@ -405,7 +405,7 @@ def get_snr_variance(wave_bundle, excluded_channels=[]):
     Returns
     -------
     snr_var: float
-        The SNR variance.
+        The channel-wise SNR variance.
     """
 
     snrs = collect_snrs(wave_bundle, excluded_channels)
@@ -432,7 +432,7 @@ def get_snr_rsd(wave_bundle, excluded_channels=[]):
     """
 
     snr_mean = get_avg_snr(wave_bundle, excluded_channels=excluded_channels)
-    if snr_mean == 0:
+    if np.isclose(snr_mean, 0):
         return 0.
     
     snr_var = get_snr_variance(wave_bundle, excluded_channels=excluded_channels)
