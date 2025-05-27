@@ -390,6 +390,58 @@ def get_snr_ratio(wave_bundle, excluded_channels=[]):
 
     return snr_ratio 
 
+def get_snr_variance(wave_bundle, excluded_channels=[]):
+
+    """
+    Calculates channel-wise averaged SNR.
+
+    Parameters
+    ----------
+    wave_bundle: dict of TGraphs or np.ndarrays
+        Dictionary of waveform TGraphs or np.ndarrays to be averaged.
+    excluded_channels: list
+        List of dictionary keys to exclude from average.
+
+    Returns
+    -------
+    snr_var: float
+        The SNR variance.
+    """
+
+    snrs = collect_snrs(wave_bundle, excluded_channels)
+    snr_var = np.std(snrs)**2
+
+    return snr_var
+
+def get_snr_rsd(wave_bundle, excluded_channels=[]):
+
+    """
+    Calculates relative standard deviation of the SNR among channels.
+
+    Parameters
+    ----------
+    wave_bundle: dict of TGraphs or np.ndarrays
+        Dictionary of waveform TGraphs or np.ndarrays to be averaged.
+    excluded_channels: list
+        List of dictionary keys to exclude from average.
+
+    Returns
+    -------
+    snr_rsd: float
+        The SNR RSD.
+    """
+
+    snr_mean = get_avg_snr(wave_bundle, excluded_channels=excluded_channels)
+    if snr_mean == 0:
+        return 0.
+    
+    snr_var = get_snr_variance(wave_bundle, excluded_channels=excluded_channels)
+    snr_std = np.sqrt(snr_var)
+    
+    snr_rsd = snr_std / snr_mean
+
+    return snr_rsd
+
 def get_avg_rms(wave_bundle, excluded_channels=[]):
 
     """

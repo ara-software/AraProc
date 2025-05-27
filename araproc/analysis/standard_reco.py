@@ -849,6 +849,41 @@ class StandardReco:
             raise RuntimeError("No maps meet the fractional correlation threshold within the z_thresh.")
 
         return min_depth, min_depth_index
+    
+    def get_corr_map_contrast(self, corr_map):
+        """
+        Calculates the contrast in the correlation values on a skymap. 
+
+        Parameters
+        ----------
+        corr_map : dict
+            Dictionary containing:
+            - 'map': ROOT.TH2D histogram with correlation values mapped by theta and phi.
+            - 'corr': Overall peak correlation value.
+            - 'radius': Correlation radius for the station (in meters).
+
+        Returns
+        -------
+        corr_contrast : float
+            Contrast in correlation map. 
+        """
+        # Access correlation map and filter values within the theta range
+        hist = corr_map.get("map", None)
+        if hist is None:
+            raise ValueError("The 'map' key was not found in corr_map.")
+        
+        # locate the peak 
+        max_corr = hist.GetMaximum()
+
+        # calculate the mean
+        mean_corr = hist.Integral() / (hist.GetNbinsX() * hist.GetNbinsY());
+
+        if(mean_corr != 0):
+            corr_contrast = (max_corr - mean_corr)/mean_corr
+        else:
+            corr_contrast = 0
+
+        return corr_contrast 
 
     def get_corr_snr(self, ch1, ch2, wave_packet):
 
@@ -956,7 +991,7 @@ class StandardReco:
         avg_hpol_corr_snr = np.mean(avg_hpol_corr_snr)
 
         return avg_vpol_corr_snr, avg_hpol_corr_snr  
-
+    
     def get_plane_wave_zenith(self, wave_packet, ch1, ch2):
         """
         Computes the elevation angle of a signal based on timing differences between

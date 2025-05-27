@@ -115,5 +115,70 @@ def get_peak_over_avg_power(waveform, fraction=0.5):
 
     return peak_over_rms
 
+def get_moments_peak_over_avg_power(wave_bundle, excluded_channels=[]):
+    
+    """
+    Calculates the peak power at maximum of the Hilbert envelope divided
+    by the average power in fraction of the full trace around the peak for
+    each channel, and then calculates the mean and std of this value over channels. 
+
+    Parameters
+    ----------
+    wave_bundle: dict of TGraphs or np.ndarrays
+        Dictionary of waveform TGraphs or np.ndarrays to be averaged.
+    excluded_channels: list
+        List of dictionary keys to exclude from average.
+
+    Returns
+    -------
+    mean_peak_over_rms: float
+        Average peak power over rms.
+    std_peak_over_rms: float
+        Standard deviation of peak power over rms.
+    """
+    
+    chans = list(wave_bundle.keys())
+
+    poaps = []
+    for chan in chans:
+      if(chan in excluded_channels):
+        continue
+
+      waveform = wave_bundle[chan]
+      poap = get_peak_over_avg_power(waveform)
+      poaps.append(poap)
+   
+    mean_peak_over_rms = np.mean(poaps)
+    std_peak_over_rms = np.std(poaps) 
+
+    return mean_peak_over_rms, std_peak_over_rms
+
+def get_rsd_peak_over_avg_power(wave_bundle, excluded_channels=[]):
+    
+    """
+    Calculates the relative standard deviation of the POAP of the Hilbert enveloped waveform. 
+
+    Parameters
+    ----------
+    wave_bundle: dict of TGraphs or np.ndarrays
+        Dictionary of waveform TGraphs or np.ndarrays to be averaged.
+    excluded_channels: list
+        List of dictionary keys to exclude from average.
+
+    Returns
+    -------
+    rsd_peak_over_rms: float
+        Relative standard deviation of peak power over rms.
+    """
+   
+    mean_poap, std_poap = get_moments_peak_over_avg_power(wave_bundle, excluded_channels=excluded_channels)
+
+    if mean_poap == 0:
+        return 0. 
+
+    rsd_poap = std_poap / mean_poap
+
+    return rsd_poap
+
 
 
