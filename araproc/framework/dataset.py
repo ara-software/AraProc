@@ -2,6 +2,7 @@ import array
 import copy
 import ctypes
 import logging
+import os
 import numpy as np
 import ROOT
 import yaml
@@ -574,13 +575,46 @@ class SimWrapper:
         self.event_tree = None
         self.sim_tree = None
         self.sim_settings_tree = None
-        if '.run' not in path_to_data_file:
+        if 'merged' in path_to_data_file:
+            basename = os.path.basename(path_to_data_file)
+            sim_type = basename.split("_")[0]
+            if sim_type == "veff": 
+                # veff_lgE19.0_A2_config2_merged_0001.root 
+                sim_type, lgE, station, config, merged, run_root = basename.split("_")
+                energy = float( lgE[3:] )
+                run = int(run_root.split(".")[0])
+            elif sim_type == 'nu':
+                # nu_A4_config2_merged_0002.root
+                # nu_PA_config1_merged_0003.root
+                sim_type, station, config, merged, run_root = basename.split("_")
+                energy = 0
+                run = int(run_root.split(".")[0])
+            config = config[-1]
+            if station == "PA": 
+                station_num = 6
+            else:
+                station_num = int(station[-1])
+            self.run_number = station_num*1_0_000_0000 + int(float(config))*1_000_0000 + int( energy*10 )*1_0000 + run
+        elif 'noise' in path_to_data_file:
+            basename = os.path.basename(path_to_data_file)
+            araout_noise, setup, station, config_txt_run_root = basename.split("_")
+            config, txt, run, root = config_txt_run_root.split(".")
+            config = config[-1]
+            run = int(run[3:])
+            energy = 0
+            if station == "PA": 
+                station_num = 6
+            else:
+                station_num = int(station[-1])
+            self.run_number = station_num*1_0_000_0000 + int(float(config))*1_000_0000 + int( energy*10 )*1_0000 + run
+        elif '.run' not in path_to_data_file:
             self.run_number = -10 # if there's no file we will crash anyway
         else:
             # arasim files come in the form /path/AraOut.[setupFile].run[runNo].root so first
             # split on '.run' and grab the last element to get [runNo].root then split on
             # '.root' and grab the first element to be left with [runNo]
             self.run_number = int(path_to_data_file.split('.run')[-1].split('.root')[0])
+            
         self.station_id = None
         self.num_events = None
         self.config = None
