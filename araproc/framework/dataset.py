@@ -329,10 +329,7 @@ class DataWrapper:
                 return None
             
             mode_result = stats.mode(data, keepdims=True)
-            mode_val = int(mode_result.mode[0])
-            count = int(mode_result.count[0])
-            
-            # print(f"{event_type_name} Events - Mode: {mode_val}, Count: {count}/{len(data)} ({100*count/len(data):.1f}%)")
+            mode_val = int(mode_result.mode[0])            
             return mode_val
         
         # Get RF trigger events
