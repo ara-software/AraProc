@@ -322,19 +322,26 @@ class DataWrapper:
             rf_events[i] = event_obj.isRFTrigger()
             software_triggers[i] = event_obj.isSoftwareTrigger()
                     
+        # turn all branches back on
+        self.event_tree.SetBranchStatus("*", 1)
         
         # Get RF trigger events
         rf_readout_blocks = numReadoutBlocks_values[rf_events]
-        rf_mode = int(stats.mode(rf_readout_blocks).mode)//4
+        if len(rf_readout_blocks) > 0:
+            rf_mode = int(stats.mode(rf_readout_blocks).mode)//4
+        else:
+            rf_mode = int(-10)
 
         # Get software trigger events  z
         sw_readout_blocks = numReadoutBlocks_values[software_triggers]
-        sw_mode = int(stats.mode(sw_readout_blocks).mode)//4
+        if len(sw_readout_blocks) > 0:
+            sw_mode = int(stats.mode(sw_readout_blocks).mode)//4
+        else:
+            sw_mode = int(-10)
     
         # Return results (handle None cases)
         self.__num_rf_readout_blocks = rf_mode
         self.__num_soft_readout_blocks = sw_mode
-        self.event_tree.SetBranchStatus("*", 1)
         print(f"    [LOG] DONE: Length of RF and Software Blocks is {self.__num_rf_readout_blocks}, {self.__num_soft_readout_blocks}")
 
     def __load_pedestal(self, path_to_pedestal_file = None):
