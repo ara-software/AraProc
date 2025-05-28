@@ -12,9 +12,6 @@ station100:
       filt8 : { min_freq : 0.140, max_freq : 0.155, min_power_ratio : 0.01 } # CW @143 MHz
       filt9 : { min_freq : 0.396, max_freq : 0.410, min_power_ratio : 0.01 } # CW @403 MHz (from radiosonde)
 
-    readout_limits:
-      rf_readout_limit: 20
-      soft_readout_limit: 8
   config2:
     excluded_channels : []
     filters:
@@ -28,9 +25,6 @@ station100:
       filt8 : { min_freq : 0.805, max_freq : 0.815, min_power_ratio : 0.02 } # CW @809 MHz
       filt9 : { min_freq : 0.140, max_freq : 0.155, min_power_ratio : 0.01 } # CW @143 MHz
       filt10 : { min_freq : 0.396, max_freq : 0.410, min_power_ratio : 0.01 } # CW @403 MHz (from radiosonde)
-    readout_limits:
-      rf_readout_limit: 26
-      soft_readout_limit: 8
   config3:
     excluded_channels : []
     filters:
@@ -43,9 +37,6 @@ station100:
       filt7 : { min_freq : 0.805, max_freq : 0.815, min_power_ratio : 0.02 } # CW @809 MHz
       filt8 : { min_freq : 0.140, max_freq : 0.155, min_power_ratio : 0.01 } # CW @143 MHz
       filt9 : { min_freq : 0.396, max_freq : 0.410, min_power_ratio : 0.01 } # CW @403 MHz (from radiosonde)
-    readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 8
 station2:
   config1:
     excluded_channels : [15] # always exclude channel 15
@@ -56,9 +47,6 @@ station2:
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
       filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
       filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
-    readout_limits:
-      rf_readout_limit: 20
-      soft_readout_limit: 8
   config2:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -68,9 +56,6 @@ station2:
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
       filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
       filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
-    readout_limits:
-      rf_readout_limit: 20
-      soft_readout_limit: 8
   config3:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -80,9 +65,6 @@ station2:
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
       filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
       filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
-    readout_limits:
-      rf_readout_limit: 20
-      soft_readout_limit: 8
   config4:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -92,9 +74,6 @@ station2:
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
       filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
       filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
-    readout_limits:
-      rf_readout_limit: 26
-      soft_readout_limit: 8
   config5:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -104,9 +83,6 @@ station2:
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
       filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
       filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
-    readout_limits:
-      rf_readout_limit: 26
-      soft_readout_limit: 8
   config6:
     excluded_channels : [15] # always exclude channel 15
     filters:
@@ -116,9 +92,6 @@ station2:
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
       filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
       filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
-    readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 12
   config7:
     excluded_channels : [0, 4, 8, 12, 15] # always exclude channel 15, also exclude string 1 for duplication issue and misreconstructing calpulsers
     filters:
@@ -128,9 +101,6 @@ station2:
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
       filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
       filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
-    readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 12
 station3:
   config1:
     excluded_channels : []
@@ -141,9 +111,6 @@ station3:
       filt4 : { min_freq : 0.295, max_freq : 0.305, min_power_ratio : 0.011 }
       filt5 : { min_freq : 0.398, max_freq : 0.408, min_power_ratio : 0.01 }
       filt6 : { min_freq : 0.495, max_freq : 0.505, min_power_ratio : 0.01 }
-    readout_limits:
-      rf_readout_limit: 20
-      soft_readout_limit: 8
   config2:
     excluded_channels : []
     filters:
@@ -153,9 +120,6 @@ station3:
       filt4 : { min_freq : 0.295, max_freq : 0.305, min_power_ratio : 0.011 }
       filt5 : { min_freq : 0.398, max_freq : 0.408, min_power_ratio : 0.01 }
       filt6 : { min_freq : 0.495, max_freq : 0.505, min_power_ratio : 0.01 }
-    readout_limits:
-      rf_readout_limit: 20
-      soft_readout_limit: 8
   config3:
     excluded_channels : [3, 7, 11, 15]
     filters:
@@ -165,9 +129,6 @@ station3:
       filt4 : { min_freq : 0.295, max_freq : 0.305, min_power_ratio : 0.01 }
       filt5 : { min_freq : 0.398, max_freq : 0.408, min_power_ratio : 0.01 }
       filt6 : { min_freq : 0.495, max_freq : 0.505, min_power_ratio : 0.005 }
-    readout_limits:
-      rf_readout_limit: 26
-      soft_readout_limit: 8
   config4:
     excluded_channels : [3, 7, 11, 15]
     filters:
@@ -177,9 +138,6 @@ station3:
       filt4 : { min_freq : 0.370, max_freq : 0.408, min_power_ratio : 0.01 }
       filt5 : { min_freq : 0.430, max_freq : 0.510, min_power_ratio : 0.01 }
       filt6 : { min_freq : 0.580, max_freq : 0.620, min_power_ratio : 0.01 } 
-    readout_limits:
-      rf_readout_limit: 26
-      soft_readout_limit: 8
   config5:
     excluded_channels : [3, 7, 11, 15]
     filters:
@@ -190,9 +148,6 @@ station3:
       filt5 : { min_freq : 0.400, max_freq : 0.470, min_power_ratio : 0.01 }
       filt6 : { min_freq : 0.495, max_freq : 0.510, min_power_ratio : 0.02 }
       filt7 : { min_freq : 0.580, max_freq : 0.620, min_power_ratio : 0.02 }
-    readout_limits:
-      rf_readout_limit: 26
-      soft_readout_limit: 8
   config6:
     excluded_channels : []
     filters:
@@ -202,9 +157,6 @@ station3:
       filt4 : { min_freq : 0.295, max_freq : 0.330, min_power_ratio : 0.002 }
       filt5 : { min_freq : 0.400, max_freq : 0.410, min_power_ratio : 0.002 }
       filt6 : { min_freq : 0.495, max_freq : 0.510, min_power_ratio : 0.002 }
-    readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 12
   config7:
     excluded_channels : [3, 7, 11, 15]
     filters:
@@ -215,9 +167,6 @@ station3:
       filt5 : { min_freq : 0.400, max_freq : 0.430, min_power_ratio : 0.007 }
       filt6 : { min_freq : 0.495, max_freq : 0.510, min_power_ratio : 0.005 }
       filt7 : { min_freq : 0.580, max_freq : 0.620, min_power_ratio : 0.01 }
-    readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 12
   config8:
     excluded_channels : [3, 7, 11, 15]
     filters:
@@ -227,9 +176,6 @@ station3:
       filt4 : { min_freq : 0.240, max_freq : 0.305, min_power_ratio : 0.02 }
       filt5 : { min_freq : 0.400, max_freq : 0.510, min_power_ratio : 0.01 }
       filt6 : { min_freq : 0.580, max_freq : 0.620, min_power_ratio : 0.01 }
-    readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 12
   config9:
     excluded_channels : [3, 7, 11, 15]
     filters:
@@ -241,9 +187,6 @@ station3:
       filt6 : { min_freq : 0.385, max_freq : 0.410, min_power_ratio : 0.005 }
       filt7 : { min_freq : 0.430, max_freq : 0.470, min_power_ratio : 0.01 }
       filt8 : { min_freq : 0.495, max_freq : 0.510, min_power_ratio : 0.005 }
-    readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 12
 station4:
   config1:
     excluded_channels : [3, 7, 11, 15] # always exclude string 4
@@ -255,9 +198,6 @@ station4:
       filt5 : { min_freq : 0.400, max_freq : 0.408, min_power_ratio : 0.001 } # Major Radiosonde
       filt6 : { min_freq : 0.408, max_freq : 0.500, min_power_ratio : 0.01 }
       filt7 : { min_freq : 0.650, max_freq : 0.660, min_power_ratio : 0.0006 } # Major A4's private property
-    readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
   config2:
     excluded_channels : [3, 7, 11, 15] # always exclude string 4
     filters:
@@ -268,9 +208,6 @@ station4:
       filt5 : { min_freq : 0.400, max_freq : 0.408, min_power_ratio : 0.001 } # Major Radiosonde
       filt6 : { min_freq : 0.408, max_freq : 0.500, min_power_ratio : 0.01 }
       filt7 : { min_freq : 0.650, max_freq : 0.660, min_power_ratio : 0.0006 } # Major A4's private property
-    readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
   config3:
     excluded_channels : [3, 7, 11, 15] # always exclude string 4
     filters:
@@ -281,9 +218,6 @@ station4:
       filt5 : { min_freq : 0.400, max_freq : 0.408, min_power_ratio : 0.001 } # Major Radiosonde
       filt6 : { min_freq : 0.408, max_freq : 0.500, min_power_ratio : 0.01 }
       filt7 : { min_freq : 0.650, max_freq : 0.660, min_power_ratio : 0.0006 } # Major A4's private property
-    readout_limits:
-      rf_readout_limit: 32
-      soft_readout_limit: 10
   config4:
     excluded_channels : [3, 7, 11, 15] # always exclude string 4
     filters:
@@ -295,9 +229,6 @@ station4:
       filt6 : { min_freq : 0.408, max_freq : 0.500, min_power_ratio : 0.01 }
       filt7 : { min_freq : 0.650, max_freq : 0.660, min_power_ratio : 0.0006 } # Major A4's private property
 
-    readout_limits:
-      rf_readout_limit: 32
-      soft_readout_limit: 10
 station5:
   config1:
     excluded_channels : []
@@ -310,9 +241,6 @@ station5:
       filt7 : { min_freq : 0.290, max_freq : 0.310, min_power_ratio : 0.001 }
       filt8 : { min_freq : 0.310, max_freq : 0.590, min_power_ratio : 0.02 }
       filt9 : { min_freq : 0.390, max_freq : 0.420, min_power_ratio : 0.002 }
-    readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
   config2:
     excluded_channels : []
     filters:
@@ -322,7 +250,4 @@ station5:
       filt4 : { min_freq : 0.220, max_freq : 0.260, min_power_ratio : 0.001 }
       filt5 : { min_freq : 0.260, max_freq : 0.510, min_power_ratio : 0.02 }
       filt6 : { min_freq : 0.380, max_freq : 0.420, min_power_ratio : 0.001 }
-    readout_limits:
-      rf_readout_limit: 28
-      soft_readout_limit: 10
 
