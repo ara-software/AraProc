@@ -321,24 +321,15 @@ class DataWrapper:
             event_obj = self.event_tree.event
             rf_events[i] = event_obj.isRFTrigger()
             software_triggers[i] = event_obj.isSoftwareTrigger()
-        
-        def get_mode_safe(data, event_type_name):
-            """Safely compute mode and handle edge cases"""
-            if len(data) == 0:
-                print(f"No {event_type_name} events found")
-                return None
-            
-            mode_result = stats.mode(data, keepdims=True)
-            mode_val = int(mode_result.mode[0])            
-            return mode_val
+                    
         
         # Get RF trigger events
         rf_readout_blocks = numReadoutBlocks_values[rf_events]
-        rf_mode = get_mode_safe(rf_readout_blocks, "RF Trigger")
+        rf_mode = int(stats.mode(rf_readout_blocks).mode)//4
 
         # Get software trigger events  z
         sw_readout_blocks = numReadoutBlocks_values[software_triggers]
-        sw_mode = get_mode_safe(sw_readout_blocks, "Software Trigger")
+        sw_mode = int(stats.mode(sw_readout_blocks).mode)//4
     
         # Return results (handle None cases)
         self.__num_rf_readout_blocks = rf_mode
