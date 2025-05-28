@@ -12,6 +12,7 @@ from scipy import stats
 from araproc.framework import waveform_utilities as wu
 from araproc.framework import constants as const
 from araproc.framework import file_utilities as futil
+from araproc.framework import constants as fconst
 from araproc.analysis import dedisperse as dd
 from araproc.analysis import cw_filter as cwf
 from araproc.analysis.snr import get_snr
@@ -315,7 +316,7 @@ class DataWrapper:
             
             # Get numReadoutBlocks directly
             numReadoutBlocks_values[i] = int(self.event_tree.event.numReadoutBlocks)
-                        
+
             # Get event types
             event_obj = self.event_tree.event
             rf_events[i] = event_obj.isRFTrigger()
@@ -327,14 +328,14 @@ class DataWrapper:
         # Get RF trigger events
         rf_readout_blocks = numReadoutBlocks_values[rf_events]
         if len(rf_readout_blocks) > 0:
-            rf_mode = int(stats.mode(rf_readout_blocks).mode)//4
+            rf_mode = int(stats.mode(rf_readout_blocks).mode)//fconst.num_dda
         else:
             rf_mode = int(-10)
 
         # Get software trigger events  z
         sw_readout_blocks = numReadoutBlocks_values[software_triggers]
         if len(sw_readout_blocks) > 0:
-            sw_mode = int(stats.mode(sw_readout_blocks).mode)//4
+            sw_mode = int(stats.mode(sw_readout_blocks).mode)//fconst.num_dda
         else:
             sw_mode = int(-10)
     
