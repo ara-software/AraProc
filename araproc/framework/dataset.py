@@ -6,6 +6,8 @@ import os
 import numpy as np
 import ROOT
 import yaml
+from scipy import stats
+
 
 from araproc.framework import waveform_utilities as wu
 from araproc.framework import constants as const
@@ -159,6 +161,8 @@ class DataWrapper:
         self.raw_event_ptr = None
         self.cw_id_readers = None
         self.config = None
+        self.__num_rf_readout_blocks = None
+        self.__num_soft_readout_blocks = None
 
         if station_id not in const.valid_station_ids:
             raise Exception(f"Station id {station_id} is not supported")
@@ -273,6 +277,77 @@ class DataWrapper:
     def __assign_config(self):
         self.qual_cuts = ROOT.AraQualCuts.Instance()
         self.config = self.qual_cuts.getLivetimeConfiguration(self.run_number, self.station_id)
+
+    def get_num_rf_readout_blocks(self):
+        if self.__num_rf_readout_blocks is not None:
+            # if this param is alread initiated, then use it
+            return self.__num_rf_readout_blocks
+        else:
+            # otherwise, initialize it
+            self.__establish_readout_params()
+            return self.__num_rf_readout_blocks
+    
+    def get_num_soft_readout_blocks(self):
+        if self.__num_soft_readout_blocks is not None:
+            # if this param is alread initiated, then use it
+            return self.__num_soft_readout_blocks
+        else:
+            # otherwise, initialize it
+            self.__establish_readout_params()
+            return self.__num_soft_readout_blocks
+
+    def __establish_readout_params(self):
+        
+        print("    [LOG] Establishing the Length of RF and Software Blocks....")
+        # Enable only needed branches
+        self.event_tree.SetBranchStatus("*", 0)
+        self.event_tree.SetBranchStatus("event.numReadoutBlocks", 1)
+        self.event_tree.SetBranchStatus("event.triggerInfo[4]", 1)
+
+        total_entries = self.event_tree.GetEntries()
+        numReadoutBlocks_values = np.empty(total_entries, dtype=int)
+        rf_events = np.empty(total_entries, dtype=bool)
+        software_triggers = np.empty(total_entries, dtype=bool)
+
+        # Read all data
+        for i in range(total_entries):
+            self.event_tree.GetEntry(i)
+            
+            # Get numReadoutBlocks directly
+            val = int(self.event_tree.event.numReadoutBlocks)
+            numReadoutBlocks_values[i] = abs(val)
+            
+            # Get event types
+            event_obj = self.event_tree.event
+            rf_events[i] = event_obj.isRFTrigger()
+            software_triggers[i] = event_obj.isSoftwareTrigger()
+        
+        def get_mode_safe(data, event_type_name):
+            """Safely compute mode and handle edge cases"""
+            if len(data) == 0:
+                print(f"No {event_type_name} events found")
+                return None
+            
+            mode_result = stats.mode(data, keepdims=True)
+            mode_val = int(mode_result.mode[0])
+            count = int(mode_result.count[0])
+            
+            # print(f"{event_type_name} Events - Mode: {mode_val}, Count: {count}/{len(data)} ({100*count/len(data):.1f}%)")
+            return mode_val
+        
+        # Get RF trigger events
+        rf_readout_blocks = numReadoutBlocks_values[rf_events]
+        rf_mode = get_mode_safe(rf_readout_blocks, "RF Trigger")
+
+        # Get software trigger events  z
+        sw_readout_blocks = numReadoutBlocks_values[software_triggers]
+        sw_mode = get_mode_safe(sw_readout_blocks, "Software Trigger")
+    
+        # Return results (handle None cases)
+        self.__num_rf_readout_blocks = rf_mode
+        self.__num_soft_readout_blocks = sw_mode
+        self.event_tree.SetBranchStatus("*", 1)
+        print(f"    [LOG] DONE: Length of RF and Software Blocks is {self.__num_rf_readout_blocks}, {self.__num_soft_readout_blocks}")
 
     def __load_pedestal(self, path_to_pedestal_file = None):
 
@@ -1192,6 +1267,17 @@ class AnalysisDataset:
 
         sim_info = self.dataset_wrapper.get_sim_information(event_idx)
         return sim_info
+
+    def get_num_rf_readout_blocks(self):
+        if self.is_simulation:
+            raise ValueError("You requested data information, but this dataset is marked as simulation. Abort!")
+        return self.dataset_wrapper.get_num_rf_readout_blocks()
+
+
+    def get_num_soft_readout_blocks(self):
+        if self.is_simulation:
+            raise ValueError("You requested data information, but this dataset is marked as simulation. Abort!")
+        return self.dataset_wrapper.get_num_soft_readout_blocks()
 
     def get_wavepacket(self,
                       useful_event,

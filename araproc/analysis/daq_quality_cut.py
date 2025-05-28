@@ -139,35 +139,7 @@ def get_daq_structure_errors(num_ddas,blk_len_sort, trig_sort, irs_block_number,
     return np.sum(daq_st_err) > 0
 
 
-def get_read_win_limit(st,config):
-
-    """
-    Detect readout window errors for a single event based on event data.
-
-    Parameters
-    ----------
-    st : int
-        Station id number.
-    config : int
-        Configuration Number
-    Returns
-    -------
-    rf_readout_limit: int
-        RF trig readout window limit.
-    soft_readout_limit: int
-        Soft trig readout window limit.
-    """
-
-    file = pkg_resources.open_text(config_files,"analysis_configs.yaml")
-    file_content = yaml.safe_load(file)
-    #Get the readout limits for different triggers
-    readout_limits = file_content[f"station{st}"][f"config{config}"]["readout_limits"]
-    rf_readout_limit = readout_limits["rf_readout_limit"]
-    soft_readout_limit = readout_limits["soft_readout_limit"]
-    file.close()
-    return rf_readout_limit, soft_readout_limit
-
-def get_readout_window_errors(blk_len_sort, trig_sort, channel_mask, st,config):
+def get_readout_window_errors(blk_len_sort, trig_sort, channel_mask, dataset):
 
     """
     Detect readout window errors for a single event based on event data.
@@ -180,10 +152,7 @@ def get_readout_window_errors(blk_len_sort, trig_sort, channel_mask, st,config):
         The trigger information for the event.
     channel_mask : array-like
         The channel mask for the event.
-    config : int
-        Configuration Number
-    st : int
-        The station ID for the event.
+    dataset : araproc dataset
 
     Returns
     -------
@@ -192,7 +161,8 @@ def get_readout_window_errors(blk_len_sort, trig_sort, channel_mask, st,config):
     """
 
     # Get readout window limits for RF and software triggers
-    rf_read_win_len, soft_read_win_len = get_read_win_limit(st,config)
+    rf_read_win_len = dataset.get_num_rf_readout_blocks()
+    soft_read_win_len = dataset.get_num_soft_readout_blocks()
 
     # Define boolean conditions for various readout errors
     single_read_bools = blk_len_sort < 2
@@ -209,12 +179,11 @@ def get_readout_window_errors(blk_len_sort, trig_sort, channel_mask, st,config):
     read_win_err[1] = int(rf_read_bools)      # Bad RF readout window error
     read_win_err[2] = int(cal_read_bools)     # Bad calibration readout window error
     read_win_err[3] = int(soft_read_bools)    # Bad software readout window error
-
     # Return True if there are any readout window errors
     return np.sum(read_win_err) > 0
 
 
-def check_daq_quality(useful_event, station_id, config):
+def check_daq_quality(useful_event, dataset):
 
     """
     Main function to extract DAQ structure and readout window errors for a single event.
@@ -223,10 +192,7 @@ def check_daq_quality(useful_event, station_id, config):
     ----------
     useful_event : object
         The useful event object containing event information.
-    station_id : int
-        The station ID for the event.
-    config : int
-        Configuration Number
+    dataset : araproc dataset
 
     Returns
     -------
@@ -235,6 +201,7 @@ def check_daq_quality(useful_event, station_id, config):
         
     """
 
+    station_id = dataset.station_id
     # Extract necessary information from useful_event using the merged function
     num_ddas,blk_len, trig_type, irs_block_number, channel_mask = process_event_info(useful_event, station_id)
     ## Make sure the event has known trigger type
@@ -245,7 +212,7 @@ def check_daq_quality(useful_event, station_id, config):
     daq_errors = get_daq_structure_errors(num_ddas,blk_len, trig_type, irs_block_number, channel_mask)
 
     # Get readout window errors
-    readout_errors = get_readout_window_errors(blk_len, trig_type, channel_mask,station_id,config)
+    readout_errors = get_readout_window_errors(blk_len, trig_type, channel_mask, dataset)
 
     combined_errors = daq_errors or readout_errors
 
