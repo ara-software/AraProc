@@ -314,9 +314,8 @@ class DataWrapper:
             self.event_tree.GetEntry(i)
             
             # Get numReadoutBlocks directly
-            val = int(self.event_tree.event.numReadoutBlocks)
-            numReadoutBlocks_values[i] = abs(val)
-            
+            numReadoutBlocks_values[i] = int(self.event_tree.event.numReadoutBlocks)
+                        
             # Get event types
             event_obj = self.event_tree.event
             rf_events[i] = event_obj.isRFTrigger()
