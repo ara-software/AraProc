@@ -231,7 +231,7 @@ station3:
       rf_readout_limit: 28
       soft_readout_limit: 12
   config9:
-    excluded_channels : [3, 7, 11, 15]
+    excluded_channels : [0, 4, 8, 12]
     filters:
       filt1 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10 }
       filt2 : { min_freq : 0.120, max_freq : 0.210, min_power_ratio : 0.02 }
