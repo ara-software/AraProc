@@ -37,7 +37,7 @@ def get_cvmfs_ped_file_name(station_id, run_number):
     file=f"station_{station_id}/{start:07d}-{stop:07d}/station_{station_id}_run_{run_number:07d}.gz"
     return os.path.join(cvmfs_top_dir, file)
 
-def guess_location_of_hk_files(station_id, run_number):
+def guess_location_of_sensor_hk_file(station_id, run_number):
 
     """
     A utility function to guess the location of the housekeeping file
@@ -50,9 +50,7 @@ def guess_location_of_hk_files(station_id, run_number):
     else:
         local_station_id = station_id
 
-    inpath = f"/data/exp/ARA/*/L1/100pct/ARA0{local_station_id}/*/run{run_number:06d}/"
-
-    # first the sensor hk file
+    inpath = f"/data/exp/ARA/*/L1/10pct/ARA0{local_station_id}/*/run{run_number:06d}/"
     sensor_hk_file = f"sensorHk{run_number:06d}.root"
     sensor_hk_full_path = inpath + sensor_hk_file
     files = glob.glob(sensor_hk_full_path)
@@ -62,10 +60,21 @@ def guess_location_of_hk_files(station_id, run_number):
         raise Exception(f"Requested run found in more than one directory!\n{files}")
     
     sensor_hk_file = files[0]
+    return sensor_hk_file
 
-    files = None # reset
+def guess_location_of_event_hk_file(station_id, run_number):
 
-    # now the event hk file
+    """
+    A utility function to guess the location of the housekeeping file
+    associated with a run.
+    You need to be at the WIPAC datawarehosue for this to work.
+    """
+    if station_id==100:
+        local_station_id=1
+    else:
+        local_station_id = station_id
+
+    inpath = f"/data/exp/ARA/*/L1/10pct/ARA0{local_station_id}/*/run{run_number:06d}/"
     event_hk_file = f"eventHk{run_number:06d}.root"
     event_hk_full_path = inpath + event_hk_file
     files = glob.glob(event_hk_full_path)
@@ -75,8 +84,7 @@ def guess_location_of_hk_files(station_id, run_number):
         raise Exception(f"Requested run found in more than one directory!\n{files}")
     
     event_hk_file = files[0]
-
-    return sensor_hk_file, event_hk_file
+    return event_hk_file
 
 def guess_location_of_daq_config_file(station_id, run_number):
 
