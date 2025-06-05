@@ -84,15 +84,6 @@ station2:
       filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
       filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
   config6:
-    excluded_channels : [15] # always exclude channel 15
-    filters:
-      filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } # Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
-      filt2 : { min_freq : 0.248, max_freq : 0.254, min_power_ratio : 0.005 } # Targeting 251 MHz
-      filt3 : { min_freq : 0.376, max_freq : 0.410, min_power_ratio : 0.02  } # Targeting 379 MHz and 404 MHz
-      filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
-      filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
-      filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
-  config7:
     excluded_channels : [0, 4, 8, 12, 15] # always exclude channel 15, also exclude string 1 for duplication issue and misreconstructing calpulsers
     filters:
       filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } # Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
@@ -101,7 +92,7 @@ station2:
       filt4 : { min_freq : 0.440, max_freq : 0.460, min_power_ratio : 0.005 } # Targeting 450 MHz
       filt5 : { min_freq : 0.497, max_freq : 0.533, min_power_ratio : 0.001 } # Targeting 502 MHz and 528 MHz
       filt6 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10  } # Broad, high power, cleanup filter 
-  config8:
+  config7:
     excluded_channels : [0, 4, 8, 12, 15] # always exclude channel 15, also exclude string 1 for duplication issue and misreconstructing calpulsers
     filters:
       filt1 : { min_freq : 0.045, max_freq : 0.160, min_power_ratio : 0.001 } # Targets 60 MHz peak seen in spectra and something around 110 MHz and broadband from ~121-155 found by PV
@@ -121,7 +112,7 @@ station3:
       filt5 : { min_freq : 0.398, max_freq : 0.408, min_power_ratio : 0.01 }
       filt6 : { min_freq : 0.495, max_freq : 0.505, min_power_ratio : 0.01 }
   config2:
-    excluded_channels : []
+    excluded_channels : [3, 7, 11, 15]
     filters:
       filt1 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10 }
       filt2 : { min_freq : 0.120, max_freq : 0.155, min_power_ratio : 0.02 }
@@ -158,7 +149,7 @@ station3:
       filt6 : { min_freq : 0.495, max_freq : 0.510, min_power_ratio : 0.02 }
       filt7 : { min_freq : 0.580, max_freq : 0.620, min_power_ratio : 0.02 }
   config6:
-    excluded_channels : []
+    excluded_channels : [3, 7, 11, 15]
     filters:
       filt1 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10 }
       filt2 : { min_freq : 0.120, max_freq : 0.155, min_power_ratio : 0.02 }
