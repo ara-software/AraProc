@@ -317,10 +317,11 @@ class StandardReco:
                 snrs[chan] = snr.get_snr(waveform_bundle[chan])
 
             # calculate SNR_i * SNR_j (Numerator of Equ 4.4 in Brian's thesis)
+            # modified: subtract off 1 so that SNR=1 events have vanishing weight
             for pair_index, (ant1, ant2) in self.pairs_v:
-                v_weights.append(snrs[ant1] * snrs[ant2])
+                v_weights.append((snrs[ant1]-1) * (snrs[ant2]-1))
             for pair_index, (ant1, ant2) in self.pairs_h:
-                h_weights.append(snrs[ant1] * snrs[ant2])
+                h_weights.append((snrs[ant1]-1) * (snrs[ant2]-1))
         else:
             # otherwise equal weights
             v_weights = np.ones(len(self.pairs_v), dtype=float)
