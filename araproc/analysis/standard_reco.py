@@ -207,7 +207,7 @@ class StandardReco:
 
         return cross_correlations
 
-    def do_standard_reco(self, wavepacket, applyHilbert=True):
+    def do_standard_reco(self, wavepacket, applyHilbert=True, applyWeights=True):
         
         """
         A function to do a standard set of reconstructions.
@@ -306,14 +306,47 @@ class StandardReco:
         else:
           this_corr_functions_v = self.__corr_functions_v_fullphase
           this_corr_functions_h = self.__corr_functions_h_fullphase
- 
+
+        v_weights = []
+        h_weights = []
+        if applyWeights:
+            # do snr weighting
+            snrs = {}
+            chans = list(waveform_bundle.keys())
+            for chan in chans:
+                snrs[chan] = snr.get_snr(waveform_bundle[chan])
+
+            # calculate SNR_i * SNR_j (Numerator of Equ 4.4 in Brian's thesis)
+            for pair_index, (ant1, ant2) in self.pairs_v:
+                v_weights.append(snrs[ant1] * snrs[ant2])
+            for pair_index, (ant1, ant2) in self.pairs_h:
+                h_weights.append(snrs[ant1] * snrs[ant2])
+        else:
+            # otherwise equal weights
+            v_weights = np.ones(len(self.pairs_v), dtype=float)
+            h_weights = np.ones(len(self.pairs_h), dtype=float)
+        
+        # normalize (calculate the double sum (Denominator of Equ 4.5 in Brian's thesis))
+        v_weights = np.asarray(v_weights)
+        h_weights = np.asarray(h_weights)
+        v_weights/=np.sum(v_weights)
+        h_weights/=np.sum(h_weights)
+
+        # stuff into c++ container 
+        weights_v = ROOT.std.map('int', 'double')()
+        for iV, the_weight in enumerate(v_weights):
+            weights_v[iV] = the_weight
+        weights_h = ROOT.std.map('int', 'double')()
+        for iH, the_weight in enumerate(h_weights):
+            weights_h[iH] = the_weight
+
         ############################
         ####### VPol Pulser ########
         ############################
 
         # check the cal pulser in V
         pulser_map_v = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
-            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_nearby, 0,)
+            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_nearby, 0, weights_v)
         
         corr_pulser_v, phi_pulser_v, theta_pulser_v = mu.get_corr_map_peak(pulser_map_v)
         reco_results["pulser_v"] = {
@@ -328,11 +361,11 @@ class StandardReco:
 
         # make a 300 m map in V (Direct rays)
         distant_map_v_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 0,)
+            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 0, weights_v)
 
         # make a 300 m map in V (Refracted/Reflected rays)
         distant_map_v_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 1,)
+            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 1, weights_v)
 
         # Get the correlation, phi, and theta for both maps
         corr_distant_v_dir, phi_distant_v_dir, theta_distant_v_dir = mu.get_corr_map_peak(distant_map_v_dir)
@@ -358,7 +391,7 @@ class StandardReco:
 
         # check the cal pulser in H
         pulser_map_h = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
-            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_nearby, 0,)
+            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_nearby, 0, weights_h)
 
         corr_pulser_h, phi_pulser_h, theta_pulser_h = mu.get_corr_map_peak(pulser_map_h)
         reco_results["pulser_h"] = {
@@ -373,11 +406,11 @@ class StandardReco:
 
         # make a 300 m map in H (Direct rays)
         distant_map_h_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 0, )
+            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 0, weights_h)
 
         # make a 300 m map in H (Refracted/Reflected rays)
         distant_map_h_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 1, )
+            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 1, weights_h)
 
         # Get the correlation, phi, and theta for both maps
         corr_distant_h_dir, phi_distant_h_dir, theta_distant_h_dir = mu.get_corr_map_peak(distant_map_h_dir)
