@@ -333,8 +333,10 @@ class StandardReco:
                 h_weights[pair_index] = np.maximum((snrs[ant1]-1) * (snrs[ant2]-1), 0.)
         else:
             # otherwise equal weights
-            v_weights = np.ones(len(self.pairs_v), dtype=float)
-            h_weights = np.ones(len(self.pairs_h), dtype=float)
+            for pair_index, (ant1, ant2) in self.pairs_v:
+                v_weights[pair_index] = 1.0
+            for pair_index, (ant1, ant2) in self.pairs_h:
+                h_weights[pair_index] = 1.0
         
         # Check if all weights are close to zero (and complain if so)
         v_all_zero = np.all(np.isclose(list(v_weights.values()), 0))
