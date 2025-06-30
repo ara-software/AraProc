@@ -255,9 +255,9 @@ class StandardReco:
         applyWeights : bool
             Boolean whether the pairs should be SNR-weighted in the summed cross correlation.
 
-            By default, every antenna pair enters the summed correlation with equal weighting.
-            That is, each pair receives a weight of 1/num_pairs.
-            With this flag, instead the pair gets upweighted by SNR_i * SNR_j.
+            By default, every antenna pair enters the summed correlation with an SNR weighting.
+            That is, the pair gets upweighted by SNR_i * SNR_j.
+            If applyWeights=False, each pair receives a weight of 1/num_pairs.
             For more information, please see Brian Clark's thesis equations 4.4 and 4.5,
             and the surrounding text.
  
