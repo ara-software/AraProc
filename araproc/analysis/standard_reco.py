@@ -252,6 +252,14 @@ class StandardReco:
                 Waveform type requested by which_trace
         applyHilbert : bool
             Boolean whether the cross-correlation function is Hilbert enveloped.
+        applyWeights : bool
+            Boolean whether the pairs should be SNR-weighted in the summed cross correlation.
+
+            By default, every antenna pair enters the summed correlation with equal weighting.
+            That is, each pair receives a weight of 1/num_pairs.
+            With this flag, instead the pair gets upweighted by SNR_i * SNR_j.
+            For more information, please see Brian Clark's thesis equations 4.4 and 4.5,
+            and the surrounding text.
  
         Returns
         -------
@@ -307,39 +315,47 @@ class StandardReco:
           this_corr_functions_v = self.__corr_functions_v_fullphase
           this_corr_functions_h = self.__corr_functions_h_fullphase
 
-        v_weights = []
-        h_weights = []
+        v_weights = {}
+        h_weights = {}
         if applyWeights:
             # do snr weighting
             snrs = {}
-            chans = list(waveform_bundle.keys())
-            for chan in chans:
+            for chan in waveform_bundle.keys():
                 snrs[chan] = snr.get_snr(waveform_bundle[chan])
 
             # calculate SNR_i * SNR_j (Numerator of Equ 4.4 in Brian's thesis)
-            # modified: subtract off 1 so that SNR=1 events have vanishing weight
+            # With a couple modifications:
+            #   (1) subtract off 1 so that SNR=1 events have vanishing weight
+            #   (2) clamp every value to at least 0 -- that is, no negative weights
             for pair_index, (ant1, ant2) in self.pairs_v:
-                v_weights.append((snrs[ant1]-1) * (snrs[ant2]-1))
+                v_weights[pair_index]=np.maximum((snrs[ant1]-1) * (snrs[ant2]-1), 0.)
             for pair_index, (ant1, ant2) in self.pairs_h:
-                h_weights.append((snrs[ant1]-1) * (snrs[ant2]-1))
+                h_weights[pair_index] = np.maximum((snrs[ant1]-1) * (snrs[ant2]-1), 0.)
         else:
             # otherwise equal weights
             v_weights = np.ones(len(self.pairs_v), dtype=float)
             h_weights = np.ones(len(self.pairs_h), dtype=float)
         
+        # Check if all weights are close to zero (and complain if so)
+        v_all_zero = np.all(np.isclose(list(v_weights.values()), 0))
+        h_all_zero = np.all(np.isclose(list(h_weights.values()), 0))
+
+        if v_all_zero:
+            raise ValueError("All v_weights are close to zero!")
+        if h_all_zero:
+            raise ValueError("All h_weights are close to zero!")
+
         # normalize (calculate the double sum (Denominator of Equ 4.5 in Brian's thesis))
-        v_weights = np.asarray(v_weights)
-        h_weights = np.asarray(h_weights)
-        v_weights/=np.sum(v_weights)
-        h_weights/=np.sum(h_weights)
+        v_denom = sum(v_weights.values())
+        h_denom = sum(h_weights.values())
 
         # stuff into c++ container 
-        weights_v = ROOT.std.map('int', 'double')()
-        for iV, the_weight in enumerate(v_weights):
-            weights_v[iV] = the_weight
-        weights_h = ROOT.std.map('int', 'double')()
-        for iH, the_weight in enumerate(h_weights):
-            weights_h[iH] = the_weight
+        map_weights_v = ROOT.std.map('int', 'double')()
+        for pair in v_weights.keys():
+            map_weights_v[int(pair)] = float(v_weights[pair])/v_denom
+        map_weights_h = ROOT.std.map('int', 'double')()
+        for pair in h_weights.keys():
+            map_weights_h[int(pair)] = float(h_weights[pair])/h_denom
 
         ############################
         ####### VPol Pulser ########
@@ -347,7 +363,7 @@ class StandardReco:
 
         # check the cal pulser in V
         pulser_map_v = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
-            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_nearby, 0, weights_v)
+            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_nearby, 0, map_weights_v)
         
         corr_pulser_v, phi_pulser_v, theta_pulser_v = mu.get_corr_map_peak(pulser_map_v)
         reco_results["pulser_v"] = {
@@ -362,11 +378,11 @@ class StandardReco:
 
         # make a 300 m map in V (Direct rays)
         distant_map_v_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 0, weights_v)
+            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 0, map_weights_v)
 
         # make a 300 m map in V (Refracted/Reflected rays)
         distant_map_v_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 1, weights_v)
+            self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 1, map_weights_v)
 
         # Get the correlation, phi, and theta for both maps
         corr_distant_v_dir, phi_distant_v_dir, theta_distant_v_dir = mu.get_corr_map_peak(distant_map_v_dir)
@@ -392,7 +408,7 @@ class StandardReco:
 
         # check the cal pulser in H
         pulser_map_h = self.rtc_wrapper.correlators["nearby"].GetInterferometricMap(
-            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_nearby, 0, weights_h)
+            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_nearby, 0, map_weights_h)
 
         corr_pulser_h, phi_pulser_h, theta_pulser_h = mu.get_corr_map_peak(pulser_map_h)
         reco_results["pulser_h"] = {
@@ -407,11 +423,11 @@ class StandardReco:
 
         # make a 300 m map in H (Direct rays)
         distant_map_h_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 0, weights_h)
+            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 0, map_weights_h)
 
         # make a 300 m map in H (Refracted/Reflected rays)
         distant_map_h_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
-            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 1, weights_h)
+            self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 1, map_weights_h)
 
         # Get the correlation, phi, and theta for both maps
         corr_distant_h_dir, phi_distant_h_dir, theta_distant_h_dir = mu.get_corr_map_peak(distant_map_h_dir)
@@ -430,6 +446,10 @@ class StandardReco:
             "map": distant_map_h_ref, "radius": self.rtc_wrapper.correlators["distant"].GetRadius(),
             'which_distance': 'distant', 'solution': 1, 'polarization': 1,
         }
+
+        # cleanup (just to be sure....)
+        del map_weights_v
+        del map_weights_h
 
         return reco_results
 
