@@ -7,10 +7,11 @@ station100:
       filt3 : { min_freq : 0.120, max_freq : 0.126, min_power_ratio : 0.02 } # CW @125 MHz
       filt4 : { min_freq : 0.220, max_freq : 0.228, min_power_ratio : 0.02 } # CW @225 MHz
       filt5 : { min_freq : 0.245, max_freq : 0.255, min_power_ratio : 0.01 } # CW @250 MHz
-      filt6 : { min_freq : 0.645, max_freq : 0.655, min_power_ratio : 0.02 } # CW @650 MHz
-      filt7 : { min_freq : 0.805, max_freq : 0.815, min_power_ratio : 0.02 } # CW @809 MHz
-      filt8 : { min_freq : 0.140, max_freq : 0.155, min_power_ratio : 0.005 } # CW @143 MHz
-      filt9 : { min_freq : 0.398, max_freq : 0.408, min_power_ratio : 0.005 } # CW @403 MHz (from radiosonde)
+      filt6 : { min_freq : 0.280, max_freq : 0.310, min_power_ratio : 0.02 } # CW @290 MHz
+      filt7 : { min_freq : 0.645, max_freq : 0.655, min_power_ratio : 0.02 } # CW @650 MHz
+      filt8 : { min_freq : 0.805, max_freq : 0.815, min_power_ratio : 0.02 } # CW @809 MHz
+      filt9 : { min_freq : 0.140, max_freq : 0.155, min_power_ratio : 0.005 } # CW @143 MHz
+      filt10 : { min_freq : 0.398, max_freq : 0.408, min_power_ratio : 0.005 } # CW @403 MHz (from radiosonde)
   config2:
     excluded_channels : []
     filters:
@@ -19,11 +20,12 @@ station100:
       filt3 : { min_freq : 0.120, max_freq : 0.126, min_power_ratio : 0.02 } # CW @125 MHz
       filt4 : { min_freq : 0.220, max_freq : 0.228, min_power_ratio : 0.02 } # CW @225 MHz
       filt5 : { min_freq : 0.245, max_freq : 0.255, min_power_ratio : 0.01 } # CW @250 MHz
-      filt6 : { min_freq : 0.374, max_freq : 0.382, min_power_ratio : 0.02 } # CW @378 MHz
-      filt7 : { min_freq : 0.645, max_freq : 0.655, min_power_ratio : 0.02 } # CW @650 MHz
-      filt8 : { min_freq : 0.805, max_freq : 0.815, min_power_ratio : 0.02 } # CW @809 MHz
-      filt9 : { min_freq : 0.140, max_freq : 0.155, min_power_ratio : 0.005 } # CW @143 MHz
-      filt10 : { min_freq : 0.398, max_freq : 0.408, min_power_ratio : 0.005 } # CW @403 MHz (from radiosonde)
+      filt6 : { min_freq : 0.280, max_freq : 0.310, min_power_ratio : 0.02 } # CW @290 MHz
+      filt7 : { min_freq : 0.374, max_freq : 0.382, min_power_ratio : 0.02 } # CW @378 MHz
+      filt8 : { min_freq : 0.645, max_freq : 0.655, min_power_ratio : 0.02 } # CW @650 MHz
+      filt9 : { min_freq : 0.805, max_freq : 0.815, min_power_ratio : 0.02 } # CW @809 MHz
+      filt10 : { min_freq : 0.140, max_freq : 0.155, min_power_ratio : 0.005 } # CW @143 MHz
+      filt11 : { min_freq : 0.398, max_freq : 0.408, min_power_ratio : 0.005 } # CW @403 MHz (from radiosonde)
   config3:
     excluded_channels : []
     filters:
