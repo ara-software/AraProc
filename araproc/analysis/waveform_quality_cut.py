@@ -3,6 +3,34 @@ import ROOT
 
 from araproc.framework import waveform_utilities as wfu
 
+def get_number_saturated(waveform, saturation_threshold=1500):
+    """
+    Counts number of points in channel's trace which are saturated.
+
+    Parameters
+    ----------
+    waveform: TGraphs or np.ndarrays
+        Waveform TGraphs or np.ndarrays to be averaged.
+    saturation_threshold : float
+        Voltage beyond which a sample is considered saturated (in mV).
+
+    Returns
+    -------
+    n_saturated : int
+        Number of points which are above saturation threshold.
+    """
+        
+    if(isinstance(waveform, ROOT.TGraph)):
+      _, trace = wfu.tgraph_to_arrays(waveform) # in mV
+    elif(isinstance(waveform, np.ndarray)):
+      trace = np.copy(waveform) # in mV
+
+    abs_trace = np.abs(trace)
+    above_threshold = abs_trace > saturation_threshold
+    n_saturated = above_threshold.sum()
+
+    return n_saturated
+
 def check_waveform_saturation(wave_bundle, excluded_channels=[]):
 
     """
@@ -11,16 +39,15 @@ def check_waveform_saturation(wave_bundle, excluded_channels=[]):
     Parameters
     ----------
     wave_bundle: dict of TGraphs or np.ndarrays
-        Dictionary of waveform TGraphs or np.ndarrays to be averaged.
+        Dictionary of waveform TGraphs or np.ndarrays to check.
     excluded_channels: list
-        List of dictionary keys to exclude from average.
+        List of dictionary keys to exclude from check.
 
     Returns
     -------
     is_saturated : bool
         Whether a waveform is saturated.
 
-    An example event that will fail this check is A4 run 6421 event 15333
     """
     
     chans = list(wave_bundle.keys())
@@ -36,15 +63,7 @@ def check_waveform_saturation(wave_bundle, excluded_channels=[]):
             continue 
 
         waveform = wave_bundle[chan]
-
-        if(isinstance(waveform, ROOT.TGraph)):
-          _, trace = wfu.tgraph_to_arrays(waveform) # in mV
-        elif(isinstance(waveform, np.ndarray)):
-          trace = np.copy(waveform) # in mV
-
-        abs_trace = np.abs(trace)
-        above_threshold = abs_trace > saturation_threshold
-        n_above_threshold = above_threshold.sum()
+        n_above_threshold = get_number_saturated(waveform)
 
         if(n_above_threshold > n_points):
             is_saturated = True
