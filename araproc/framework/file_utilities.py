@@ -4,8 +4,9 @@ import ROOT
 import datetime
 import glob
 import numpy as np
-from araproc.framework import constants as const
 import logging
+
+from araproc.framework import constants as const
 
 def file_is_safe(file_path):
     
@@ -111,6 +112,7 @@ def guess_location_of_daq_config_file(station_id, run_number):
 def parse_run_number(run_file_path):
     """
     Helper function to parse the run number from a run file path.
+    
     Parameters
     ----------
     run_file_path : str
@@ -135,4 +137,34 @@ def parse_run_number(run_file_path):
 
     return run_number   
 
-   
+def get_run_config(run_number, station_id):
+
+    """
+    Helper function to determine the livetime configuration of a run based on its run number.
+
+    Parameters
+    ----------
+    run_number : int
+        Run number
+    station_id : int
+        Station id        
+
+    Returns
+    -------
+    config : int
+        Livetime configuration 
+    """
+
+    if station_id == 1:
+        station_id = 100
+
+    if station_id not in const.valid_station_ids:
+        raise Exception(f"Station id {station_id} is not supported")
+
+    qual_cuts = ROOT.AraQualCuts.Instance()
+    config = qual_cuts.getLivetimeConfiguration(run_number, station_id)
+
+    return config
+
+
+
