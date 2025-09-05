@@ -650,7 +650,13 @@ class SimWrapper:
             sim_type = basename.split("_")[0]
             if sim_type == "veff": 
                 # veff_lgE19.0_A2_config2_merged_0001.root 
-                sim_type, lgE, station, config, merged, run_root = basename.split("_")
+                # veff_lgE20.0_A2_config1_neutrino_only_merged_0001.root
+                if len(basename.split("_")) == 6: 
+                    sim_type, lgE, station, config, merged, run_root = basename.split("_")
+                elif len(basename.split("_")) == 8: 
+                    sim_type, lgE, station, config, neutrino, only, merged, run_root = basename.split("_")
+                else:
+                    raise ValueError(f"Unable to parse run information from file name: {basename}")
                 energy = float( lgE[3:] )
                 run = int(run_root.split(".")[0])
             elif sim_type == 'nu':
