@@ -259,7 +259,7 @@ def plot_skymap(the_map,
     ROOT.gStyle.SetPalette(112) # viridis
     ROOT.gPad.SetRightMargin(0.15) # make space for the z axis
 
-    # Add caption
+    # Add note about markers
     caption = ROOT.TLatex(0.5, 0.92, "Correlations include ray tracings, markers are straight line paths")
     caption.SetNDC(True)
     caption.SetTextAlign(22)
