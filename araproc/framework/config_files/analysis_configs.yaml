@@ -234,16 +234,16 @@ station5:
     excluded_channels : []
     filters:
       filt1 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10 }
-      filt2 : { min_freq : 0.045, max_freq : 0.127, min_power_ratio : 0.0001}
-      filt3 : { min_freq : 0.127, max_freq : 0.160, min_power_ratio : 0.001 }
+      filt2 : { min_freq : 0.045, max_freq : 0.127, min_power_ratio : 0.02 } #0.01 } #0.0001}
+      filt3 : { min_freq : 0.127, max_freq : 0.160, min_power_ratio : 0.02} #0.001 }
       #filt4 : { min_freq : 0.200, max_freq : 0.290, min_power_ratio : 0.01 } # ORIG # 0.0009 to kill peak at 250
-      filt4 : { min_freq : 0.200, max_freq : 0.290, min_power_ratio : 0.02 } # ORIG # 0.0009 to kill peak at 250
+      filt4 : { min_freq : 0.200, max_freq : 0.290, min_power_ratio : 0.03 } #0.019 } # ORIG # 0.0009 to kill peak at 250
       #filt10 : { min_freq : 0.200, max_freq : 0.290, min_power_ratio : 0.01 }
-      filt5 : { min_freq : 0.220, max_freq : 0.240, min_power_ratio : 0.001 }
-      filt7 : { min_freq : 0.290, max_freq : 0.310, min_power_ratio : 0.001 }
+      filt5 : { min_freq : 0.220, max_freq : 0.240, min_power_ratio : 0.01 } #0.001 }
+      filt7 : { min_freq : 0.290, max_freq : 0.310, min_power_ratio : 0.02 } #0.001 }
       filt8 : { min_freq : 0.310, max_freq : 0.590, min_power_ratio : 0.02 }
       filt9 : { min_freq : 0.390, max_freq : 0.420, min_power_ratio : 0.002 }
-      filt10 : { min_freq : 0.240, max_freq : 0.260, min_power_ratio : 0.0009 } # kills line at 250
+      filt10 : { min_freq : 0.240, max_freq : 0.260, min_power_ratio : 0.0022 } #0.0009 } #0.0009 } # kills line at 250
       filt11 : { min_freq : 0.490, max_freq : 0.510, min_power_ratio : 0.0009 }
   config2:
     excluded_channels : []
