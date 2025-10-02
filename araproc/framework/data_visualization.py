@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from araproc.framework import constants as const
 from araproc.framework import waveform_utilities as wu
 from araproc.framework import map_utilities as mu
 import ROOT
@@ -17,10 +18,29 @@ But also, "agg" sometimes give segfaults, so instead we use "pdf".
 import matplotlib # noqa : E402
 matplotlib.use("pdf")
 
+def get_wf_color(channel_number, excluded_channels): 
+    """
+    Given a channel number and a list of excluded channels, return a purple 
+      color for all VPols (channel_number<8) in purple, a green color for
+      HPols (channel_number > 8), and a slightly greyer purple or green if the 
+      channel is masked.
+    """
+    if channel_number in const.vpol_channel_ids: # Vpols
+        if channel_number in excluded_channels: # Channel is masked
+            return 'thistle'
+        else:
+            return 'purple'
+    else: # HPols
+        if channel_number in excluded_channels: # channel is masked
+            return '#c8d9bf' # A lighter version of "xkcd:greenish grey"
+        else: 
+            return 'green'
+
 def plot_waveform_bundle(
     waveform_dict,
     time_or_freq = "time",
-    output_file_path = None
+    output_file_path = None, 
+    excluded_channels = (),
     ):
     """
     Code to plot a bundle of waveforms.
@@ -94,12 +114,13 @@ def plot_waveform_bundle(
         ymin = min(ymin, yvals.min())
         ymax = max(ymax, yvals.max())
 
-        if wave_key < 8: # VPol channels
-            axd[f"ch{wave_key}"].plot(xvals, yvals, color = 'purple', lw = 1) # make the plot
-            axd[f"ch{wave_key}"].set_title(f"Channel {wave_key}")
-        else: # HPol channels
-            axd[f"ch{wave_key}"].plot(xvals, yvals, color = 'green', lw = 1) # make the plot
-            axd[f"ch{wave_key}"].set_title(f"Channel {wave_key}")
+        # make the plot
+        axd[f"ch{wave_key}"].plot(xvals, yvals, color=get_wf_color(wave_key, excluded_channels), lw = 1)
+        axd[f"ch{wave_key}"].set_title(f"Channel {wave_key}")
+
+        # Add warning to channels that are masked
+        if wave_key in excluded_channels: 
+            axd[f"ch{wave_key}"].annotate("Masked to Analysis", (0.03,0.87), xycoords='axes fraction', c='grey')
 
     # label axes  
     for ax in [axd["ch12"], axd["ch13"], axd["ch14"], axd["ch15"]]:
