@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from araproc.framework import constants as const
 from araproc.framework import waveform_utilities as wu
 from araproc.framework import map_utilities as mu
 import ROOT
@@ -24,7 +25,7 @@ def get_wf_color(channel_number, excluded_channels):
       HPols (channel_number > 8), and a slightly greyer purple or green if the 
       channel is masked.
     """
-    if channel_number < 8: # Vpols
+    if channel_number in const.vpol_channel_ids: # Vpols
         if channel_number in excluded_channels: # Channel is masked
             return 'thistle'
         else:
