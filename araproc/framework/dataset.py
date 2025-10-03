@@ -897,6 +897,7 @@ class SimWrapper:
             self.event_ptr.Nu_Interaction[likely_interaction].nnu.Phi()
         ) # Although this references the mostly likely triggering interaction, 
         # the direction of all particles in the same event should be the same
+        sim_info["is_noise"] = (int(self.settings_ptr.TRIG_ANALYSIS_MODE) == 2) # modes 0 & 1 are for signal, 2 is pure noise
 
         return sim_info
     
