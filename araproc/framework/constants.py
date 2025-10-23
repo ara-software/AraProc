@@ -23,6 +23,10 @@ num_polarization = 2
 num_trigger_type = 3
 num_rf_channels = len(rf_channels_ids)
 
+# reconstruction maps
+all_reco_result_maps = set(["pulser_v", "distant_v_dir", "distant_v_ref",
+                            "pulser_h", "distant_h_dir", "distant_h_ref"]) 
+
 # ice model
 def get_index_of_refraction(z): 
     """
