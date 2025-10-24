@@ -28,7 +28,7 @@ class StandardReco:
     Based on this information, it also calcultes the appropriate waveform pairs.
     Then it instantiates the two ray trace correlators wwe are expecting to use.
     One at the pulser distance, with the key/name "nearby."
-    And one at 300m, with the key/name "distant."
+    And one at a distant radius, with the key/name "distant."
     They are stored in RTC wrapper which belongs to this class.
     See the list of attributes below.
 
@@ -107,21 +107,6 @@ class StandardReco:
         for i in excluded_channels:
             excluded_channels_vec.push_back(int(i))
 
-        # each station has a slightly different distance for the cal pulser reco,
-        # so look that up
-
-        self.calpulser_r_library = {
-            100 : "48.02",
-            2 : "42.86",
-            3 : "41.08",
-            4 : "52.60",
-            5 : "49.23"
-        }
-
-        # for distant events, we use the same radius
-        self.distant_events_r_library = {
-            1 : "300",
-        }
 
         self.num_channels = num_channels_library[station_id]
         self.station_id = station_id
@@ -130,26 +115,26 @@ class StandardReco:
 
         # always add a "nearby" correlator for 41m away
         dir_path = os.path.join(ray_trace_tables_dir,
-                                f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{self.calpulser_r_library[station_id]}_angle_1.00_solution_0_v2.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{const.calpulser_r_library[station_id]}_angle_1.00_solution_0_v2.root"
                                 )
         ref_path = os.path.join(ray_trace_tables_dir,
-                                f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{self.calpulser_r_library[station_id]}_angle_1.00_solution_1_v2.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{const.calpulser_r_library[station_id]}_angle_1.00_solution_1_v2.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "nearby",
-                radius=float(self.calpulser_r_library[station_id]),
+                radius=float(const.calpulser_r_library[station_id]),
                 path_to_dir_file=dir_path,
                 path_to_ref_file=ref_path
                 )
 
-        # always add a "distant" correlator for 300m away
+        # always add a "distant" correlator for (145m or 300m) away
         dir_path = os.path.join(ray_trace_tables_dir,
-                                f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_300.00_angle_1.00_solution_0_v2.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{const.distant_events_r_library[station_id]}_angle_1.00_solution_0_v2.root"
                                 )
         ref_path = os.path.join(ray_trace_tables_dir,
-                                f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_300.00_angle_1.00_solution_1_v2.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_40_radius_{const.distant_events_r_library[station_id]}_angle_1.00_solution_1_v2.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "distant",
-                radius=float(self.distant_events_r_library[1]),
+                radius=float(const.distant_events_r_library[station_id]),
                 path_to_dir_file=dir_path,
                 path_to_ref_file=ref_path
                 )
@@ -233,10 +218,10 @@ class StandardReco:
         It then calculates a suite of (currently) four maps, with the following names:
             "pulser_v" : vpol x-corr map at the radius of the cal pulser
             "pulser_h" : hpol x-corr map at the radius of the cal pulser
-            "distant_v_dir" : vpol x-corr map at the radius of 300 m with a direct hypothesis
-            "distant_v_ref" : vpol x-corr map at the radius of 300 m with a refracted/reflected hypothesis
-            "distant_h_dir" : hpol x-corr map at the radius of 300 m with a direct hypothesis
-            "distant_h_ref" : hpol x-corr map at the radius of 300 m with a refracted/reflected hypothesis
+            "distant_v_dir" : vpol x-corr map at the distant radius with a direct hypothesis
+            "distant_v_ref" : vpol x-corr map at the distant radius with a refracted/reflected hypothesis
+            "distant_h_dir" : hpol x-corr map at the distant radius with a direct hypothesis
+            "distant_h_ref" : hpol x-corr map at the distant radius with a refracted/reflected hypothesis
         
         For each of these maps, it locates the peak corr and the phi/theta of the peak.
         For each of these maps, it returns a dictionary of results, with a key (a string),
@@ -392,11 +377,11 @@ class StandardReco:
         ############################
 
         if "distant_v_dir" in self.requested_maps:
-            # make a 300 m map in V (Direct rays)
+            # make a disant map in V (Direct rays)
             distant_map_v_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
                 self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 0, map_weights_v)
             
-            # Get the correlation, phi, and theta for 300 m V dir maps
+            # Get the correlation, phi, and theta for distant V dir maps
             corr_distant_v_dir, phi_distant_v_dir, theta_distant_v_dir = mu.get_corr_map_peak(distant_map_v_dir)
             
             # Store the direct rays results
@@ -407,11 +392,11 @@ class StandardReco:
             }
 
         if "distant_v_ref" in self.requested_maps:
-            # make a 300 m map in V (Refracted/Reflected rays)
+            # make a distant map in V (Refracted/Reflected rays)
             distant_map_v_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
                 self.pairs_v, this_corr_functions_v, self.__arrival_delays_v_distant, 1, map_weights_v)
             
-            # Get the correlation, phi, and theta for 300 m V ref maps
+            # Get the correlation, phi, and theta for distant V ref maps
             corr_distant_v_ref, phi_distant_v_ref, theta_distant_v_ref = mu.get_corr_map_peak(distant_map_v_ref)
             
             # Store the refracted/reflected rays results
@@ -442,11 +427,11 @@ class StandardReco:
         ############################
 
         if "distant_h_dir" in self.requested_maps:
-            # make a 300 m map in H (Direct rays)
+            # make a distant map in H (Direct rays)
             distant_map_h_dir = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
                 self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 0, map_weights_h)
 
-            # Get the correlation, phi, and theta for 300 m V dir maps
+            # Get the correlation, phi, and theta for distant V dir maps
             corr_distant_h_dir, phi_distant_h_dir, theta_distant_h_dir = mu.get_corr_map_peak(distant_map_h_dir)
             
             # Store the direct rays results
@@ -457,11 +442,11 @@ class StandardReco:
             }
         
         if "distant_h_ref" in self.requested_maps:
-            # make a 300 m map in H (Refracted/Reflected rays)
+            # make a distant map in H (Refracted/Reflected rays)
             distant_map_h_ref = self.rtc_wrapper.correlators["distant"].GetInterferometricMap(
                 self.pairs_h, this_corr_functions_h, self.__arrival_delays_h_distant, 1, map_weights_h)
 
-            # Get the correlation, phi, and theta for 300 m V ref maps
+            # Get the correlation, phi, and theta for distant V ref maps
             corr_distant_h_ref, phi_distant_h_ref, theta_distant_h_ref = mu.get_corr_map_peak(distant_map_h_ref)
 
             # Store the refracted/reflected rays results in a separate dictionary
@@ -500,7 +485,7 @@ class StandardReco:
             meaning phi [-180 -> 180],  of the sky point you want looked up.
         which_distance : str
             Because this is our standard reco set, you can choose between "nearby" (at the cal pulser distance),
-            or "distant" (at 300 m).
+            or "distant".
         solution : int
             Which solution do you want. 0 = direct, 1 = reflected/refracted.
         
