@@ -27,6 +27,24 @@ num_rf_channels = len(rf_channels_ids)
 all_reco_result_maps = set(["pulser_v", "distant_v_dir", "distant_v_ref",
                             "pulser_h", "distant_h_dir", "distant_h_ref"]) 
 
+# each station's cal pulser radius
+calpulser_r_library = {
+    100 : "48.02",
+    2 : "42.86",
+    3 : "41.08",
+    4 : "52.60",
+    5 : "49.23"
+}
+
+# each station's distant radius
+distant_events_r_library = {
+    100 : "145.00",
+    2 : "300.00",
+    3 : "300.00",
+    4 : "300.00",
+    5 : "300.00"
+}
+
 # ice model
 def get_index_of_refraction(z): 
     """
