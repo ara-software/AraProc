@@ -1,6 +1,5 @@
 import array
 import copy
-import ctypes
 import logging
 import os
 import numpy as np
@@ -230,23 +229,22 @@ class DataWrapper:
             raise
  
     def __establish_run_number(self):
-
-        run_ptr = ctypes.c_int()
+        run_ptr = array.array('i', [0])  # Int_t buffer
         try:
-            self.event_tree.SetBranchAddress("run",run_ptr)
+            rc = self.event_tree.SetBranchAddress("run", run_ptr)
+            if rc != 0:
+                raise RuntimeError(f"SetBranchAddress('run', …) failed with rc={rc}")
             logging.debug("Setting the run branch address worked")
         except:
             logging.critical("Could not assign run branch address")
             raise
-
         try:
             self.event_tree.GetEntry(0)
             logging.debug("Got entry zero for purposes of establishing run number")
         except:
             logging.critical("Could not get entry zero for purposes of establishing run number")
             raise
-    
-        self.run_number = run_ptr.value
+        self.run_number = int(run_ptr[0])
 
     def __establish_data_station_id(self):
 
