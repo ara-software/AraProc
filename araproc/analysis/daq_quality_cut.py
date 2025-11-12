@@ -9,14 +9,14 @@ import araproc.framework.config_files as config_files
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
-def process_event_info(useful_event, station_id):
+def process_event_info(raw_event, station_id):
 
     """
-    Process a useful_event to extract event information, determine trigger type, and calculate block length.
+    Process a raw_event to extract event information, determine trigger type, and calculate block length.
 
     Parameters
     ----------
-    useful_event : object
+    raw_event : object
         The useful event object containing event information.
     station_id : int
         The station ID used to determine pulser time.
@@ -34,21 +34,21 @@ def process_event_info(useful_event, station_id):
     """
 
     # Extract block information
-    num_blocks = len(useful_event.blockVec)
+    num_blocks = len(raw_event.blockVec)
     block_nums = np.empty(num_blocks)  # Create an empty array for block numbers
     channel_mask = np.empty(num_blocks, dtype=int)  # Create an empty array for channel masks
     for n in range(num_blocks):
-        this_block_id = useful_event.blockVec[n].getBlock()
+        this_block_id = raw_event.blockVec[n].getBlock()
         block_nums[n] = int(this_block_id)
-        channel_mask[n] = useful_event.blockVec[n].channelMask
+        channel_mask[n] = raw_event.blockVec[n].channelMask
     # Extract event-level information
-    read_win = useful_event.numReadoutBlocks  # Number of readout blocks
+    read_win = raw_event.numReadoutBlocks  # Number of readout blocks
 
-    if useful_event.isCalpulserEvent():
+    if raw_event.isCalpulserEvent():
        trig_type = 1
-    elif useful_event.isRFTrigger():
+    elif raw_event.isRFTrigger():
        trig_type = 0
-    elif useful_event.isSoftwareTrigger():
+    elif raw_event.isSoftwareTrigger():
        trig_type = 2
     elif station_id == 5: 
         # Station 5 force readouts from PA don't have a trigger type. Log them as an RF event
@@ -183,14 +183,14 @@ def get_readout_window_errors(blk_len_sort, trig_sort, channel_mask, dataset):
     return np.sum(read_win_err) > 0
 
 
-def check_daq_quality(useful_event, dataset):
+def check_daq_quality(raw_event, dataset):
 
     """
     Main function to extract DAQ structure and readout window errors for a single event.
 
     Parameters
     ----------
-    useful_event : object
+    raw_event : object
         The useful event object containing event information.
     dataset : araproc dataset
 
@@ -202,8 +202,8 @@ def check_daq_quality(useful_event, dataset):
     """
 
     station_id = dataset.station_id
-    # Extract necessary information from useful_event using the merged function
-    num_ddas,blk_len, trig_type, irs_block_number, channel_mask = process_event_info(useful_event, station_id)
+    # Extract necessary information from raw_event using the merged function
+    num_ddas,blk_len, trig_type, irs_block_number, channel_mask = process_event_info(raw_event, station_id)
     ## Make sure the event has known trigger type
     if trig_type is None:
        return True 
