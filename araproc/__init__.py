@@ -12,11 +12,18 @@ try:
         path = os.path.dirname(path)
 
     if os.path.isdir(os.path.join(path, ".git")):
+
+        # Get the current branch
+        branch_reference = subprocess.check_output(
+            ['cat', f"{path}/.git/HEAD"]
+        ).strip().decode("utf-8") # returns something like: `ref: refs/heads/main`
+        branch_path = branch_reference.split(" ")[-1]
+
+        # Get the current git hash
         git_hash = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"],
-            cwd=path,
-            stderr=subprocess.DEVNULL
+            ['cat', f"{path}/.git/{branch_path}"]
         ).strip().decode("utf-8")
+
 except Exception:
     raise ValueError("Could not determine git hash")
 
