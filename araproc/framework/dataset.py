@@ -244,6 +244,10 @@ class DataWrapper:
         except:
             logging.critical("Could not get entry zero for purposes of establishing run number")
             raise
+
+        if int(run_ptr[0]) == 0:
+            raise ValueError("Extracted run number was 0, something probably went wrong!")
+
         self.run_number = int(run_ptr[0])
 
     def __establish_data_station_id(self):
