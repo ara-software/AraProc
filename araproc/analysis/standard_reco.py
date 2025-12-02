@@ -1054,7 +1054,105 @@ class StandardReco:
         avg_hpol_corr_snr = np.mean(avg_hpol_corr_snr)
 
         return avg_vpol_corr_snr, avg_hpol_corr_snr  
+   
+    def get_max_rms_corr(self, wave_packet, excluded_channels = []):
+        """
+        Computes SNR-weighted average correlation of baselines including the highest RMS channel.
+
+        Parameters
+        ----------
+        wavepacket: dict
+            A dict with three entries:
+              "event": int  
+                Event number
+              "waveforms": dict
+                Dict mapping RF channel ID to waveforms.
+                Keys are channel id (an integer)
+                Values are TGraphs
+              "trace_type": string
+                Waveform type requested by which_trace.
+        excluded_channels: list
+            List of dictionary keys to exclude from average.
+
+        Returns
+        -------
+        avg_max_rms_corr_v : float
+            The average correlation with the max rms Vpol channel.
+        avg_max_rms_corr_h : float
+            The average correlation with the max rms Hpol channel.
+        """
+        
+        wave_bundle = wave_packet["waveforms"]
+        chans = sorted(list(wave_bundle.keys()))
+
+        good_vpol_chs, good_hpol_chs = [], []
+        snrs = {}
+        max_rms_v = 0
+        max_rms_h = 0
+        max_rms_chan_v = -1
+        max_rms_chan_h = -1
+
+        for chan in chans:
+            if chan in excluded_channels:
+                continue
+
+            rms = snr.get_jackknife_rms(wave_bundle[chan])
+            snrs[chan] = snr.get_snr(wave_bundle[chan])
+
+            if chan in const.vpol_channel_ids:
+                good_vpol_chs.append(chan)
+                if rms > max_rms_v:
+                    max_rms_v = rms
+                    max_rms_chan_v= chan
+            if chan in const.hpol_channel_ids:
+                good_hpol_chs.append(chan)
+                if rms > max_rms_h:
+                    max_rms_h = rms
+                    max_rms_chan_h = chan
+
+        # form weights and pair-wise correlations
+        snr_pair_weight_v = []
+        snr_pair_corr_v = []
+        for chan in good_vpol_chs:
+            if chan == max_rms_chan_v:
+                continue
+        
+            this_snr_weight = max((snrs[chan]-1.)*(snrs[max_rms_chan_v]-1.), 0)
+            _, corr_func = wfu.tgraph_to_arrays(self.__get_correlation_function(chan, max_rms_chan_v, wave_packet, False))
+            this_corr = corr_func.max()
+
+            snr_pair_weight_v.append(this_snr_weight)
+            snr_pair_corr_v.append(this_corr)
+        
+        snr_pair_weight_h = []
+        snr_pair_corr_h = []
+        for chan in good_hpol_chs:
+            if chan == max_rms_chan_h:
+                continue
+        
+            this_snr_weight = max((snrs[chan]-1.)*(snrs[max_rms_chan_h]-1.), 0)
+            _, corr_func = wfu.tgraph_to_arrays(self.__get_correlation_function(chan, max_rms_chan_h, wave_packet, False))
+            this_corr = corr_func.max()
+
+            snr_pair_weight_h.append(this_snr_weight)
+            snr_pair_corr_h.append(this_corr)
+
+        # normalize weights 
+        snr_pair_weight_v = np.asarray(snr_pair_weight_v)
+        snr_pair_weight_h = np.asarray(snr_pair_weight_h)
     
+        snr_pair_weight_v /= snr_pair_weight_v.sum()
+        snr_pair_weight_h /= snr_pair_weight_h.sum()
+
+        # find avg corr
+        snr_pair_corr_v = np.asarray(snr_pair_corr_v)
+        snr_pair_corr_h = np.asarray(snr_pair_corr_h)
+
+        avg_max_rms_corr_v = (snr_pair_weight_v * snr_pair_corr_v).sum()
+        avg_max_rms_corr_h = (snr_pair_weight_h * snr_pair_corr_h).sum()
+
+        return avg_max_rms_corr_v, avg_max_rms_corr_h
+
     def get_plane_wave_zenith(self, wave_packet, ch1, ch2):
         """
         Computes the elevation angle of a signal based on timing differences between

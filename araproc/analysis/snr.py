@@ -442,6 +442,38 @@ def get_snr_rsd(wave_bundle, excluded_channels=[]):
 
     return snr_rsd
 
+def collect_rms(wave_bundle, excluded_channels=[]):
+
+    """
+    Collects the RMSs of each included channel.
+
+    Parameters
+    ----------
+    wave_bundle: dict of TGraphs or np.ndarrays
+        Dictionary of waveform TGraphs or np.ndarrays to be averaged.
+    excluded_channels: list
+        List of dictionary keys to exclude from average.
+
+    Returns
+    -------
+    rmss : list of floats 
+        The RMSs of all included channels
+    """
+    
+    chans = list(wave_bundle.keys())
+
+    rmss = []
+    for chan in chans:
+      if(chan in excluded_channels):
+        continue
+
+      waveform = wave_bundle[chan]
+      rms = get_jackknife_rms(waveform)
+      rmss.append(rms)
+
+    return rmss
+
+
 def get_avg_rms(wave_bundle, excluded_channels=[]):
 
     """
@@ -459,20 +491,39 @@ def get_avg_rms(wave_bundle, excluded_channels=[]):
     avg_rms : float
         The average RMS.
     """
-    
-    chans = list(wave_bundle.keys())
-
-    rms = []
-    for chan in chans:
-      if(chan in excluded_channels):
-        continue
-
-      waveform = wave_bundle[chan]
-      thisRms = get_jackknife_rms(waveform)
-      rms.append(thisRms)
-
+   
+    rms = collect_rms(wave_bundle, excluded_channels=excluded_channels)
     avg_rms = np.mean(rms)
-
+    
     return avg_rms
+
+def get_max_rms_ratio(wave_bundle, excluded_channels=[]):
+
+    """
+    Calculates the ratio of the channel-wise maximum RMS to the channel-wise averaged RMS.
+    
+    Parameters
+    ----------
+    wave_bundle: dict of TGraphs or np.ndarrays
+        Dictionary of waveform TGraphs or np.ndarrays to be averaged.
+    excluded_channels: list
+        List of dictionary keys to exclude from average.
+
+    Returns
+    -------
+    max_rms_ratio : float
+        The average RMS.
+    """
+
+    rms = collect_rms(wave_bundle, excluded_channels=excluded_channels)
+    avg_rms = np.mean(rms)
+    max_rms = np.max(rms)
+       
+    if avg_rms == 0: # this can only happen if all channels have 0 rms
+        return 1.0
+
+    max_rms_ratio = max_rms / avg_rms
+
+    return max_rms_ratio
 
 
