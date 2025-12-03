@@ -1103,7 +1103,7 @@ class StandardReco:
                 good_vpol_chs.append(chan)
                 if rms > max_rms_v:
                     max_rms_v = rms
-                    max_rms_chan_v= chan
+                    max_rms_chan_v = chan
             elif chan in const.hpol_channel_ids:
                 good_hpol_chs.append(chan)
                 if rms > max_rms_h:
