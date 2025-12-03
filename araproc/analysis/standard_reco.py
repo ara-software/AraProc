@@ -1104,7 +1104,7 @@ class StandardReco:
                 if rms > max_rms_v:
                     max_rms_v = rms
                     max_rms_chan_v= chan
-            if chan in const.hpol_channel_ids:
+            elif chan in const.hpol_channel_ids:
                 good_hpol_chs.append(chan)
                 if rms > max_rms_h:
                     max_rms_h = rms
