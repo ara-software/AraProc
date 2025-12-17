@@ -1087,8 +1087,8 @@ class StandardReco:
 
         good_vpol_chs, good_hpol_chs = [], []
         snrs = {}
-        max_rms_v = 0
-        max_rms_h = 0
+        max_rms_v = -1
+        max_rms_h = -1
         max_rms_chan_v = -1
         max_rms_chan_h = -1
 
@@ -1101,12 +1101,12 @@ class StandardReco:
 
             if chan in const.vpol_channel_ids:
                 good_vpol_chs.append(chan)
-                if rms > max_rms_v:
+                if rms > max_rms_v or max_rms_v < 0:
                     max_rms_v = rms
                     max_rms_chan_v = chan
             elif chan in const.hpol_channel_ids:
                 good_hpol_chs.append(chan)
-                if rms > max_rms_h:
+                if rms > max_rms_h or max_rms_h < 0:
                     max_rms_h = rms
                     max_rms_chan_h = chan
 
