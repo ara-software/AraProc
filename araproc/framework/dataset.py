@@ -891,6 +891,7 @@ class SimWrapper:
         sim_info["enu"] = self.event_ptr.nu_prim_energy
         sim_info["pid"] = self.event_ptr.nu_prim_pid
         sim_info["evid"] = self.event_ptr.event_ID
+        sim_info["likely_int_id"] = likely_interaction
         sim_info["vertex"] = self.get_AraSim_xyz_position(
             self.detector_ptr.stations[0],
             self.event_ptr.Nu_Interaction[likely_interaction].posnu)
