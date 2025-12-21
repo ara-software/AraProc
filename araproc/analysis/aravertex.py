@@ -21,16 +21,16 @@ class AraVertexReco:
             raise ValueError("excluded_channels must be a 1D numpy array")
 
         self.station_id = station_id
-        self.num_channels = 16
+        self.num_channels = const.num_rf_channels
         self.excluded_channels = [int(ch) for ch in excluded_channels]
 
         # load ARA geomtool
         self.araGeom = ROOT.AraGeomTool.Instance()
         ROOT.SetOwnership(self.araGeom, True)
 
-        # Compute station COG
+        # Compute station COG (center of gravity) or station center
         antenna_average = np.zeros(3)
-        for i in range(16): # 16 channels
+        for i in range(16): # 16 RF channels
             for ii in range(3): # 3 axes (x, y, z)
                 antenna_average[ii] += (self.araGeom.getStationInfo(station_id).getAntennaInfo(i).antLocation[ii])
         antenna_average /= 16.0
@@ -73,7 +73,7 @@ class AraVertexReco:
         for pol_key, pol in [("aravertex_v", 0), ("aravertex_h", 1)]:
 
             if pol_key not in self.reco_pol:
-                continue
+                raise RuntimeError(f"Unsupported polarization key: {pol_key}")
 
             # reset internal AraVertex state
             self.Reco.clear()
@@ -100,7 +100,7 @@ class AraVertexReco:
             reco_out = self.Reco.doPairFitSpherical()
 
             # handle failures
-            if not math.isfinite(reco_out.theta):
+            if not (math.isfinite(reco_out.theta) and math.isfinite(reco_out.phi)):
                 reco_results[pol_key] = {
                     "valid": False,
                     "theta": np.nan,
@@ -109,9 +109,9 @@ class AraVertexReco:
                 continue
 
             # convert to ARA conventions
-            theta = 90.0 - reco_out.theta * ROOT.TMath.RadToDeg()
-            phi = reco_out.phi * ROOT.TMath.RadToDeg()
-            R = reco_out.R
+            theta = 90.0 - reco_out.theta * ROOT.TMath.RadToDeg() # in degree
+            phi = reco_out.phi * ROOT.TMath.RadToDeg() # in degree
+            R = reco_out.R # in meter
 
             reco_results[pol_key] = {
                 "valid": True,
