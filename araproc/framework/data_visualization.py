@@ -238,7 +238,8 @@ def plot_skymap(the_map,
         else:
             phi = theta = None
 
-        # skip unphysical default solution
+        # skip AraVertex default failure return (no valid hit pairs, e.g. SNR < 5)
+        # when this happens, AraVetex saves placeholder reconstruction (theta = 90 degree and phi = 0 degree)
         if phi is not None and not (abs(theta - 90.0) < 1e-3 and abs(phi) < 1e-3):
             av_marker = ROOT.TMarker(phi, theta, 34)
             av_marker.SetMarkerColor(ROOT.kBlue)
