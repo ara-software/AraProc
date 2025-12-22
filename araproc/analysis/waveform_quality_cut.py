@@ -77,7 +77,7 @@ def check_valid_waveforms(wave_bundle, excluded_channels=[]):
     
     Parameters
     ----------
-    wavepacket : dict
+    wave_bundle : dict
         A dict with three entries:
           "event" : int  
             Event number
@@ -90,6 +90,8 @@ def check_valid_waveforms(wave_bundle, excluded_channels=[]):
             The exclusions are handled further down under the excluded channels section.
           "trace_type" : string
             Waveform type requested by which_trace
+    excluded_channels: list
+        List of dictionary keys to exclude from check.
 
     Returns
     -------
@@ -140,6 +142,8 @@ def is_bad_waveform_quality(wavepacket, excluded_channels=[]):
             The exclusions are handled further down under the excluded channels section.
           "trace_type" : string
             Waveform type requested by which_trace
+    excluded_channels: list
+        List of dictionary keys to exclude from check.
 
     Returns
     -------
