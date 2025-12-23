@@ -999,7 +999,7 @@ class SimWrapper:
         Parameters
         ----------
         origin : AraSim::Position
-            Location to serving at the XY origin. The Z-coordinate is take relative to the ice above this point.
+            Location serving as the XY origin. The Z-coordinate is taken relative to the ice above this point.
             Usually the station.
         position : AraSim::Position
             Location whose coordinates we are interested in. 
