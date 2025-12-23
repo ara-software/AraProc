@@ -993,16 +993,16 @@ class SimWrapper:
 
     def get_AraSim_xyz_position(self, origin, position):
         """
-        Return the XY displacement of a origin and its depth with respect to
-        the surface of the ice. 
+        Return the XY displacement of a position from the origin, and the position depth with respect to
+        the surface of the ice above the origin. 
 
         Parameters
         ----------
         origin : AraSim::Position
-            Location to measure X-Y displacement from `position` and depth from ice surface.
+            Location to serving at the XY origin. The Z-coordinate is take relative to the ice above this point.
             Usually the station.
         position : AraSim::Position
-            Location to measure `origin` X-Y displacement with respect to. 
+            Location whose coordinates we are interested in. 
             Usually a cascade.
 
         Returns
@@ -1010,28 +1010,23 @@ class SimWrapper:
         dx : float
             X displacement from `position` to `origin` in meters
         dy : float
-            X displacement from `position` to `origin` in meters
+            Y displacement from `position` to `origin` in meters
         depth : float
             Depth of `origin` with respect to the surface of the ice defined by `ROOT::IceModel`
         """
 
         # Get XY coordinates of provided origin
-        r_from_pole_origin = np.sqrt(origin.GetX()**2 + origin.GetY()**2)
-        lon_origin = np.radians(origin.Lon())
-        x_origin = r_from_pole_origin * np.cos(lon_origin)
-        y_origin = r_from_pole_origin * np.sin(lon_origin)
+        x_origin = origin.GetX() 
+        y_origin = origin.GetY()
 
         # Convert XY position coordinates
-        r_from_pole_position = np.sqrt(position.GetX()**2 + position.GetY()**2)
-        lon_position = np.radians(position.Lon())
-        x_position = r_from_pole_position * np.cos(lon_position)
-        y_position = r_from_pole_position * np.sin(lon_position)
+        x_position = position.GetX() 
+        y_position = position.GetY() 
 
-        # Get depth of the position
-        origin_depth = self.icemodel_ptr.Surface( origin.Lon(), origin.Lat()) - origin.R()
-        ang_diff = origin.Angle(position)
-        depth_diff = origin.R() - position.R()*np.cos(ang_diff)
-        z_position = -origin_depth - depth_diff
+        # Get depth of the position -- careful here since arasim is pretending the Earth is flat...
+        origin_surface = self.icemodel_ptr.Surface( origin.Lon(), origin.Lat()) - origin.R() # surface relative to origin
+        origin_point = position.GetZ() - origin.GetZ() # position relative to origin
+        z_position = origin_point - origin_surface # position relative to surface
 
         return x_position-x_origin, y_position-y_origin, z_position
 
