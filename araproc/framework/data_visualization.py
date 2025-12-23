@@ -164,6 +164,7 @@ def plot_skymap(the_map,
                 plane_wave_elevation = None, 
                 station_id = None, landmarks = None,
                 calpulser_indices = None, spice_depth = None,
+                aravertex_results = None,
                 output_file_path = None
                 ):
     """
@@ -182,6 +183,8 @@ def plot_skymap(the_map,
         the depth of spice pulser ## example -1451.3
     output_file_path: str
         path to the output file
+    aravertex_results : dict or None
+        AraVertex reconstruction results; no marker is shown if hit-channel SNR < 5   
   
     Returns
     -------
@@ -224,6 +227,32 @@ def plot_skymap(the_map,
        label0.SetTextSize(0.03)
        label0.Draw("SAME")
        labels.append(label0)
+
+    # AraVertex marker (not shown if hit-channel SNR < 5)
+    if aravertex_results is not None:
+        for r in aravertex_results.values():
+            if r["valid"]:
+                phi = r["phi"]
+                theta = r["theta"]
+                break
+        else:
+            phi = theta = None
+
+        # skip AraVertex default failure return (no valid hit pairs, e.g. SNR < 5)
+        # when this happens, AraVetex saves placeholder reconstruction (theta = 90 degree and phi = 0 degree)
+        if phi is not None and not (abs(theta - 90.0) < 1e-3 and phi == 0.0):
+            av_marker = ROOT.TMarker(phi, theta, 34)
+            av_marker.SetMarkerColor(ROOT.kBlue)
+            av_marker.SetMarkerSize(1.0)
+            av_marker.Draw("SAME")
+            markers.append(av_marker)
+
+            av_label = ROOT.TLatex(phi + 3, theta + 3, "AraVertex")
+            av_label.SetTextColor(ROOT.kBlue)
+            av_label.SetTextSize(0.025)
+            av_label.Draw("SAME")
+            labels.append(av_label)
+ 
       
     ## Add known locations to the skymap 
     landmark_dict = mu.AraGeom(station_id).get_known_landmarks(landmarks, calpulser_indices, spice_depth)
