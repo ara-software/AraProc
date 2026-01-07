@@ -114,6 +114,7 @@ class AraVertexReco:
             R = reco_out.R # in meter
 
             # check whether the "not enough hits" value was returned by AraVertex -- set to an unphysical value that won't be cut by the zenith cut
+            # "not enough hits" value is theta = 90.0 (elevation) and phi = 0.0
             if abs(theta - 90.0) < 1e-3 and phi == 0.0:
                 reco_results[pol_key] = {
                     "valid": False,
