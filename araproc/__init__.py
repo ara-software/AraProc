@@ -55,6 +55,16 @@ except: # noqa: E722
 if success_flag_libAraCorrelator not in [0, 1]:
         raise ImportError("Failed to load libAraCorrelator.so")
 
+# libAraVertex
+try:
+    success_flag_libAraVertex = ROOT.gSystem.Load(os.environ.get("ARA_ROOT_LIB_DIR")+"/libAraVertex.so")
+except: # noqa: E722
+    logging.critical("Loading libAraVertex.so failed. Stop all work!")
+    raise ImportError("Failed to load libAraVertex.so")
+if success_flag_libAraVertex not in [0, 1]:
+        raise ImportError("Failed to load libAraVertex.so")
+
+
 # FFTtools
 try:
     success_flag_libFFT = ROOT.gSystem.Load(os.environ.get("ARA_DEPS_INSTALL_DIR")+"/lib/libRootFftwWrapper.so")
