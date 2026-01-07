@@ -99,12 +99,12 @@ class AraVertexReco:
             # run vertexing
             reco_out = self.Reco.doPairFitSpherical()
 
-            # handle failures
+            # handle failures -- set to an unphysical value that won't be cut by the zenith cut
             if not (math.isfinite(reco_out.theta) and math.isfinite(reco_out.phi)):
                 reco_results[pol_key] = {
                     "valid": False,
-                    "theta": np.nan,
-                    "phi": np.nan,
+                    "theta": -1234.,
+                    "phi": -1234.,
                     "R": np.nan}
                 continue
 
@@ -112,6 +112,16 @@ class AraVertexReco:
             theta = 90.0 - reco_out.theta * ROOT.TMath.RadToDeg() # in degree
             phi = reco_out.phi * ROOT.TMath.RadToDeg() # in degree
             R = reco_out.R # in meter
+
+            # check whether the "not enough hits" value was returned by AraVertex -- set to an unphysical value that won't be cut by the zenith cut
+            if abs(theta - 90.0) < 1e-3 and phi == 0.0:
+                reco_results[pol_key] = {
+                    "valid": False,
+                    "theta": -1234.,
+                    "phi": -1234.,
+                    "R": np.nan}
+                continue
+                
 
             reco_results[pol_key] = {
                 "valid": True,
