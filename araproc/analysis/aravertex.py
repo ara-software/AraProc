@@ -103,8 +103,8 @@ class AraVertexReco:
             if not (math.isfinite(reco_out.theta) and math.isfinite(reco_out.phi)):
                 reco_results[pol_key] = {
                     "valid": False,
-                    "theta": -1234.,
-                    "phi": -1234.,
+                    "theta": -1111.,
+                    "phi": -1111.,
                     "R": np.nan}
                 continue
 
