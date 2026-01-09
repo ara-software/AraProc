@@ -897,7 +897,7 @@ class SimWrapper:
             self.event_ptr.Nu_Interaction[likely_interaction].posnu)
         sim_info["sim_weight_vertex"] = self.get_sim_weight_position(
             self.event_ptr.Nu_Interaction[likely_interaction].posnu,
-            self.detector_ptr.station[0],
+            self.detector_ptr.stations[0],
             self.icemodel_ptr)
         sim_info["direction"] = (
             self.event_ptr.Nu_Interaction[likely_interaction].nnu.Theta(),
