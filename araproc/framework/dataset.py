@@ -895,6 +895,10 @@ class SimWrapper:
         sim_info["vertex"] = self.get_AraSim_xyz_position(
             self.detector_ptr.stations[0],
             self.event_ptr.Nu_Interaction[likely_interaction].posnu)
+        sim_info["sim_weight_vertex"] = self.get_sim_weight_position(
+            self.event_ptr.Nu_Interaction[likely_interaction].posnu,
+            self.detector_ptr.stations[0],
+            self.icemodel_ptr)
         sim_info["direction"] = (
             self.event_ptr.Nu_Interaction[likely_interaction].nnu.Theta(),
             self.event_ptr.Nu_Interaction[likely_interaction].nnu.Phi()
@@ -1030,6 +1034,77 @@ class SimWrapper:
 
         return x_position-x_origin, y_position-y_origin, z_position
 
+    def get_sim_weight_position(self, vertex, station, icemodel):
+        """
+        Return the XY displacement of a vertex relative to the station-center for use in sim weight calculations.
+        This displaces an event vertically if it is above the surface in AraSim to ensure it is given an invalid weight.
+
+        Parameters
+        ----------
+        vertex : AraSim::Position
+            Location whose coordinates we are interested in. 
+            Usually a cascade.
+        station : AraSim::ARA_station
+            AraSim ARA_station object containing station information.            
+        icemodel : AraSim::IceModel
+            AraSim ice model object containing Earth geometry information.
+
+        Returns
+        -------
+        x : float
+            X displacement from vertex to station-center in meters 
+        y : float
+            Y displacement from vertex to station-center in meters
+        z : float
+            Z displacement from vertex to station-center in meters
+        """
+           
+        # find station center in internal coordinates
+        avgPos = ROOT.Position(0., 0., 0.)
+        avgX = 0.
+        avgY = 0.
+        avgZ = 0.
+        count = 0
+        nStrings = int(station.strings.size())
+        for i in range(nStrings):
+            nAnts = int(station.strings[i].antennas.size())
+
+            for j in range(nAnts):
+                avgX += station.strings[i].antennas[j].GetX()
+                avgY += station.strings[i].antennas[j].GetY()
+                avgZ += station.strings[i].antennas[j].GetZ()
+                count += 1
+        
+        avgX /= count
+        avgY /= count
+        avgZ /= count
+
+        avgPos.SetXYZ(avgX, avgY, avgZ) # construct this way to ensure lon/lat are set properly
+
+        # Get coordinates of station 
+        station_x = avgPos.GetX()
+        station_y = avgPos.GetY()
+        station_z = avgPos.GetZ() 
+
+        # get surface radius above station
+        station_lon = avgPos.Lon()
+        station_lat = avgPos.Lat()
+        station_surface = icemodel.Surface(station_lon, station_lat)
+
+        # Get coordinates of vertex 
+        vertex_x = vertex.GetX()
+        vertex_y = vertex.GetY()
+        vertex_z = vertex.GetZ()
+
+        # Convert vertex to station-centered coordinates
+        x = vertex_x - station_x
+        y = vertex_y - station_y
+        z = vertex_z - station_z
+
+        if station_surface < vertex.R(): # vertex above surface -- shift z-position to ensure chord length is 0 and sim weight is invalid
+            z += 100e3 # shift up by 100 km
+
+        return x, y, z 
 
 class AnalysisDataset:
 
