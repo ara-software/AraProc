@@ -1059,8 +1059,6 @@ class SimWrapper:
             Z displacement from vertex to station-center in meters
         """
            
-        
- 
         # find station center in internal coordinates
         avgPos = ROOT.Position(0., 0., 0.)
         avgX = 0.
