@@ -904,6 +904,12 @@ class SimWrapper:
             self.event_ptr.Nu_Interaction[likely_interaction].nnu.Phi()
         ) # Although this references the mostly likely triggering interaction, 
         # the direction of all particles in the same event should be the same
+
+        sim_info['ray_solution'] = self.report_ptr.stations[0].strings[string].antennas[antenna].Likely_Sol[1]
+        # 0 means the direction solution likely triggered the detector
+        # 1 means the refracted/reflected solution likely triggered
+        # -1 means a solution was not determined
+
         sim_info["is_noise"] = (int(self.settings_ptr.TRIG_ANALYSIS_MODE) == 2) # modes 0 & 1 are for signal, 2 is pure noise
 
         return sim_info
