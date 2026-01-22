@@ -177,7 +177,7 @@ station3:
       filt5 : { min_freq : 0.398, max_freq : 0.408, min_power_ratio : 0.01 }
       filt6 : { min_freq : 0.495, max_freq : 0.505, min_power_ratio : 0.01 }
   config9:
-    excluded_channels : [3]
+    excluded_channels : [0, 4, 8, 12, 3]
     filters:
       filt1 : { min_freq : 0.000, max_freq : 1.000, min_power_ratio : 0.10 }
       filt2 : { min_freq : 0.120, max_freq : 0.155, min_power_ratio : 0.02 }
