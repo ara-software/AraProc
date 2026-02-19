@@ -311,7 +311,7 @@ class AraGeom:
         valid_pairs = valid_vpol_pairs + valid_hpol_pairs
 
         if not valid_pairs:
-            print("WARNING!!! No valid inter-string VPol pairs; falling back to straight line solution for Landmark.")
+            print("WARNING!!! No valid VPol pairs found ; falling back to straight line solution for Landmark.")
             return theta_SL, phi_RT
 
         theta_list = []
@@ -351,7 +351,7 @@ class AraGeom:
             theta_pair = t0 - r0 * (t1 - t0) / (r1 - r0)  # assuming theta_pair linearly between t0 and t1
             theta_list.append(theta_pair)
 
-        # Final ray-traced theta = median of all inter-string pairs
+        # Final ray-traced theta = median of all valid pairs
         theta_RT = float(np.median(theta_list))
         return theta_RT, phi_RT
 
