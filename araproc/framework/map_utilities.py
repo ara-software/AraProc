@@ -2,7 +2,7 @@ import ctypes
 import numpy as np
 import ROOT
 from araproc.framework import constants
-
+from itertools import combinations
 
 def get_corr_map_peak(the_map  = None):
     """
@@ -76,7 +76,7 @@ class AraGeom:
 
         if excluded_channels is None:
             excluded_channels = []
-
+        #print(" exc chan = ",excluded_channels)
         antenna_coordinates = [[] for _ in range(3)]  # x, y, z
         total_antennas = constants.num_rf_channels
 
@@ -263,6 +263,99 @@ class AraGeom:
         return r, 90 - theta, phi
 
 
+    def get_raytraced_theta_phi(self, xyz_rel, excluded_channels, radius_map, reco,
+                                     which_distance="distant", solution=0):
+        """
+        Find the ray-traced elevation (90-theta) and azimuth (phi) where a landmark
+        intersects the reconstruction sphere of radius `radius_map`.
+
+        Parameters
+        ----------
+        xyz_rel : array-like
+        [x, y, z] of landmark relative to station center (SC) in meters.
+        radius_map : float
+        Radius of reconstruction sphere (m)
+        reco : StandardReco 
+        which_distance : str "nearby" or "distant"
+        solution : int
+        0 = direct ray, 1 = reflected/refracted ray
+
+        Returns
+        -------
+        theta_RT : float
+        Ray-traced elevation (degrees)
+        phi_RT : float
+        Azimuth (degrees, from x-axis)
+        """
+        xyz_np = np.array(xyz_rel, dtype=float)
+        r_lm = np.linalg.norm(xyz_np) 
+
+        # Straight-line projection to sphere of radius = radius_map
+        xyz_proj = xyz_np * (radius_map / r_lm) 
+        x, y, z = xyz_proj
+
+        phi_RT = np.degrees(np.arctan2(y, x))  # azimuth
+        theta_SL = np.degrees(np.arcsin(np.clip(z / radius_map, -1.0, 1.0)))  # straight-line elevation, should be between -1 to +1 
+        #print("   excluded_channels are ",excluded_channels) # should exclude channels when considering the dt to theta,phi scanning
+
+        # Get all valid VPol and HPol channels after removing excluded channels
+        vpol_channels = [ch for ch in constants.vpol_channel_ids if ch not in excluded_channels]
+        hpol_channels = [ch for ch in constants.hpol_channel_ids if ch not in excluded_channels]
+
+        # Make all possible pairs within each polarization
+        valid_vpol_pairs = list(combinations(vpol_channels, 2))
+        valid_hpol_pairs = list(combinations(hpol_channels, 2))
+        
+        #print("Valid VPol pairs:", valid_vpol_pairs,"  no of VPOL pair = ",len(valid_vpol_pairs))
+        #print("Valid HPol pairs:", valid_hpol_pairs,"   no of HPOL pair = ",len(valid_hpol_pairs))
+        valid_pairs = valid_vpol_pairs + valid_hpol_pairs
+
+        if not valid_pairs:
+            print("WARNING!!! No valid inter-string VPol pairs; falling back to straight line solution for Landmark.")
+            return theta_SL, phi_RT
+
+        theta_list = []
+        theta_grid = np.arange(-90, 91, 1.0)  # lookup grid 
+        #consider all pairs of same polarization for the expected time difference
+        for ch_a, ch_b in valid_pairs:
+            pos_a = np.array(self.st_info.getAntennaInfo(ch_a).antLocation)
+            pos_b = np.array(self.st_info.getAntennaInfo(ch_b).antLocation)
+            #n(z) at average depth using the antenna pairs' depths
+            n_eff = (constants.get_index_of_refraction(pos_a[2]) +
+                    constants.get_index_of_refraction(pos_b[2])) / 2.0
+            v_eff = constants.speed_of_light / n_eff # velocity v(z)
+
+            dt_target = (np.linalg.norm(xyz_proj - pos_a) - np.linalg.norm(xyz_proj - pos_b)) / v_eff # expected time difference
+
+            # You can lookup Brian's ray trace table over theta grid for reference
+            # phi_RT  ~constant, n(z) varies with depth z
+
+            dt_table = np.array([
+            reco.lookup_arrival_time(ch_a, t, phi_RT, which_distance, solution) -
+            reco.lookup_arrival_time(ch_b, t, phi_RT, which_distance, solution)
+            for t in theta_grid
+            ]) # ray-traced arrival time for a (given r=radius_map, theta, phi) per  channel
+
+            residual = dt_table - dt_target
+            #print('residual   = ',residual)
+            sign_changes = np.where(np.diff(np.sign(residual)))[0] 
+
+            if len(sign_changes) == 0:
+                theta_list.append(theta_SL) # fall back if no sign change = straight line solution as done before
+                continue
+
+            # pick crossing closest to straight-line theta
+            idx = sign_changes[np.argmin(np.abs(theta_grid[sign_changes] - theta_SL))]
+            t0, t1 = theta_grid[idx], theta_grid[idx + 1]
+            r0, r1 = residual[idx], residual[idx + 1]
+            theta_pair = t0 - r0 * (t1 - t0) / (r1 - r0)  # assuming theta_pair linearly between t0 and t1
+            theta_list.append(theta_pair)
+
+        # Final ray-traced theta = median of all inter-string pairs
+        theta_RT = float(np.median(theta_list))
+        return theta_RT, phi_RT
+
+
 
     def get_critical_angle(self):
         """
@@ -280,7 +373,8 @@ class AraGeom:
         return 90 - critical_angle  ## In terms of elevation angle
 
 
-    def get_known_landmarks(self, list_of_landmarks=None, list_of_cal_pulser_indices=None, spice_depth=None):
+    def get_known_landmarks(self, list_of_landmarks=None, list_of_excluded_chans=None, list_of_cal_pulser_indices=None,
+                            spice_depth=None, reco=None, solution=0): 
         """
         Parameters
         ----------
@@ -290,7 +384,10 @@ class AraGeom:
           which landmarks you want to see in your skymap
         spice_depth : int/float
           the depth of spice pulser ## example -1451.3 
-
+        Note: Added ray-traced solution for distant pulsers [IC22S, IC1S, SPICE] and southpole landmarks [ICL, WT, SPRESSO and SPT]. Use ray-tracing to find
+              where the ray coming from these sources interset the reconstruction sphere (with Radius R = 300, refer to ray-tracing tables generated by Brian for direct
+              and ref. ray-traced arrival time per chan (VPOL and HPol) for theta (-90 to +90) deg, and phi (-180, 180). At the intersection point, theta, phi are 
+              estimated and plotted on the skymap. 
         Returns
         -------
         collect : dict
@@ -316,13 +413,23 @@ class AraGeom:
             collect[f"CP{cp}"] = [rCal, tCal, pCal]
             del rCal, tCal, pCal
         del calpulser
-          
+        # Adding ray-traced landmarks for southpole landmarks and distant pulser
+        # first: distant pulser 
+        
+        R_distant_map = float(reco.rtc_wrapper.correlators["distant"].GetRadius()) if reco is not None else None #The radius of distant map
         for pulser in ["IC1S", "IC22S", "SPIce"]:
             if pulser in list_of_landmarks:
                 this_pulser = self.get_distant_pulsers(pulser, spice_depth)
                 r, t, p = self.get_relative_cartesian_to_spherical(station_center, this_pulser)
-                collect[pulser] = [r, t, p]
+                if reco is not None:
+                    xyz_rel = np.array(this_pulser) - np.array(station_center)
+                    t, p = self.get_raytraced_theta_phi(
+                            xyz_rel, list_of_excluded_chans, R_distant_map, reco, 
+                            which_distance="distant",
+                            solution=solution)
+                collect[pulser] = [r, t, p] # ray traced solution for distant pulser landmark
                 del r,t,p 
+        #next : known south pole landmarks (ray-traced solution)
 
         for known_loc in ["ICL", "WT", "SPRESSO", "SPT"]:
             if known_loc in list_of_landmarks:
@@ -330,6 +437,12 @@ class AraGeom:
                 this_loc = np.array(this_loc)[0]
                 st_centric = self.get_global_to_station_centric(this_loc[:3])
                 r, t, p = self.get_relative_cartesian_to_spherical(station_center, st_centric)
+                if reco is not None:
+                    xyz_rel = np.array(st_centric) - np.array(station_center)
+                    t, p = self.get_raytraced_theta_phi(
+                            xyz_rel, list_of_excluded_chans, R_distant_map, reco,
+                            which_distance="distant",
+                            solution=solution)
                 collect[known_loc] = [r, t, p]
                 del r,t,p
         collect['critical_angle'] = self.get_critical_angle()

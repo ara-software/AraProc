@@ -160,13 +160,17 @@ def plot_waveform_bundle(
     plt.close(fig)
     del fig, axd
 
-def plot_skymap(the_map,
+def plot_skymap(the_map, 
+                excluded_channels = None, 
                 plane_wave_elevation = None, 
-                station_id = None, landmarks = None,
+                station_id = None, landmarks = None, 
                 calpulser_indices = None, spice_depth = None,
-                aravertex_results = None,
-                output_file_path = None
-                ):
+                aravertex_results = None, 
+                output_file_path = None,
+                reco = None, map_type = None):
+
+    #print(" List of EXCLUDED chans is  = ",excluded_channels)
+
     """
     This function returns skymap for given map type
     Parameters
@@ -253,10 +257,10 @@ def plot_skymap(the_map,
             av_label.Draw("SAME")
             labels.append(av_label)
  
-      
-    ## Add known locations to the skymap 
-    landmark_dict = mu.AraGeom(station_id).get_known_landmarks(landmarks, calpulser_indices, spice_depth)
-
+    solution = 1 if map_type in {"distant_v_ref", "distant_h_ref"} else 0 # which solution we want for landmmark ray-tracing 0 for dir 1 = refl./refrac.
+    ## Add known locations (ray-traced) to the skymap 
+    landmark_dict = mu.AraGeom(station_id).get_known_landmarks(landmarks, excluded_channels, calpulser_indices, spice_depth, reco=reco, solution=solution)
+    
     for entry in landmark_dict.keys():
         if entry == 'critical_angle':
            critical_ang = landmark_dict[entry]
@@ -310,7 +314,10 @@ def plot_skymap(the_map,
     ROOT.gPad.SetRightMargin(0.15) # make space for the z axis
 
     # Add note about markers
-    caption = ROOT.TLatex(0.5, 0.92, "Correlations include ray tracings, markers are straight line paths")
+    caption_text = ("Correlations include ray tracings, markers are ray-traced paths"
+                if reco is not None
+                else "WARNING ! Correlations include ray tracings, markers are straight line paths") # changed caption text for ray-traced path
+    caption = ROOT.TLatex(0.5, 0.92, caption_text)
     caption.SetNDC(True)
     caption.SetTextAlign(22)
     caption.SetTextSize(0.025)
