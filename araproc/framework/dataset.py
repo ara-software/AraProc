@@ -470,8 +470,10 @@ class DataWrapper:
             raise KeyError(f"Requested event index {event_idx} is invalid (negative)")
 
         try:
-            self.event_tree.GetEntry(event_idx)
+            nbytes = self.event_tree.GetEntry(event_idx)
             logging.debug(f"Called root get entry {event_idx}")
+            if nbytes <= 0:
+                raise RuntimeError(f"Bad raw entry loading {event_idx}! File may be corrupted...")
         except:
             logging.critical(f"Getting entry {event_idx} failed.")
             raise
@@ -514,8 +516,10 @@ class DataWrapper:
             raise Exception("Dataset is not calibrated! You are not allowed to get a useful event!")
 
         try:
-            self.event_tree.GetEntry(event_idx)
+            nbytes = self.event_tree.GetEntry(event_idx)
             logging.debug(f"Called root get entry {event_idx}")
+            if nbytes <= 0:
+                raise RuntimeError(f"Bad useful entry loading {event_idx}! File may be corrupted...")
         except:
             logging.critical(f"Getting entry {event_idx} failed.")
             raise 
