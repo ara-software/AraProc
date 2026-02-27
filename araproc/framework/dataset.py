@@ -168,7 +168,9 @@ class DataWrapper:
             raise Exception(f"Station id {station_id} is not supported")
         self.station_id = station_id
 
-        if futil.file_is_safe(path_to_data_file):
+        if path_to_data_file[:4] == "http":
+            self.path_to_data_file = path_to_data_file
+        elif futil.file_is_safe(path_to_data_file):
             self.path_to_data_file = path_to_data_file
         else:
             raise Exception(f"{path_to_data_file} has a problem!")
@@ -203,7 +205,7 @@ class DataWrapper:
 
         # open the TFile
         try:
-            self.root_tfile = ROOT.TFile(self.path_to_data_file, "READ")
+            self.root_tfile = ROOT.TFile.Open(self.path_to_data_file, "READ")
             logging.debug(f"Successfully opened {self.path_to_data_file}")
         except:
             logging.critical(f"Opening {self.path_to_data_file} failed")
