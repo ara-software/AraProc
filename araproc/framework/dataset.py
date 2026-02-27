@@ -810,8 +810,14 @@ class SimWrapper:
         self.__check_event_idx_sanity(event_idx)
 
         try:
-            self.event_tree.GetEntry(event_idx)
+            nbytes = self.event_tree.GetEntry(event_idx)
             logging.debug(f"Called root get entry {event_idx}")
+            if nbytes <= 0:
+                raise RuntimeError(f"Bad entry loading {event_idx}! File may be corrupted...")
+            for chan in range(16):
+                if self.useful_event_ptr.getGraphFromRFChan(chan).GetN() < 10:
+                    raise RuntimeError(f"Bad waveform in {event_idx}! File may be corrupted...")
+                 
         except:
             logging.critical(f"Getting entry {event_idx} failed.")
             raise 
@@ -874,8 +880,10 @@ class SimWrapper:
         self.__check_event_idx_sanity(event_idx)
     
         try:
-            self.sim_tree.GetEntry(event_idx)
+            nbytes = self.sim_tree.GetEntry(event_idx)
             logging.debug(f"Called sim_tree get entry {event_idx}")
+            if nbytes <= 0:
+                raise RuntimeError(f"Bad entry loading {event_idx}! File may be corrupted...") 
         except:
             logging.critical(f"Getting entry {event_idx} in sim_tree failed.")
             raise 
