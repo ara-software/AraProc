@@ -37,6 +37,40 @@ def get_corr_map_peak(the_map  = None):
     return peak_corr, peak_phi, peak_theta
 
 
+
+def load_raytrace_model(
+    arasimsrc="/cvmfs/icecube.opensciencegrid.org/users/abishop/AraSim-main"
+):
+    """
+    Load AraSim RayTrace into ROOT interpreter.
+    
+    """
+
+    ROOT.gInterpreter.ProcessLine(f'#include "{arasimsrc}/RayTrace.h"')
+    ROOT.gInterpreter.ProcessLine(f'#include "{arasimsrc}/RayTrace_IceModels.h"')
+    ROOT.gInterpreter.ProcessLine(f'#include "{arasimsrc}/Vector.h"')
+
+    ROOT.gInterpreter.ProcessLine(
+        'auto _rt_atten = boost::shared_ptr<basicAttenuationModel>'
+        '(new basicAttenuationModel);'
+    )
+
+    ROOT.gInterpreter.ProcessLine(
+        f'auto _rt_refr = boost::shared_ptr<exponentialRefractiveIndex>'
+        f'(new exponentialRefractiveIndex({1.3260},{1.780},{0.0202}));'   # no, nf and l from PA paper
+    )
+    
+    ROOT.gInterpreter.ProcessLine(
+        'RayTrace::TraceFinder _rt_tf(_rt_refr, _rt_atten);'
+    )
+
+    ROOT.gInterpreter.ProcessLine('Vector _rt_src; Vector _rt_rec;')
+
+
+
+load_raytrace_model()
+
+
 class AraGeom:
     """
     A class to initialize ARA geometry and provide associated utility functions.
@@ -133,11 +167,13 @@ class AraGeom:
             return np.asarray([easting, northing, elevation]) - self.SUR_TO_GLOB
         return np.asarray([easting, northing]) - self.SUR_TO_GLOB[:2]
     
+
     def get_array_from_lat_long(self,latitude,longitude):
         easting = self.geomTool.getEastingFromLatLong(latitude,longitude)
         northing = self.geomTool.getNorthingFromLatLong(latitude,longitude)
         return np.array([northing, easting,0])
 
+    
     def get_global_to_station_centric(self, array_coords):
         """
         Convert global coordinates to station-centric coordinates.
@@ -280,7 +316,68 @@ class AraGeom:
         return 90 - critical_angle  ## In terms of elevation angle
 
 
-    def get_known_landmarks(self, list_of_landmarks=None, list_of_cal_pulser_indices=None, spice_depth=None):
+
+    #get ray-traced angle at the center of the station
+
+    def get_raytraced_arrival_angles(self, source_xyz, R_sphere, accuracy=0.001, solution=None):
+
+        src = np.array(source_xyz, dtype=float)
+        station_center = np.array(self.get_station_center())
+
+        
+        z_rec = float(station_center[2])
+
+        dx = src[0] - station_center[0]
+        dy = src[1] - station_center[1]
+
+        r_src = float(np.sqrt(dx**2 + dy**2))
+        az_phi = float(np.arctan2(dy, dx))
+
+        ROOT._rt_src.SetXYZ(r_src, 0.0, float(src[2]))
+        ROOT._rt_rec.SetXYZ(0.0, 0.0, z_rec)
+
+        sol_cnt = ctypes.c_int()
+        sol_err = ctypes.c_int()
+
+        allowed = ROOT.RayTrace.NoReflection if solution == 0 else ROOT.RayTrace.AllReflections
+
+        paths = ROOT._rt_tf.findPaths(
+            ROOT._rt_src,
+            ROOT._rt_rec,
+            0.5,
+            ROOT.TMath.Pi()/2,
+            sol_cnt,
+            sol_err,
+            allowed,
+            accuracy
+        )
+
+        if not paths or len(paths) == 0:
+            return []
+
+        solutions = []
+
+        for i, path in enumerate(paths):
+
+            
+            zenith_deg = np.degrees(path.receiptAngle)
+            elevation  = zenith_deg - 90.0 
+            azimuth    = np.degrees(az_phi)
+
+            solutions.append({
+                'elevation': elevation,
+                'azimuth': azimuth,
+                'tof': float(path.pathTime) * 1e9,
+                'path_len': float(path.pathLen),
+                'reflectionAngle': float(path.reflectionAngle),
+            })
+
+        return solutions
+
+
+
+    def get_known_landmarks(self, list_of_landmarks=None, excluded_channels=None, list_of_cal_pulser_indices=None, spice_depth=None, solution=None):
+
         """
         Parameters
         ----------
@@ -307,31 +404,83 @@ class AraGeom:
              list_of_cal_pulser_indices = [0,1,2,3]
         if spice_depth is not None:
            list_of_landmarks.append('SPIce')
-        collect = {}
-        
-        calpulser = self.get_local_CP(list_of_cal_pulser_indices)
+
         station_center = self.get_station_center()
+        collect = {}
+
+    
+        def _resolve(name, source_xyz, R_sphere, solution=None):
+            """
+            Compute straight-line AND ray-traced angles depending solution choice 0 or 1
+
+            return [r, elevation, azimuth] using ray-traced if available] 
+            If solution is not availble, fall back to straight line solution
+
+            """
+            r_sl, elev_sl, az_sl = self.get_relative_cartesian_to_spherical(station_center, source_xyz)
+            rt_sols = self.get_raytraced_arrival_angles(
+            source_xyz, R_sphere, solution=solution)
+
+            if not rt_sols:
+                print(f"  [{name}]  RT  :  NO SOLUTION — fallback to SL")
+                return [r_sl, elev_sl, az_sl]
+
+            # Label each path D or R using AraSim's noReflection sentinel (100.0 rad)
+            NO_REFL = 100.0
+            for s in rt_sols:
+                s['label'] = 'D' if abs(float(s.get('reflectionAngle', NO_REFL)) - NO_REFL) < 0.01 else 'R'
+
+            # Prefer R if solution=1, fallback to D; if solution=0 or None, take shortest patth
+            if solution == 1:
+                preferred = sorted([s for s in rt_sols if s['label'] == 'R'], key=lambda x: x['path_len'])
+                fallback  = sorted([s for s in rt_sols if s['label'] == 'D'], key=lambda x: x['path_len'])
+            elif solution == 0:
+                preferred = sorted(rt_sols, key=lambda x: x['path_len'])
+                fallback  = []
+            else:
+                preferred = sorted(rt_sols, key=lambda x: x['path_len'])
+                fallback  = []
+
+            chosen = preferred[0] if preferred else (fallback[0] if fallback else None)
+
+            if chosen is None:
+                print(f"  [{name}]  no suitable solution — fallback to SL")
+                return [r_sl, elev_sl, az_sl]
+
+            return [r_sl, chosen['elevation'], chosen['azimuth']]
+
+
+
+        #Adding landmark for calpulsers
+
+        R_nearby   = float(constants.calpulser_r_library[self.station_id]) 
+
+        calpulser = self.get_local_CP(list_of_cal_pulser_indices)
+        
         for cp in calpulser:
-            rCal, tCal, pCal = self.get_relative_cartesian_to_spherical(station_center, calpulser[cp])
-            collect[f"CP{cp}"] = [rCal, tCal, pCal]
-            del rCal, tCal, pCal
+            collect[f"CP{cp}"] = _resolve(f"CP{cp}", calpulser[cp], R_nearby, solution=0) #CPs hardcoded to direct solution,
+            
         del calpulser
+
+
+        #Adding landmark for Distant Landmarrks
+
+        R_distant = float(constants.distant_events_r_library[self.station_id])
           
         for pulser in ["IC1S", "IC22S", "SPIce"]:
             if pulser in list_of_landmarks:
                 this_pulser = self.get_distant_pulsers(pulser, spice_depth)
-                r, t, p = self.get_relative_cartesian_to_spherical(station_center, this_pulser)
-                collect[pulser] = [r, t, p]
-                del r,t,p 
+                collect[pulser] = _resolve(pulser, this_pulser, R_distant, solution)
+                
 
         for known_loc in ["ICL", "WT", "SPRESSO", "SPT"]:
             if known_loc in list_of_landmarks:
                 this_loc = self.get_southpole_landmarks(known_loc)
                 this_loc = np.array(this_loc)[0]
                 st_centric = self.get_global_to_station_centric(this_loc[:3])
-                r, t, p = self.get_relative_cartesian_to_spherical(station_center, st_centric)
-                collect[known_loc] = [r, t, p]
-                del r,t,p
+                collect[known_loc] = _resolve(known_loc, st_centric, R_distant, solution)
+                
         collect['critical_angle'] = self.get_critical_angle()
+        
         return collect
 
