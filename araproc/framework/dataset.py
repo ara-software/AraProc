@@ -821,8 +821,13 @@ class SimWrapper:
             if nbytes <= 0:
                 raise RuntimeError(f"Bad entry loading {event_idx}! File may be corrupted...")
             for chan in range(16):
-                if self.useful_event_ptr.getGraphFromRFChan(chan).GetN() < 10:
-                    raise RuntimeError(f"Bad waveform in {event_idx}! File may be corrupted...")
+                gr = self.useful_event_ptr.getGraphFromRFChan(chan)
+                ROOT.SetOwnership(gr, True)
+                try:
+                    if gr is None or gr.GetN() < 10:
+                        raise RuntimeError(f"Bad waveform in {event_idx}, channel {chan}! File may be corrupted...")
+                finally:
+                    del gr
                  
         except:
             logging.critical(f"Getting entry {event_idx} failed.")
