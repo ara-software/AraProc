@@ -160,9 +160,11 @@ def plot_waveform_bundle(
     plt.close(fig)
     del fig, axd
 
-def plot_skymap(the_map,
+
+
+def plot_skymap(the_map, excluded_channels=None,
                 plane_wave_elevation = None, 
-                station_id = None, landmarks = None,
+                station_id = None, map_type=None, landmarks = None,
                 calpulser_indices = None, spice_depth = None,
                 aravertex_results = None,
                 output_file_path = None
@@ -253,9 +255,10 @@ def plot_skymap(the_map,
             av_label.Draw("SAME")
             labels.append(av_label)
  
-      
+    solution = 1 if map_type in {"distant_v_ref", "distant_h_ref"} else 0 
     ## Add known locations to the skymap 
-    landmark_dict = mu.AraGeom(station_id).get_known_landmarks(landmarks, calpulser_indices, spice_depth)
+    
+    landmark_dict = mu.AraGeom(station_id).get_known_landmarks(landmarks, excluded_channels, calpulser_indices, spice_depth, solution=solution)
 
     for entry in landmark_dict.keys():
         if entry == 'critical_angle':
@@ -310,7 +313,8 @@ def plot_skymap(the_map,
     ROOT.gPad.SetRightMargin(0.15) # make space for the z axis
 
     # Add note about markers
-    caption = ROOT.TLatex(0.5, 0.92, "Correlations include ray tracings, markers are straight line paths")
+    caption_text = ("Correlations include ray tracings, markers are also ray-traced paths")
+    caption = ROOT.TLatex(0.5, 0.92, caption_text)
     caption.SetNDC(True)
     caption.SetTextAlign(22)
     caption.SetTextSize(0.025)
