@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from araproc.framework import constants as const
 from araproc.framework import waveform_utilities as wu
 from araproc.framework import map_utilities as mu
+
 import ROOT
 ROOT.gStyle.SetOptStat(0)
 ROOT.gROOT.SetBatch(True) # tell root not to open gui windows
@@ -160,9 +161,11 @@ def plot_waveform_bundle(
     plt.close(fig)
     del fig, axd
 
+
+
 def plot_skymap(the_map,
                 plane_wave_elevation = None, 
-                station_id = None, landmarks = None,
+                station_id = None, map_type=None, radius_map = None, landmarks = None,
                 calpulser_indices = None, spice_depth = None,
                 aravertex_results = None,
                 output_file_path = None
@@ -253,24 +256,27 @@ def plot_skymap(the_map,
             av_label.Draw("SAME")
             labels.append(av_label)
  
-      
+    solution = 1 if map_type in {"distant_v_ref", "distant_h_ref"} else 0 
     ## Add known locations to the skymap 
-    landmark_dict = mu.AraGeom(station_id).get_known_landmarks(landmarks, calpulser_indices, spice_depth)
+    
+    landmark_dict = mu.AraGeom(station_id).get_known_landmarks(landmarks, radius_map, calpulser_indices, spice_depth, solution=solution)
 
     for entry in landmark_dict.keys():
-        if entry == 'critical_angle':
-           critical_ang = landmark_dict[entry]
-           horizontal_line = ROOT.TLine(-180, critical_ang, 180, critical_ang)  # Draw line from phi=-180 to phi=180 
-           horizontal_line.SetLineColor(ROOT.kRed)
-           horizontal_line.SetLineStyle(2)  # Dashed line
-           horizontal_line.SetLineWidth(2)
-           horizontal_line.Draw("SAME")
-           label1 = ROOT.TLatex(150,  critical_ang + 5, "#theta_{c}")  # Offset for clarity
-           label1.SetTextColor(ROOT.kRed)
-           label1.SetTextSize(0.03)
-           label1.Draw("SAME")
-           labels.append(label1)
-           continue
+        #adding ray-traced critical angle 
+        if entry == 'critical_angle_rt':
+            critical_ang_rt = landmark_dict[entry]
+            horizontal_line_rt = ROOT.TLine(-180, critical_ang_rt, 180, critical_ang_rt) # Draw line from phi=-180 to phi=180 
+            horizontal_line_rt.SetLineColor(ROOT.kRed)
+            horizontal_line_rt.SetLineStyle(2) # Dashed line
+            horizontal_line_rt.SetLineWidth(2) 
+            horizontal_line_rt.Draw("SAME")
+            label_rt = ROOT.TLatex(110, critical_ang_rt + 5, "#theta_{c}")  # Offset for clarity
+            label_rt.SetTextColor(ROOT.kRed)
+            label_rt.SetTextSize(0.03)
+            label_rt.Draw("SAME")
+            labels.append(label_rt)
+            continue
+
 
         phi = landmark_dict[entry][2]
         theta = landmark_dict[entry][1]
@@ -310,7 +316,8 @@ def plot_skymap(the_map,
     ROOT.gPad.SetRightMargin(0.15) # make space for the z axis
 
     # Add note about markers
-    caption = ROOT.TLatex(0.5, 0.92, "Correlations include ray tracings, markers are straight line paths")
+    caption_text = ("Correlations include ray tracings, markers are also ray-traced paths")
+    caption = ROOT.TLatex(0.5, 0.92, caption_text)
     caption.SetNDC(True)
     caption.SetTextAlign(22)
     caption.SetTextSize(0.025)
