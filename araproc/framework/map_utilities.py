@@ -272,10 +272,10 @@ class AraGeom:
 
         landmarks = []
         if landmark_type == "ICL":
-            for i in range(1):
-                corner = self.geomTool.getICLCorner(i)
+            for i in range(1):  ## This can go range(4)
+                corner = self.geomTool.getICLCorner(i)  
                 landmarks.append([corner[0], corner[1], corner[2]])
-        elif landmark_type == "WT":
+        elif landmark_type == "WT": ## This can go range(1,4)
             for i in range(3, 4):
                 corner = self.geomTool.getWindTurbine(i)
                 landmarks.append([corner[0], corner[1], corner[2]])
@@ -308,12 +308,12 @@ class AraGeom:
 
 
         if pulser_name == "SPIce" and spice_depth is None:
-            raise ValueError("Unknown SPIce pulser depth")
+            raise ValueError(f"Unknown SPIce pulser depth")
 
         pulser_coords = {
             "IC1S":  [45659.6457, 50490.4199],
-            "IC22S": [44884.416,  51444.8819],
-            "SPIce": [42600,      48800],
+            "IC22S": [44884.416, 51444.8819],
+            "SPIce": [42600, 48800],
         }
         pulser_depths = {"IC1S": -1400, "IC22S": -1450.47, "SPIce": spice_depth}
 
