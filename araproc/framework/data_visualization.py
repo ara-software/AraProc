@@ -7,11 +7,6 @@ import ROOT
 ROOT.gStyle.SetOptStat(0)
 ROOT.gROOT.SetBatch(True) # tell root not to open gui windows
 
-# plt.rcParams.update({
-#     "text.usetex": True,
-#     "font.family": "serif",
-# })
-
 """
 It's important to use a non-GUI backend!
 Otherwise using matplotlib functions in a loop can memory leak.
