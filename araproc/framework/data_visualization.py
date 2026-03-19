@@ -35,6 +35,121 @@ def get_wf_color(channel_number, excluded_channels):
             return '#c8d9bf' # A lighter version of "xkcd:greenish grey"
         else: 
             return 'green'
+        
+def plot_waveform(
+    waveform_dict,
+    channel,
+    time_or_freq = "time",
+    output_file_path = None, 
+    excluded_channels = (),
+    ):
+    """
+    Code to plot a bundle of waveforms.
+    Please be aware that because this is matplotlib,
+    this function is very slow (about 2.5 s per event).
+    As a result, you probably shouldn't use it to draw many events.
+    It's meant for debugging and visualization.
+    """
+    
+    ####################
+    # sanitize inputs
+    ####################
+
+    # make sure they have requested something valid (time vs freq domain)
+    time_or_freq_options = ["time", "freq"]
+    if time_or_freq not in time_or_freq_options:
+        raise KeyError(f"Requested option ({time_or_freq}) is not in approved list: {time_or_freq_options}")
+
+    xlabel_options = {
+        "time" : "Time (ns)",
+        "freq" : "Frequency (GHz)"
+    }
+    ylabel_options = {
+        "time" : "Voltage (mV)",
+        "freq" : "Spectrum (dBm)"
+    }    
+
+    if not isinstance(output_file_path, str):
+        raise TypeError("Path to output file must be a string")
+        
+    ####################
+    # actually make plots
+    ####################
+
+    # get the waves to plot
+    tgraphs_to_plot = waveform_dict
+
+    # set up fig and axes
+    fig, ax = plt.subplots()
+
+    # draw the graphs, label each one appropriately
+    ymin = 1e100
+    ymax = -1e100
+    spec2Tot = {}
+    wave_key = channel
+    times, volts = wu.tgraph_to_arrays(tgraphs_to_plot[wave_key]) # 'times' in 'ns' and 'volts' in 'mV'
+    xvals = times
+    yvals = volts
+    
+    if time_or_freq == "freq":
+        # if they frequested frequency domain, do the FFT
+        freqs, spectrum = wu.time2freq(times, volts) # 'freqs' in 'GHz' and 'spectrum' (complex) in 'mV'
+        xvals = freqs
+        
+        # Convert yvals to dBm
+        # np.abs(spectrum)**2 makes spectrum in mV^2. For power, you do P = V^2/R , here R = Z_0 = 50 Ohm.
+        # mV**2/50 =  mW * 1e-3. Power is always reperesented as dBm in dB scale which is 10*log10(P in mW)
+        yvals = 10*np.log10(np.abs(spectrum)**2 / 50 / 1e3) # from mV to dBm
+        
+        # save total of square of absolute spectrum for reference
+        spec2Tot[f"ch{wave_key}"] = (np.abs(spectrum)**2).sum()
+
+    ymin = min(ymin, yvals.min())
+    ymax = max(ymax, yvals.max())
+
+    # make the plot
+    ax.plot(xvals, yvals, color=get_wf_color(wave_key, excluded_channels), lw = 1)
+    ax.set_title(f"Channel {wave_key}")
+
+    # Add warning to channels that are masked
+    if wave_key in excluded_channels: 
+        ax.annotate("Masked to Analysis", (0.03,0.87), xycoords='axes fraction', c='grey')
+
+    # label axes  
+    ax.set_xlabel(xlabel_options[time_or_freq])
+    ax.set_ylabel(ylabel_options[time_or_freq])
+    
+    # make limits look nice
+    if time_or_freq == "freq":
+        ax.set_xlim(0, 1)
+        # limit y range downwards
+        ymin = max(ymin, -25)
+        ax.set_ylim([ymin-5,ymax+5])
+
+        # add secondary axis to help with CW filtering
+        ax2 = ax.twinx()
+        y1min, y1max = ax.get_ylim()
+        ## convert back to just the spec^2
+        spec2min = 50.*1e3*10.**(y1min/10.)
+        spec2max = 50.*1e3*10.**(y1max/10.)
+        ## normalize by total power in spectrum
+        fmin = np.log10(spec2min/spec2Tot[f"ch{wave_key}"])
+        fmax = np.log10(spec2max/spec2Tot[f"ch{wave_key}"])
+        ax2.set_ylim(fmin, fmax)
+        ax2.set_yticks(np.arange(np.ceil(fmin), np.floor(fmax)+0.1, 1)) # ticks MUST fall within the [fmin, fmax] range or y-axes will not correspond correctly
+        ax2.axhline(y=0.0, c='lightgray', linestyle='--')
+        ax2.set_ylabel("lg(Fractional Power)")
+    else:
+        ax.set_ylim(ymin, ymax)
+    plt.tight_layout()
+
+    # save figure
+    fig.savefig(output_file_path)
+
+    # careful cleanup
+    plt.close(fig)
+    del fig, ax
+
 
 def plot_waveform_bundle(
     waveform_dict,
