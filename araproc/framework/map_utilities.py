@@ -38,7 +38,6 @@ def get_corr_map_peak(the_map  = None):
     return peak_corr, peak_phi, peak_theta
 
 
-
 def load_raytrace_model(arasimsrc=None):
     """
     Load and initialize the AraSim ray-tracing model into ROOT's interpreter.
@@ -193,7 +192,6 @@ class AraGeom:
         # Station information
         self.st_info = self.geomTool.getStationInfo(self.station_id)
 
-
     def get_station_center(self, excluded_channels=None):
         """
         Calculates the average x, y, and z coordinates of antennas for a given station.
@@ -268,6 +266,7 @@ class AraGeom:
             return np.asarray([easting, northing, elevation]) - self.SUR_TO_GLOB
         return np.asarray([easting, northing]) - self.SUR_TO_GLOB[:2]
     
+
     def get_array_from_lat_long(self,latitude,longitude):
         """
         Convert latitude/longitude to ARA array coordinates.
@@ -288,7 +287,6 @@ class AraGeom:
         easting = self.geomTool.getEastingFromLatLong(latitude,longitude)
         northing = self.geomTool.getNorthingFromLatLong(latitude,longitude)
         return np.array([northing, easting,0])
-
 
 
     def get_global_to_station_centric(self, array_coords):
@@ -339,13 +337,12 @@ class AraGeom:
                 landmarks.append([corner[0], corner[1], corner[2]])
         elif landmark_type == "SPRESSO":
             landmarks.append(self.get_array_from_lat_long(-89.93120, 144.51249))
-        #elif landmark_type == "SPT":
-        #    corner = self.geomTool.getSouthPoleTelescope()
-        #    landmarks.append([corner[0], corner[1], corner[2]])
+        elif landmark_type == "SPT":
+            corner = self.geomTool.getSouthPoleTelescope()
+            landmarks.append([corner[0], corner[1], corner[2]])
         else:
             raise ValueError(f"Unknown landmark type: {landmark_type}")
         return landmarks
-
 
 
     def get_distant_pulsers(self, pulser_name, spice_depth=None):
@@ -416,8 +413,7 @@ class AraGeom:
         phi = np.degrees(np.arctan2(y, x))
         return r, 90 - theta, phi
 
-
-
+ 
     def get_critical_angle(self):
         """
         Returns
@@ -435,74 +431,63 @@ class AraGeom:
 
 
 
-
     def _circle_intersect(self, p0, v, radius, t_max=1.0):
         """
-        Find the first intersection of a straight line segment (or ray) with the
-        station-centered circle x^2 + z^2 = radius^2 in the local propagation plane.
-
-        Here, p(t) = p0 + t*v parameterizes only the local straight segment used for
-        interpolation between two successive sampled ray-trace points. It does NOT
-        represent the full curved ray-trace path. The full path comes from AraSim;
-        this helper is used only to determine where that discretely sampled path
-        crosses the reconstruction circle more accurately than choosing the sampled
-        point whose radius is merely closest to R_sphere.
-
-        In the local propagation plane:
-          - x >= 0 : radial distance from the station, in meters
-          - z      : vertical offset from the station, in meters (positive upward)
-
-        Substituting p(t) into x^2 + z^2 = radius^2 gives:
-          a*t^2 + b*t + c = 0
-        with
-          a = |v|^2
-          b = 2 * dot(p0, v)
-          c = |p0|^2 - radius^2
-
-        The two roots are checked in increasing order so the nearest valid crossing
-        is returned first. Only roots with 0 <= t <= t_max are accepted.
+        Intersect the line segment p(t) = p0 + t*v with the circle x^2 + z^2 = radius^2
+        in the local (rho, dz) plane, for t in [0, t_max].
 
         Parameters
         ----------
-        p0 : tuple of float
-            Start point (x, z), in meters.
-        v : tuple of float
-            Direction vector (vx, vz) in the local (x, z) plane. For a finite
-            segment, pass p1 - p0.
+        p0 : (float, float)
+            (x0, z0) = (rho0, dz0)
+        v : (float, float)
+            (vx, vz) direction from p0 to p1 (segment vector)
         radius : float
-            Circle radius, in meters (= R_sphere or R_map).
-        t_max : float, optional
-            Upper bound on t. In this file, t_max = 1.0 is used for a finite
-            segment between successive sampled points.
+            Circle radius
+        t_max : float
+            Maximum allowed t (use 1.0 for segment endpoint)
 
         Returns
         -------
-        tuple or None
-            (x, z, t) for the first valid intersection, with x and z in meters,
-            or None if no valid intersection exists.
+        (x, z, t) or None
+            Intersection point and interpolation parameter t.
         """
-        x0, z0 = p0
-        vx, vz = v
+        # Unpack the starting point (rho0, dz0) and segment direction (drho, ddz).
+        x0, z0 = float(p0[0]), float(p0[1])
+        vx, vz = float(v[0]), float(v[1])
+        R = float(radius)
 
+        # Substitute x(t)=x0+t*vx and z(t)=z0+t*vz into x^2+z^2=R^2:
+        # (vx^2+vz^2) t^2 + 2(x0*vx+z0*vz) t + (x0^2+z0^2-R^2) = 0
         a = vx * vx + vz * vz
-        if a == 0.0:
-            return None  # zero-length segment / direction vector
+        if abs(a) < 1e-30: # Degenerate segment (zero length) => no unique intersection
+            return None
 
         b = 2.0 * (x0 * vx + z0 * vz)
-        c = x0 * x0 + z0 * z0 - radius * radius
-        disc = b * b - 4.0 * a * c
-        if disc < 0.0:
-            return None  # no real intersection with the circle
+        c = x0 * x0 + z0 * z0 - R * R
 
-        sq = np.sqrt(disc)
-        for t in ((-b - sq) / (2.0 * a), (-b + sq) / (2.0 * a)):
-            if 0.0 <= t <= t_max:
-                x = x0 + t * vx
-                z = z0 + t * vz
-                if x >= 0.0:  # radial distance from station must be non-negative
-                    return (x, z, t)
+        disc = b * b - 4.0 * a * c # find Discriminant
+        if disc < 0.0: # Discriminant < 0 means no real intersection with the circle
+            return None
 
-        return None
+        # Compute the two quadratic roots (potential entry/exit points)
+        s = np.sqrt(disc)
+
+        # Two solutions; choose the one that lies on the segment and is closest to p0 (smallest t >= 0)
+
+        t_candidates = [(-b - s) / (2.0 * a), (-b + s) / (2.0 * a)]
+
+        # Keep only roots that lie within the segment parameter range.
+        t_valid = [t for t in t_candidates if 0.0 <= t <= float(t_max)]
+
+        if not t_valid: # Intersections exist on the infinite line, but not on this segment portion
+            return None
+
+        t = min(t_valid) # Choose the first intersection along the segment (closest to p0)
+        # Evaluate the intersection point p(t) = p0 + t*v
+        x = x0 + t * vx
+        z = z0 + t * vz
+        return (float(x), float(z), float(t))
 
 
     def _find_sphere_crossing_from_samples(
@@ -512,60 +497,47 @@ class AraGeom:
         z_ref,
         radius,
         reverse_search=False,
-    ):
+        ):
+        
         """
-        Find the intersection of sampled ray-trace points with the station-centered
-        circle x^2 + z^2 = radius^2 in the local propagation plane.
+        Find the intersection of sampled ray-trace points with the reconstruction
+        sphere (circle in the 2D propagation plane) centered at the station.
 
-        This helper is shared by:
-          - get_raytraced_sphere_crossing_angles()
-          - get_raytraced_critical_angle()
+        Geometry
+        --------
+        Using local coordinates:
+            rho = xs
+            dz  = zs - z_ref
 
-        It finds the first pair of consecutive sampled points that bracket the desired radius and
-        then interpolates the crossing on that finite segment using
-        self._circle_intersect().
+        The reconstruction circle is:
+            rho^2 + dz^2 = radius^2
+        i.e.
+            rho^2 + (z - z_ref)^2 = radius_map^2   
 
         Parameters
         ----------
         xs : array-like
-            Sampled horizontal coordinates in the local propagation plane, in meters.
+            Sampled horizontal coordinates rho (meters), station-centered in the propagation plane.
+            For backward traces from the station: xs starts near 0 and increases outward.
+            For forward traces (source to station path): station-centered rho is passed, 
+            e.g. rho = r_src - x.
         zs : array-like
-            Sampled vertical coordinates in the local propagation plane, in meters.
+            Sampled absolute z coordinates (meters) in station-centric coordinates.
         z_ref : float
-            Reference station depth, in meters, used to convert z samples into
-            station-centered vertical offsets dz = z - z_ref.
+            Station z (meters). Used to compute dz = z - z_ref.
         radius : float
-            Target circle / sphere radius, in meters.
-        reverse_search : bool, optional
-            If True, search from the end of the sampled path backward. This is used
-            for source->station traces, where the desired crossing is the outermost
-            one encountered before arriving at the station (for finding crossing point with the radius map for source
-            within the radius map. 
-
-            Example:
-                For a source outside the map radius (e.g., r = 1000 m) and
-                R_sphere = 300 m, the sampled distances along the ray may look like:
-                    1000 → 800 → 500 → 350 → 280 → 100 → 0 (station)
-                The crossing of R_sphere occurs between 350 → 280.
-                We search backward to select this crossing before reaching
-                the station.
-
-            If False, search from the beginning forward. This is used for
-            station->outward traces (for finding ray-traced critical angle)
-            Example:
-                For an outward trace starting at the station (r = 40m) with
-                R_sphere = 300 m, the sampled distances may look like:
-                    40 → 100 → 150 → 280 → 350 → 500
-                The crossing of R_sphere occurs between 280 → 350.
-                We search forward to select this first crossing after leaving
-                the station.
+            Reconstruction Map radius (meters).
+        reverse_search : bool, default False
+            If True, pick the crossing closest to the far/source side (useful for forward traces).
+            If False, pick the first crossing encountered moving outward from the station.
 
         Returns
         -------
-        tuple
-            (inter, i_cross), where:
-              - inter is (x_cross, z_cross, t) from self._circle_intersect(), or None
-              - i_cross is the bracketing segment index, or None if no crossing exists
+        inter : tuple or None
+            (rho_cross, dz_cross, t) where t in [0,1] is the interpolation parameter along the
+            chosen segment. dz_cross is relative to z_ref.
+        i_cross : int or None
+            Segment index i for the segment (i-1 -> i) containing the intersection.
         """
         xp = np.asarray(xs, dtype=float)
         dz = np.asarray(zs, dtype=float) - float(z_ref)
@@ -575,31 +547,20 @@ class AraGeom:
 
         d = np.hypot(xp, dz)
 
-        if reverse_search:
-            # Samples run from source toward station: outside -> inside.
-            # We want the last crossing before reaching the station.
-            i_cross = next(
-                (i for i in range(len(d) - 1, 0, -1) if d[i] <= radius < d[i - 1]),
-                None,
-            )
-            if i_cross is None:
-                return None, None
+        # Find ALL candidate crossing segments by sign change 
+        crossing_indices = [
+            i for i in range(1, len(d))
+            if (d[i - 1] - float(radius)) * (d[i] - float(radius)) <= 0.0
+        ]
+        if not crossing_indices:
+            return None, None
 
-            p0 = (float(xp[i_cross - 1]), float(dz[i_cross - 1]))  # outside
-            p1 = (float(xp[i_cross]),     float(dz[i_cross]))      # inside
+        i_cross = crossing_indices[-1] if reverse_search else crossing_indices[0]
 
-        else:
-            # Samples run outward from the station: inside -> outside.
-            # We want the first crossing after leaving the station.
-            i_cross = next(
-                (i for i in range(1, len(d)) if d[i - 1] <= radius < d[i]),
-                None,
-            )
-            if i_cross is None:
-                return None, None
+        # Segment endpoints in local (rho, dz)
+        p0 = (float(xp[i_cross - 1]), float(dz[i_cross - 1])) # outside
+        p1 = (float(xp[i_cross]),     float(dz[i_cross]))     # inside
 
-            p0 = (float(xp[i_cross - 1]), float(dz[i_cross - 1]))  # inside
-            p1 = (float(xp[i_cross]),     float(dz[i_cross]))      # outside
 
         inter = self._circle_intersect(
             p0,
@@ -608,7 +569,128 @@ class AraGeom:
             t_max=1.0,
         )
 
+        # If interpolation failed on the chosen segment, try other candidates
+        if inter is None:
+            for i in crossing_indices:
+                p0 = (float(xp[i - 1]), float(dz[i - 1])) # inside
+                p1 = (float(xp[i]),     float(dz[i]))     # outside
+                inter = self._circle_intersect(
+                    p0,
+                    (p1[0] - p0[0], p1[1] - p0[1]),
+                    float(radius),
+                    t_max=1.0,
+                )
+                if inter is not None:
+                    return inter, i
+            return None, None
+
         return inter, i_cross
+
+    def _find_sphere_crossing_exact(self, xs, zs, z_rec, R):
+        """
+        Exact segment-wise intersection with circle:
+            x^2 + (z - z_rec)^2 = R^2
+
+        Returns
+        -------
+        inter : tuple or None
+            (x_cross, dz_cross)
+        seg_idx : int or None
+            segment index i for (i-1 -> i)
+        """
+
+
+        """
+        Compute the intersection of a sampled ray path with the reconstruction circle
+        (sphere cross-section) by solving the quadratic exactly on each sample segment.
+
+        Geometry / units
+        ---------------
+        - xs is station-centered horizontal distance (rho) in meters.
+        - zs is absolute z in meters (station-centric coordinates).
+        - z_rec is the station center (receiver) z (circle center) in meters
+        - R is the Map radius in meters. 
+
+        The circle condition is:
+            rho^2 + (z - z_rec)^2 = R^2
+        Define dz = (z - z_rec), then:
+            rho^2 + dz^2 = R^2
+
+        Method:
+        ---------
+        For each segment between consecutive samples (i-1 -> i), the parametric form is:
+            rho(t) = rho0 + t*(rho1 - rho0)
+            dz(t)  = dz0  + t*(dz1  - dz0)
+        for t in [0, 1]. We solve:  rho(t)^2 + dz(t)^2 = R^2
+        and select the first valid intersection encountered in the provided ordering of samples.
+
+        Parameters
+        ----------
+        xs, zs : array-like
+            Sampled points along the ray in the 2D propagation plane:
+              - xs: rho (m)
+              - zs: absolute z (m)
+            Typically ordered from station outward for backward traces.
+        z_rec : float
+            Station z coordinate (m), used to compute dz = z - z_rec.
+        R : float
+            Reconstruction radius (m).
+
+        Returns
+        -------
+        inter : tuple or None
+            (rho_cross, dz_cross) where:
+              - rho_cross is in meters
+              - dz_cross = z_cross - z_rec is in meters
+            Returns None if no segment intersects the circle.
+        seg_idx : int or None
+            Segment index i such that the crossing lies on the segment from (i-1) to i.
+        """
+        xs = np.asarray(xs, dtype=float)
+        zs = np.asarray(zs, dtype=float)
+        if xs.size < 2:
+            return None, None
+
+        dzs = zs - float(z_rec) # Convert absolute z to station-relative dz for the circle equation.
+        R = float(R)
+
+        # Look segment-by-segment and solve for an intersection on each segment.
+        for i in range(1, len(xs)):
+            x0, dz0 = float(xs[i - 1]), float(dzs[i - 1])
+            x1, dz1 = float(xs[i]),     float(dzs[i])
+
+            # Segment direction vector (drho, ddz)
+            dx = x1 - x0
+            ddz = dz1 - dz0
+
+            # Plug rho(t)=x0+t*dx and dz(t)=dz0+t*ddz into rho(t)^2 + dz(t)^2 = R^2:
+            # -> a t^2 + b t + c = 0
+            a = dx * dx + ddz * ddz
+            if abs(a) < 1e-30: # Degenerate segment (two identical points); skip.
+                continue
+
+            b = 2.0 * (x0 * dx + dz0 * ddz)
+            c = x0 * x0 + dz0 * dz0 - R * R
+
+            disc = b * b - 4.0 * a * c # Discriminant determines whether the segment line intersects the circle.
+            if disc < 0.0: # No real intersection for this segment
+                continue
+
+            # Two candidate roots (enter/exit); keep only those lying on the segment t in [0,1]
+            s = np.sqrt(disc)
+            t_candidates = [(-b - s) / (2.0 * a), (-b + s) / (2.0 * a)]
+            t_valid = [t for t in t_candidates if 0.0 <= t <= 1.0]
+            if not t_valid:
+                continue
+
+            t = min(t_valid) # Choose the earliest intersection along this segment.
+            # Convert back to intersection point in (rho, dz).
+            x = x0 + t * dx
+            dz = dz0 + t * ddz
+            return (float(x), float(dz)), int(i)
+
+        # No segment intersected the circle.
+        return None, None
 
 
     def get_raytraced_sphere_crossing_angles(
@@ -620,93 +702,121 @@ class AraGeom:
         frequency=0.5,
         polarization=0.0,
         station_center=None,
-    ):
+        ):
+
         """
-        Find the apparent direction of a source on a reconstruction sphere via ray tracing.
+        Ray-trace a source to station path using AraSim and return the apparent direction
+        of the ray at its intersection with the reconstruction sphere of radius R_sphere.
 
-        The source is ray traced to the station center using AraSim's TraceFinder.
-        The selected ray branch is intersected with the reconstruction sphere of
-        radius R_sphere centered on the station. That sphere crossing defines the
-        apparent direction (elevation, azimuth) that should be overlaid on the sky map.
+        Coordinate conventions / units
+        ------------------------------
+        All distances are in meters and angles returned are in degrees.
 
-        If the source->station traced samples do not themselves cross R_sphere
-        (for example because the source lies inside R_sphere, or because the sampled
-        branch reaches the station before crossing the sphere), the same branch is
-        re-traced outward from the station using the branch receiptAngle. The sphere
-        crossing is then determined from those outward ray-traced samples.
+        Inputs:
+        - source_xyz: (x, y, z) in station-centric Cartesian coordinates (m).
+          z is the absolute station-centric depth coordinate.
+        - station_center: (x, y, z) in station-centric cartesian coordinates (m).
+          If None, uses self.get_station_center().
+        - R_sphere: reconstruction sphere radius (m), centered at the station.
+ 
+        - rho is the station-centered horizontal distance in that plane (m), rho >= 0
+        - dz = z - z_station (m)
 
-        If the mapped elevation lies outside the physical plotting range [-90, +90]
-        degrees, the straight-line (SL) direction is used only as a plotting fallback
-        and is flagged accordingly.
+        The reconstruction sphere in the (rho, z) plane is:
+            rho^2 + (z - z_station)^2 = R_sphere^2
+        i.e. rho^2 + dz^2 = R_sphere^2.
 
-        Ray solutions are identified only by propagation-time ordering:
-          - shortest TOF  -> label 'D' (direct)
-          - second TOF    -> label 'R' (reflected / refracted)
+        How this works ?
+        ---------------------------------
+        1) Use AraSim TraceFinder::findPaths to obtain ray solutions between source and station.
+           Solutions are ordered by time-of-flight; Hence:
+             - solution=0 -> 'D' (shortest TOF, "direct")
+             - solution=1 -> 'R' (second TOF, "refracted/alternate")
+        2) Trace the chosen solution with rt_doTrace_savePoints to obtain sampled points.
+        3) Determine where the sampled ray intersects the reconstruction circle:
+           - Try a forward trace (source to station) converted to station-centered rho.
+             For forward traces we select the "outer" crossing (reverse_search=True).
+           - If no crossing is found (can happen when the source lies inside the Radius map of interest),
+             do a backward trace outward from the station using a folded receiptAngle and
+             take the first outward crossing (reverse_search=False).
+
+        Returned direction definition
+        -----------------------------
+        The returned elevation is computed at the sphere-crossing point as:
+            elevation = atan2(dz_cross, rho_cross)  [degrees]
+        where dz_cross = (z_cross - z_station) and rho_cross is the station-centered horizontal
+        distance at the crossing.
 
         Parameters
         ----------
         source_xyz : array-like
-            Source position [x, y, z] in station-centric Cartesian coordinates,
-            in meters.
+            Source coordinates [x, y, z] (m), station-centric.
         R_sphere : float
-            Reconstruction sphere radius, in meters. Must be positive.
-        accuracy : float, optional
-            Convergence tolerance passed to AraSim findPaths (dimensionless).
-            Default is 0.001.
-        solution : int, optional
-            Requested solution type:
-              - 0 : direct path (shortest propagation time)
-              - 1 : reflected / refracted path (second-shortest propagation time)
-        frequency : float, optional
-            Signal frequency passed to the AraSim ray tracer, in GHz.
-            Default is 0.5 GHz.
-        polarization : float, optional
-            Signal polarization passed to the AraSim ray tracer, in radians.
-            Default is 0.0.
-        station_center : array-like or None, optional
-            Station center [x, y, z] in station-centric Cartesian coordinates,
-            in meters. If None, the internally stored station center is used.
+            Reconstruction sphere radius (m), must be > 0.
+        accuracy : float, default 0.001
+            Convergence tolerance passed to TraceFinder::findPaths.
+        solution : int, default 0
+            0 selects the shortest TOF solution ('D'); 1 selects the second ('R').
+        frequency : float, default 0.5
+            Frequency passed to the ray tracer (AraSim units; typically GHz in this interface).
+        polarization : float, default 0.0
+            Polarization argument passed to the ray tracer.
+        station_center : array-like or None
+            Station center [x, y, z] (m). If None, computed from geometry.
 
         Returns
         -------
         list of dict
-            Each dict corresponds to one valid ray-traced solution and contains:
-              - 'label'            : 'D' or 'R'
-              - 'elevation'        : elevation angle on R_sphere, in degrees
-              - 'azimuth'          : azimuth angle, in degrees
-              - 'tof'              : propagation time, in nanoseconds
-              - 'path_len'         : ray path length, in meters
-              - 'allowedUsed'      : AraSim reflection-mode flag
-              - 'used_sl_fallback' : bool, True only if plotting fell back to SL
+            A list with 0 or 1 entries. On success, one dict is returned:
+              - 'label' : 'D' or 'R'
+              - 'elevation' : float (deg), elevation at the sphere crossing
+              - 'azimuth' : float (deg), azimuth of source direction
+              - 'tof' : float (ns), time of flight from AraSim pathTime
+              - 'path_len' : float, path length from AraSim pathLen
+              - 'allowedUsed' : int, reflection mode used
+              - 'used_sl_fallback' : bool, True only if an unphysical angle forced SL fallback
+
+            If no valid ray solution/crossing is found, returns [] and sets
+            self._last_rt_fail_reason.
         """
+
         if R_sphere is None:
             raise ValueError("R_sphere must be provided to get_raytraced_sphere_crossing_angles().")
         if R_sphere <= 0:
             raise ValueError(f"R_sphere must be positive, got {R_sphere}.")
+
+        # Source/receiver coordinates in station-centric cartesian frame (meters)
 
         src = np.asarray(source_xyz, dtype=float)
         rec = np.asarray(
             station_center if station_center is not None else self.get_station_center(),
             dtype=float,
         )
+        # Extract sphere radius and absolute z (meters)
         R = float(R_sphere)
-
         z_src = float(src[2])
         z_rec = float(rec[2])
+        # --- Convert 3D source position to 2D propagation-plane quantities ---
+        # r_src: station-centered horizontal distance to the source (meters)
+        # az_phi: azimuth angle of the source in station coordinates (radians)
 
         dx = float(src[0] - rec[0])
         dy = float(src[1] - rec[1])
         r_src = float(np.hypot(dx, dy))
         az_phi = float(np.arctan2(dy, dx))
-
+        # --- Reset last-raytrace diagnostics (for debug) ---
+        self._last_rt_npaths = 0
+        self._last_rt_paths = []
+        self._last_rt_fail_reason = None
+        # --- Configure AraSim vectors in the ray-tracer propagation plane ---
         ROOT._rt_src.SetXYZ(r_src, 0.0, z_src)
         ROOT._rt_rec.SetXYZ(0.0, 0.0, z_rec)
 
-        # findPaths searches in AraSim's 2D cylindrical propagation plane and
-        # returns the available ray solutions. We later label them only by TOF:
-        # shortest -> D, second-shortest -> R.
+        
         sol_cnt = ctypes.c_int()
         sol_err = ctypes.c_int()
+        allowed_used = int(ROOT.RayTrace.SurfaceReflection)
+
         paths = ROOT._rt_tf.findPaths(
             ROOT._rt_src,
             ROOT._rt_rec,
@@ -714,14 +824,10 @@ class AraGeom:
             ROOT.TMath.Pi() / 2,
             sol_cnt,
             sol_err,
-            int(ROOT.RayTrace.SurfaceReflection),
+            allowed_used,
             float(accuracy),
         )
-
-        self._last_rt_npaths = 0
-        self._last_rt_paths = []
-        self._last_rt_fail_reason = None
-
+        # Handle "no solutions" or raytracer errors 
         if sol_err.value != 0 or not paths or len(paths) == 0:
             self._last_rt_fail_reason = (
                 f"findPaths error (serr={sol_err.value})"
@@ -729,25 +835,16 @@ class AraGeom:
                 else "findPaths returned zero solutions"
             )
             return []
-
+        #Sort solutions by time-of-flight (TOF) and label them by order
         sorted_paths = sorted(paths, key=lambda p: float(p.pathTime))
-
-        self._last_rt_npaths = len(sorted_paths)
-        self._last_rt_paths = [
-            {
-                "tof": float(p.pathTime) * 1e9,
-                "path_len": float(p.pathLen),
-                "launchAngle": float(p.launchAngle),
-            }
-            for p in sorted_paths
-        ]
 
         labeled = []
         if len(sorted_paths) >= 1:
-            labeled.append((sorted_paths[0], "D"))
+            labeled.append((sorted_paths[0], "D")) # shortest TOF
         if len(sorted_paths) >= 2:
-            labeled.append((sorted_paths[1], "R"))
+            labeled.append((sorted_paths[1], "R"))  # second-shortest TOF
 
+        #Select which branch to trace based on 'solution' argument
         if solution == 0:
             to_trace = [(p, l) for p, l in labeled if l == "D"]
         elif solution == 1:
@@ -758,18 +855,14 @@ class AraGeom:
         else:
             raise ValueError(f"solution must be 0 or 1, got {solution}.")
 
-        allowed_used = int(ROOT.RayTrace.SurfaceReflection)
-
-        # Straight-line direction is used only as a last-resort plotting fallback
-        # if the mapped RT elevation lies outside [-90, +90] degrees.
+        # Straight-line (SL) direction computed once; used only as a fallback
         _, elev_sl, az_sl = self.get_relative_cartesian_to_spherical(rec, src)
 
         out = []
-        for path, label in to_trace:
+        for path, label in to_trace: 
             used_sl_fallback = False
-
-            # First trace: source -> station along the chosen TOF-ordered branch.
-            sol_error = ctypes.c_int(0)
+            #Forward trace (source to station) and save all intermediate ray traced points
+            sol_error = ctypes.c_int(0) 
             ROOT.rt_doTrace_savePoints(
                 z_src,
                 float(path.launchAngle),
@@ -779,21 +872,23 @@ class AraGeom:
                 float(polarization),
                 sol_error,
             )
+            #Retrieve the saved ray samples from the C++ helper vectors.
+            xs = np.asarray(list(ROOT.rt_get_x()), dtype=float) # rho-like coordinate along the trace
+            zs = np.asarray(list(ROOT.rt_get_z()), dtype=float) # absolute z samples
 
-            xs = np.asarray(list(ROOT.rt_get_x()), dtype=float)
-            zs = np.asarray(list(ROOT.rt_get_z()), dtype=float)
-
-            if sol_error.value != 0 or len(xs) < 2:
-                print(f"[TRACE FAIL] label={label}  sol_error={sol_error.value}  npts={len(xs)}")
+            if sol_error.value != 0 or len(xs) < 2:  # If the forward trace failed, skip this branch.
+                self._last_rt_fail_reason = (
+                    f"forward trace failed for label={label}: sol_error={sol_error.value}, npts={len(xs)}"
+                )
                 continue
 
-            # Convert source->station samples into receiver-centered coordinates.
-            # xp_forward is radial distance from station in meters.
+            # Convert forward-trace rho coordinate into station-centered rho.
+            # In this forward trace, x increases from source to station, so station-centered rho is (r_src - x).
             xp_forward = r_src - xs
 
-            # For source->station samples, search from the end backward because
-            # the path terminates at the station and we want the outer sphere crossing.
-            inter, i_cross = self._find_sphere_crossing_from_samples(
+            #Find sphere crossing from the forward samples
+            # reverse_search=True chooses the crossing closer to the station side for forward-ordered points.
+            inter, _ = self._find_sphere_crossing_from_samples(
                 xp_forward,
                 zs,
                 z_rec,
@@ -801,34 +896,37 @@ class AraGeom:
                 reverse_search=True,
             )
 
+            # If no forward crossing: backward trace outward from station
             if inter is None:
-                print(
-                    f"[BACKTRACE INFO] label={label}  "
-                    f"n_ray_solutions={self._last_rt_npaths}  "
-                    f"forward_trace_found_no_crossing=True  "
-                    f"R_sphere={R:.3f} m  "
-                    f"source_r={r_src:.3f} m  "
-                    f"source_z={z_src:.3f} m"
-                )
-
+                # Need receiptAngle to trace back outward along the same branch.
                 if not hasattr(path, "receiptAngle"):
                     self._last_rt_fail_reason = (
-                        f"ray-traced solution exists for label={label}, but no forward crossing "
-                        f"was found for R_sphere={R:.3f} m and receiptAngle is unavailable "
-                        f"for backward tracing"
+                        f"no forward crossing for label={label} and receiptAngle unavailable for backward tracing"
                     )
-                    print(f"[BACKTRACE FAIL] {self._last_rt_fail_reason}")
                     continue
 
-                # Re-trace the same branch outward from the station using AraSim,
-                
-                sol_error_back = ctypes.c_int(0)
-                r_back_target = max(float(R) + 50.0, float(r_src) + 50.0)
+                # Fold the receipt angle into [0, pi/2] for a valid outward-launch angle.
+                theta_receipt = float(path.receiptAngle)
+                theta_back = theta_receipt if theta_receipt <= np.pi / 2 else (np.pi - theta_receipt)
 
+                # Backward tracing distance: ensure it's far enough to cross the R_map circle
+
+                # Choose a sufficiently distant backward-trace target so the station to outward ray is long enough
+                # (and has enough sampled points) to reliably cross the reconstruction circle of radius R.
+                # - 3*R: is choden to ensure we trace several sphere radii outward
+                # - r_src+50 m: ensures we trace at least beyond the source horizontal range (plus margin) when R is small
+                # - 100 m: absolute minimum to avoid too-short traces for very small R
+
+                r_back_target = max(3.0 * R, r_src + 50.0, 100.0)
+                z_back_target = z_rec
+
+                
+                # Backward trace (station to outward) and save all intermediate points.
+                sol_error_back = ctypes.c_int(0)
                 ROOT.rt_doTrace_savePoints(
                     z_rec,
-                    float(path.receiptAngle),
-                    ROOT.RayTrace.rayTargetRecord(float(z_src), r_back_target),
+                    float(theta_back),
+                    ROOT.RayTrace.rayTargetRecord(float(z_back_target), float(r_back_target)),
                     allowed_used,
                     float(frequency),
                     float(polarization),
@@ -838,50 +936,45 @@ class AraGeom:
                 xs_back = np.asarray(list(ROOT.rt_get_x()), dtype=float)
                 zs_back = np.asarray(list(ROOT.rt_get_z()), dtype=float)
 
+
+                 # If backward trace failed, skip this branch
                 if sol_error_back.value != 0 or len(xs_back) < 2:
                     self._last_rt_fail_reason = (
-                        f"backward trace failed for label={label}: "
-                        f"sol_error={sol_error_back.value}, npts={len(xs_back)}"
+                        f"backward trace failed for label={label}: sol_error={sol_error_back.value}, npts={len(xs_back)}"
                     )
-                    print(f"[BACKTRACE FAIL] {self._last_rt_fail_reason}")
                     continue
-
-                inter, i_cross_back = self._find_sphere_crossing_from_samples(
+                # Find the first outward crossing on the backward-trace samples.
+                inter, _ = self._find_sphere_crossing_from_samples(
                     xs_back,
                     zs_back,
                     z_rec,
                     R,
                     reverse_search=False,
                 )
-
-                if inter is not None:
-                    print(
-                        f"[BACKTRACE OK] label={label}  "
-                        f"R_sphere={R:.3f} m  "
-                        f"crossing_index={i_cross_back}  "
-                        f"npts={len(xs_back)}"
-                    )
-                else:
+                # If still no crossing, give up on this RT solution
+                #record the failure reason and print it
+                # so we can see why we fell back / skipped this branch.
+                if inter is None:
                     self._last_rt_fail_reason = (
-                        f"ray-traced solution found for label={label} "
-                        f"(n_ray_solutions={self._last_rt_npaths}), but neither forward "
-                        f"nor backward traced samples crossed R_sphere={R:.3f} m"
+                        f"ray-traced solution found for label={label}, but neither forward nor backward samples crossed "
+                        f"R_sphere={R:.3f} m"
                     )
-                    print(f"[BACKTRACE FAIL] {self._last_rt_fail_reason}")
                     continue
-
+            # convert crossing point (rho_cross, dz_cross) into elevation-azimuth
             xp_c, dz_c, _ = inter
-            elev = float(np.degrees(np.arctan2(dz_c, xp_c)))
-            az = float(np.degrees(az_phi))
+            elev = float(np.degrees(np.arctan2(dz_c, xp_c))) # elevation at sphere crossing (deg)
+            az = float(np.degrees(az_phi))   # azimuth defined by 3D source position (deg)
 
+            # Sanity check: if the mapped RT elevation is unphysical (outside [-90, 90]),
+            # fall back to the straight-line direction. This should not happen, but keeping it as a safeguard.
             if not (-90.0 <= elev <= 90.0):
-                self._last_rt_fail_reason = (
-                    f"ray-traced elevation {elev:.3f} deg outside [-90, 90]; "
-                    f"used straight-line fallback for plotting"
-                )
-                elev, az = elev_sl, az_sl
+                elev, az = float(elev_sl), float(az_sl)
                 used_sl_fallback = True
+                self._last_rt_fail_reason = (
+                    f"ray-traced elevation outside [-90,90]; used SL fallback for label={label}"
+                )
 
+            # Record output dictionary for this chosen solution branch
             out.append(
                 {
                     "label": label,
@@ -894,171 +987,151 @@ class AraGeom:
                 }
             )
 
+        # If everything failed, set a final diagnostic reason.
         if not out and not self._last_rt_fail_reason:
             self._last_rt_fail_reason = f"no valid crossing to R_sphere={R:.3f} m survived"
 
         return out
 
 
+    def get_raytraced_critical_angle(self, R_sphere, frequency=0.5, polarization=0.0):
 
-    def get_raytraced_critical_angle(
-        self,
-        R_sphere,
-        frequency=0.5,
-        polarization=0.0,
-    ):
         """
-        Map the critical reception angle onto the reconstruction sphere using the
-        AraSim ray tracer.
+        Compute the apparent critical-angle direction on the reconstruction sphere
+        by ray tracing a near-critical ray launched from the station.
 
-        The critical angle is first defined locally at the station via
-        get_critical_angle(), which returns the geometric critical elevation
-        in degrees. That local critical direction is then traced outward with
-        AraSim, and the apparent critical angle on the sky map is defined by
-        where that ray-traced trajectory crosses the reconstruction sphere of
-        radius R_sphere centered on the station.
+        Method : 
+        ------------------------
+        The function:
+          1) computes the local geometric critical elevation at the station using
+             the refractive indices (air vs ice),
+          2) launches a ray from the station at that near-critical direction using AraSim,
+          3) determines where that ray intersects the reconstruction sphere 
+             of radius R_sphere centered at the station,
+          4) returns the elevation angle at that sphere-crossing point.
+          5) For "small" spheres (R_sphere less than the vertical distance to the turning
+          point), the ray intersects the sphere on the upward leg; this is handled via
+          exact segment-wise intersection in `_find_sphere_crossing_exact`.
 
-        The initial launch direction is obtained from get_critical_angle(),
-        which computes the geometric critical angle at the station depth using
-        the local index of refraction. This provides a first-order estimate of
-        the direction from which a critically refracted ray would arrive at the
-        station in a straight-line (locally uniform medium) approximation.
+        Coordinate conventions / units
+        ------------------------------
+        - All distances are in meters.
+        - Returned angle is degrees.
+        - z_rec = Station Center depth (z) coordinate (m).
+        - rho = horizontal distance from station (m), rho >= 0
+        - dz  = z - z_rec (m)
+        The reconstruction circle is:  rho^2 + dz^2 = R_sphere^2
 
-        This direction is then used to initialize the AraSim ray tracer at the
-        station depth. The full ray-traced trajectory accounts for the depth-
-        dependent refractive index profile n(z), allowing the curved ray path
-        corresponding to that critical condition to be followed through the ice.
-
-        The ray is launched from the station rather than from the surface. This
-        relies on ray-path reversibility: the outward-traced trajectory is the
-        time-reversed equivalent of a ray arriving at the station at the critical
-        angle. Using the station depth as the starting point ensures a well-defined
-        initial condition for the ray tracer and maintains consistency with how
-        other ray-traced directions are constructed in this module.
-
-        This function uses the same sampled sphere-crossing logic as
-        get_raytraced_sphere_crossing_angles():
-          1. Ray trace the trajectory outward from the station.
-          2. Search the traced (x, z) samples for a crossing of R_sphere.
-          3. Interpolate the crossing on the bracketing segment with
-             self._circle_intersect() via the shared helper
-             self._find_sphere_crossing_from_samples().
-
-        Unlike the source-mapping case, no source->station ray-tracing step is
-        required. The critical-angle trajectory is defined locally at the station,
-        so it can be traced directly outward from the station. Therefore only a
-        single outward ray trace is needed, and no fallback re-tracing is required.
-
-        The ray is traced continuously through the ice-air interface; reaching
-        z = 0 is not treated as a terminal condition. To ensure this, the outward
-        target is placed slightly above the surface.
-
-        Falls back to get_critical_angle() (geometric, no ray bending) only if
-        no valid ray-traced crossing on R_sphere can be determined, or if the
-        mapped ray-traced elevation is outside the physical plotting range
-        [-90, +90] degrees.
+        Returned value
+        --------------
+        The returned elevation is:  elevation = atan2(dz_cross, rho_cross)   [degrees]
+        where (rho_cross, dz_cross) is the intersection of the traced ray with the
+        reconstruction circle.
 
         Parameters
         ----------
         R_sphere : float
-            Reconstruction sphere radius, in meters. Must be positive.
-        frequency : float, optional
-            Signal frequency passed to the AraSim ray tracer, in GHz.
-            Default is 0.5 GHz.
-        polarization : float, optional
-            Signal polarization passed to the AraSim ray tracer, in radians.
-            Default is 0.0.
+            Reconstruction sphere radius (m), must be > 0.
+        frequency : float, default 0.5
+            Frequency passed to AraSim ray tracer (AraSim interface units; typically GHz).
+        polarization : float, default 0.0
+            Polarization argument passed to the ray tracer.
 
-        Returns
-        -------
-        float
-            Elevation angle, in degrees, where the ray-traced critical-angle
-            trajectory appears on the reconstruction sphere. Returns
-            get_critical_angle() only if no valid RT-based crossing can be obtained.
+        Notes
+        -----
+        - This function returns a ray-traced critical-angle elevation.
+        - If the AraSim trace fails (nonzero solver error / too few samples) or a turning point
+          cannot be identified, the function falls back to the geometric critical elevation at
+          the station (from `get_critical_angle()`). 
+        - We always expect the ray-traced critical angle result; the fallback is retained as 
+          a safeguard for unusual inputs.
+
         """
-        if R_sphere is None:
-            raise ValueError("R_sphere must be provided to get_raytraced_critical_angle().")
-        if R_sphere <= 0:
-            raise ValueError(f"R_sphere must be positive, got {R_sphere}.")
+
+
+        if R_sphere is None or R_sphere <= 0:
+            raise ValueError(f"R_sphere must be positive, got {R_sphere}")
 
         z_rec = float(self.get_station_center()[2])
         R = float(R_sphere)
 
-        # Geometric critical angle (straight line, no bending) approximation evaluated at the station depth using the local
-        # index of refraction that defines the direction from which a critically refracted ray would
-        # arrive at the station.
         crit_elev_deg = float(self.get_critical_angle())
 
-        # Convert the local elevation to the angle convention required by the
-        # AraSim ray tracer. This direction is used as the initial launch angle
-        # at the station for the full ray-traced propagation in n(z).
-        crit_rt_angle = np.deg2rad(90.0 - crit_elev_deg)
+        # Convert elevation to AraSim launch angle convention (theta from +z axis, radians):
+        # elevation = 90 - theta; so,  theta = 90 - elevation
+        theta_launch  = np.deg2rad(90.0 - crit_elev_deg)
 
-        allowed_used = int(ROOT.RayTrace.SurfaceReflection)
+        # Choose a far-enough target so the traced path develops its turning point ---
+        # Trace outward well beyond the sphere (10*R) and also enforce a minimum (2000 m)
+        # to ensure robust sampling even for small R.
 
-        # Initialize the ray tracer at the station depth (z_rec). Although the
-        # critical angle is defined for a ray approaching the surface from below,
-        # we launch the ray outward from the station using the same direction.
-        # By ray-path reversibility, this outward trajectory is equivalent to
-        # the time-reversed incoming critical ray and therefore traces the same
-        # physical path through the medium.
-        #
-        # The target is placed slightly above the surface to ensure that the ray
-        # is allowed to continue through the ice-air interface rather than
-        # effectively stopping at z = 0.
-        r_target = float(R + 50.0)
-        z_target = 0.050  # in meters; slightly above the ice surface
+        r_target = max(10.0 * R, 2000.0)
+        z_target = z_rec 
 
+        #Run AraSim tracer from station outward and save all sampled points 
         sol_error = ctypes.c_int(0)
         ROOT.rt_doTrace_savePoints(
             z_rec,
-            float(crit_rt_angle),
-            ROOT.RayTrace.rayTargetRecord(z_target, r_target),
-            allowed_used,
+            float(theta_launch), # launch angle (rad)
+            ROOT.RayTrace.rayTargetRecord(z_target, r_target), # outward target (z, r)
+            int(ROOT.RayTrace.SurfaceReflection),
             float(frequency),
             float(polarization),
             sol_error,
         )
 
+        # Retrieve sampled ray points from the AraSim helper buffers.
         xs = np.asarray(list(ROOT.rt_get_x()), dtype=float)
         zs = np.asarray(list(ROOT.rt_get_z()), dtype=float)
 
+        # Fallback: if trace failed or produced too few points, return geometric critical angle
+        # this has not been observed, but we keep it as a safeguard
         if sol_error.value != 0 or len(xs) < 2:
-            print(
-                f"[CRITICAL ANGLE RT FAIL] forward trace failed: "
-                f"sol_error={sol_error.value}, npts={len(xs)}"
+            print("[CRIT] Trace failed -> geometric fallback")
+            return crit_elev_deg
+
+        # Identify the turning point (maximum z along the trajectory)
+        # Turning point is detected by slope sign change: dz/ds goes from + to -.
+        turning_idx = None
+        for i in range(1, len(xs) - 1):
+            if (zs[i] - zs[i-1]) >= 0 and (zs[i+1] - zs[i]) <= 0:
+                turning_idx = i
+                break
+
+        # If no turning point is found, we cannot define the critical ray reliably fallback.
+        # this has not been observed, but we keep it as a safeguard
+        if turning_idx is None:
+            print("[CRIT] No turning point found -> geometric fallback")
+            return crit_elev_deg
+        # Compute vertical offset of turning point relative to station 
+        z_turn = zs[turning_idx]
+        dz_h   = z_turn - z_rec # dz at the turning point (m)
+
+        # Determine intersection with reconstruction circle rho^2 + dz^2 = R^2
+        if abs(dz_h) < R:
+            # If the turning point lies inside the circle vertically, the circle is intersected
+            # on the upward-going leg at dz=dz_h; solve rho from rho = sqrt(R^2 - dz^2).
+            xp_c  = np.sqrt(R**2 - dz_h**2)
+            dz_c  = dz_h
+        else:
+            # Otherwise, find the exact segment-wise intersection using samples up to the turning point.
+            inter, _ = self._find_sphere_crossing_exact(
+                xs[:turning_idx+1],
+                zs[:turning_idx+1],
+                z_rec,
+                R,
             )
-            return float(self.get_critical_angle())
+            # If no intersection is found (unlikely), fall back to geometric critical angle.
+            if inter is None:
+                return crit_elev_deg
+            xp_c, dz_c = inter
 
-        # Outward traces from the station are ordered station -> outward,
-        # so we search forward for the first inside->outside crossing.
-        inter, i_cross = self._find_sphere_crossing_from_samples(
-            xs,
-            zs,
-            z_rec,
-            R,
-            reverse_search=False,
-        )
-
-        if inter is None:
-            print(
-                f"[CRITICAL ANGLE RT FAIL] no valid RT crossing to "
-                f"R_sphere={R:.3f} m  critical_elevation={crit_elev_deg:.3f} deg"
-            )
-            return float(self.get_critical_angle())
-
-        x_cross, z_cross, _ = inter
-        elev = float(np.degrees(np.arctan2(z_cross, x_cross)))
-
-        if not (-90.0 <= elev <= 90.0):
-            print(
-                f"[CRITICAL ANGLE RT WARN] mapped elevation {elev:.3f} deg outside [-90, 90]; "
-                f"falling back to geometric critical angle with Straight Line approximation"
-            )
-            return float(self.get_critical_angle())
-
+        # Convert the crossing point (rho_cross, dz_cross) to elevation angle (degrees)
+        elev = float(np.degrees(np.arctan2(dz_c, xp_c)))
         return elev
 
+
+    
 
     def get_known_landmarks(
         self,
@@ -1067,9 +1140,9 @@ class AraGeom:
         list_of_cal_pulser_indices=None,
         spice_depth=None,
         solution=None,
-    ):
+        ):
         """
-        Compute apparent directions of known landmarks on a reconstruction sphere.
+        Compute apparent directions of known landmarks on a reconstruction sphere of chosen radius R_map
 
         Each landmark is ray traced to the station and its direction is mapped onto
         the reconstruction sphere of radius R_map. The ray tracer (AraSim findPaths)
@@ -1084,19 +1157,19 @@ class AraGeom:
 
         Fallback rules:
           - D solution: shown unless the ray-traced samples do not yield a valid
-            crossing on R_map. In that case, the same branch is re-traced outward
+            crossing on R_map (source is inside R_map). 
+            In that case, the same branch is re-traced outward
             from the station using AraSim, and the crossing is determined from
             those traced samples. Falls back to straight-line (SL) only if no valid
             RT crossing survives, or if the mapped RT elevation is unphysical for
-            plotting.
+            plotting. We always find a D solution for all landmarks in all stations. 
 
           - R solution: shown if findPaths returns at least two solutions and the
             requested reflected / refracted branch yields a valid RT crossing on
-            R_map. Falls back to SL if:
-              (a) only one solution exists, so the R branch is absent,
-              (b) neither the source->station nor the station->outward traced
-                  samples yield a valid crossing on R_map, or
-              (c) the mapped RT elevation is unphysical for plotting.
+            R_map. Falls back to SL if only one solution exists, so the R branch is absent (that is the 
+            case for surface landmarks where we get SL fallback since AraSim returned only 1 solution 
+            for surface landmarks)
+              
 
         Parameters
         ----------
@@ -1129,6 +1202,8 @@ class AraGeom:
                                       onto R_map, in degrees
               - '_marker_status'    : plotting status for each landmark
         """
+        
+        
         if R_map is None:
             raise ValueError("R_map must be provided to get_known_landmarks().")
         if R_map <= 0:
@@ -1137,8 +1212,7 @@ class AraGeom:
         if list_of_landmarks is None:
             list_of_landmarks = ["IC22S", "ICL", "SPRESSO"]
         elif list_of_landmarks == ["all"]:
-            list_of_landmarks = ["ICL", "IC22S", "IC1S", "WT", "SPRESSO"] #"SPT" removed due to depth of SPT bug in AraRoot 
-
+            list_of_landmarks = ["ICL", "IC22S", "IC1S", "WT", "SPRESSO", "SPT"]
         if list_of_cal_pulser_indices is None:
             list_of_cal_pulser_indices = [1, 3]
         elif list_of_cal_pulser_indices == ["all"]:
@@ -1152,6 +1226,7 @@ class AraGeom:
         station_center = self.get_station_center()
 
         def _resolve(name, source_xyz, station_center, R_sphere, solution):
+            
             """
             Resolve one landmark to its apparent direction on the reconstruction sphere.
 
@@ -1163,7 +1238,7 @@ class AraGeom:
             Parameters
             ----------
             name : str
-                Landmark label used for diagnostic printing and as the collect key.
+                Landmark label used for the collect key.
             source_xyz : array-like
                 Source position [x, y, z] in station-centric Cartesian coordinates,
                 in meters.
@@ -1173,7 +1248,7 @@ class AraGeom:
             R_sphere : float
                 Reconstruction sphere radius, in meters.
             solution : int
-                0 = direct path, 1 = reflected path.
+                0 = direct path, 1 = second-shortest TOF path ('R')
 
             Returns
             -------
@@ -1182,6 +1257,7 @@ class AraGeom:
                 meters, and elevation / azimuth are in degrees. Ray-traced if
                 successful, straight-line fallback otherwise.
             """
+
             r_sl, elev_sl, az_sl = self.get_relative_cartesian_to_spherical(
                 station_center, source_xyz
             )
@@ -1206,6 +1282,7 @@ class AraGeom:
             return [r_sl, rt_sols[0]["elevation"], rt_sols[0]["azimuth"]]
 
         # Local calpulsers
+        
         calpulser = self.get_local_CP(list_of_cal_pulser_indices)
         for cp in calpulser:
             collect[f"CP{cp}"] = _resolve(f"CP{cp}", calpulser[cp], station_center, R_map, solution)
@@ -1218,16 +1295,21 @@ class AraGeom:
                 collect[pulser] = _resolve(pulser, this_pulser, station_center, R_map, solution)
 
         # South Pole surface landmarks
-        for known_loc in ["ICL", "WT", "SPRESSO"]: #"SPT" removed because of unknown depth, AraRoot SPT depth entry is incorrect 
+        
+        for known_loc in ["ICL", "WT", "SPRESSO", "SPT"]:
             if known_loc in list_of_landmarks:
                 this_loc = np.array(self.get_southpole_landmarks(known_loc))[0]
-                st_centric = self.get_global_to_station_centric(this_loc[:3])
-                #if known_loc == "SPT":
-                #    st_centric[2] = 7.55984245e-02  # SPT is removed from surface landmark list due to depth bug in AraRoot
+                st_centric = self.get_global_to_station_centric(this_loc)
                 collect[known_loc] = _resolve(known_loc, st_centric, station_center, R_map, solution)
 
         # Ray-traced critical angle
-        collect["critical_angle_rt"] = self.get_raytraced_critical_angle(R_map)
+        
+        critical_angle_rt = self.get_raytraced_critical_angle(R_map)
+        collect["critical_angle_rt"] = critical_angle_rt
         collect["_marker_status"] = marker_status
 
         return collect
+
+
+
+
