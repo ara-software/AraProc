@@ -6,7 +6,7 @@ from . import data
 
 from araproc.framework import waveform_utilities as wu
 
-def load_arasim_phase_response_as_spline():
+def load_arasim_phase_response_as_spline(which_phase_file = None):
 
     """
     Load the AraSim phase response of the system to use for de-dispersion.
@@ -19,12 +19,30 @@ def load_arasim_phase_response_as_spline():
         And the phase is unwrapped, in units of radians.
     """
 
-    file = pkg_resources.open_text(data, 
-                                   "ARA_Electronics_TotalGain_TwoFilters.txt")
-    file_content = np.genfromtxt(file, 
-                                 delimiter=",", skip_header=3,
-                                 names=["freq", "gain", "phase"], 
-                                )
+    if which_phase_file is None:
+       phase_file = "ARA_Electronics_TotalGain_TwoFilters.txt"
+       print("Simulated phase file is being used")
+       with pkg_resources.open_text(data, phase_file) as file:
+            file_content = np.genfromtxt(
+            file,
+            delimiter=",",
+            skip_header=3,
+            names=["freq", "gain", "phase"],
+            )
+
+    elif which_phase_file == "lab_measured":
+       phase_file = "ARA_Electronics_TotalGain_LabMeasured.txt"
+       print(" ===== Caution: Lab measured phase file is being used ===== ")
+       with pkg_resources.open_text(data, phase_file) as file:
+            file_content = np.genfromtxt(
+            file,
+            delimiter=",",
+            skip_header=3,
+            names=["freq", "phase"],
+            )
+
+    else:
+       raise Exception("Please select the correct phase file for the dedispersion, aborting") 
 
     freq_ghz = file_content["freq"]/1.E3 # convert to GHz
     phs_unwrapped = np.unwrap(file_content["phase"]) # unwrapped phase in radians
@@ -54,7 +72,7 @@ def dedisperse_wave(
         volts, # in volts,
         phase_spline, # the phase spline
         pre_pad_ns=1000.0,  # amount of zero prepadding before dedispersion (ns)
-        final_crop_ns=10.0  # amount of prepadding to keep after dedispersion (ns)
+        final_crop_ns=10.0, # amount of prepadding to keep after dedispersion (ns)
         ):
     
     """
@@ -80,7 +98,6 @@ def dedisperse_wave(
         The default value of 10 ns is selected by looking at the 
         "average" group delay (by eye) within the band.
         
-
     Returns
     -------
     times : np.ndarray(dtype=np.float64)
