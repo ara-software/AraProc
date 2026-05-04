@@ -1193,6 +1193,9 @@ class AnalysisDataset:
         The excluded_channel list, plus channels 8->15 (inclusive).
         This list can be used to calculate pol only variables, so you get e.g.
         bad channels and the exclusion of the hpol channels.
+    which_phase_file: str
+        by default it loads simulated phase file
+        choose which_phase_file = 'lab_measured' for the lab measured phase data 
     """
 
     def __init__(self, 
@@ -1205,6 +1208,7 @@ class AnalysisDataset:
                  path_to_cw_ids : str = None,
                  always_on_min_cw_id_freq : float = 0.120,
                  always_on_max_cw_id_freq : float = 0.350,
+                 which_phase_file = None,
                  ):
     
         self.is_simulation = is_simulation
@@ -1212,7 +1216,7 @@ class AnalysisDataset:
         self.path_to_cw_ids = path_to_cw_ids
         self.always_on_min_cw_id_freq = always_on_min_cw_id_freq
         self.always_on_max_cw_id_freq = always_on_max_cw_id_freq
-
+        self.which_phase = which_phase_file
         if self.is_simulation and self.do_not_calibrate:
             raise Exception(f"Simulation (is_simulation = {self.is_simulation}) and uncalibrated data (do_not_calibrate = {self.do_not_calibrate}) are incompatible settings")
         if self.is_simulation and self.path_to_cw_ids:
@@ -1272,7 +1276,7 @@ class AnalysisDataset:
         self.__get_excluded_channels() # after we set the station ID and config
 
         # establish the properties of the dedisperser
-        self.__phase_spline = dd.load_arasim_phase_response_as_spline()
+        self.__phase_spline = dd.load_arasim_phase_response_as_spline(self.which_phase)
 
         # and the properties of the CW filter, and the bandpass filters
         self.__cw_filters = get_filters(self.station_id, self.config)
@@ -1440,8 +1444,7 @@ class AnalysisDataset:
         crop_times : dict of float pairs (keys : int, channel number; values : tuple, time range)
             The time range (tmin, tmax) which traces should be cropped to for each channel. 
             To avoid cropping you can set tmin/tmax to a very negative/positive number. If
-            a channel is missing from the dictionary, it will be skipped in the cropping process.  
-
+            a channel is missing from the dictionary, it will be skipped in the cropping process.          
         Returns
         -------
         wavepacket : dict
@@ -1454,7 +1457,7 @@ class AnalysisDataset:
                 Values are TGraphs
               "trace_type" : string
                 Waveform type requested by which_trace
-        """
+        """       
 
         if useful_event is None:
             raise KeyError("Passed useful event is None for some reason")
@@ -1530,7 +1533,7 @@ class AnalysisDataset:
         if which_traces == "dedispersed":
             wavepacket["waveforms"] = dedispersed_waves
             return wavepacket
-    
+
 
         # and finally, apply some bandpass cleanup filters
         bandpassed_waves = {}
