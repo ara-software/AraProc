@@ -243,6 +243,42 @@ class AraGeom:
             calpulsers[f'{cal_index}'] = [cal_pulser_info.antLocation[i] for i in range(3)]
         return calpulsers
 
+    def get_all_channels(self,list_of_channels, excluded_channels=None):
+        """
+        Returns the local antenna positions for all RF channels.
+
+        Parameters
+        ----------
+        excluded_channels : list
+            List of RF channel indices to exclude.
+
+        Returns
+        -------
+        channels : dict
+            A dictionary whose keys are channel indices and whose values are
+            [x, y, z] antenna positions.
+        """
+
+        if excluded_channels is None:
+            excluded_channels = []
+
+        channels = {}
+
+        total_antennas = list_of_channels  #constants.num_rf_channels
+        print("total channels", total_antennas)
+        for antenna_index in total_antennas:
+
+            if antenna_index in excluded_channels:
+                continue
+
+            antenna_info = self.st_info.getAntennaInfo(antenna_index)
+
+            channels[f'{antenna_index}'] = [
+                antenna_info.antLocation[i] for i in range(3)
+            ]
+        print('channels', channels)
+        return channels
+
 
     def get_survey_to_global_coords(self, easting, northing, elevation=None):
         """
@@ -1138,6 +1174,7 @@ class AraGeom:
         list_of_landmarks=None,
         R_map=None,
         list_of_cal_pulser_indices=None,
+        list_of_channels=None,
         spice_depth=None,
         solution=None,
         ):
@@ -1217,7 +1254,14 @@ class AraGeom:
             list_of_cal_pulser_indices = [1, 3]
         elif list_of_cal_pulser_indices == ["all"]:
             list_of_cal_pulser_indices = [0, 1, 2, 3]
-
+        if list_of_channels is None:
+            list_of_channels = []
+        elif list_of_channels == ["vpols"]:
+            list_of_channels = constants.vpol_channel_ids
+        elif list_of_channels == ["hpols"]:    
+            list_of_channels = constants.hpol_channel_ids
+        elif list_of_channels == ["all"]:
+            list_of_channels = constants.rf_channels_ids
         if spice_depth is not None and "SPIce" not in list_of_landmarks:
             list_of_landmarks.append("SPIce")
 
@@ -1281,6 +1325,11 @@ class AraGeom:
 
             return [r_sl, rt_sols[0]["elevation"], rt_sols[0]["azimuth"]]
 
+        # All RF channels
+        all_channels = self.get_all_channels(list_of_channels)
+        for this_ch in all_channels:
+            collect[f"CH{this_ch}"] = _resolve(f"CH{this_ch}",all_channels[this_ch], station_center, R_map, solution)
+        del all_channels
         # Local calpulsers
         
         calpulser = self.get_local_CP(list_of_cal_pulser_indices)
