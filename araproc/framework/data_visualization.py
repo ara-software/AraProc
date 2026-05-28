@@ -281,7 +281,8 @@ def plot_skymap(the_map,
                 station_id, 
                 map_type, 
                 landmarks = None,
-                calpulser_indices = None, 
+                calpulser_indices = None,
+                list_of_channels = None,
                 spice_depth = None,
                 aravertex_results = None,
                 output_file_path = None
@@ -298,6 +299,8 @@ def plot_skymap(the_map,
         which calpulsers you want to see in your skymap
     landmarks: list ## example ['ICL',IC22S','SPT','IC1S','SPIce','WT']
         which landmarks you want to see in your skymap
+    list_of_channels : string ## example 'vpols', 'hpols' or 'all'
+        which channels you want to see in your skymap
     spice_depth : int/float
         the depth of spice pulser ## example -1451.3
     output_file_path: str
@@ -382,7 +385,7 @@ def plot_skymap(the_map,
 
     # Add known locations to the skymap 
     
-    landmark_dict = mu.AraGeom(station_id).get_known_landmarks(landmarks, radius_map, calpulser_indices, spice_depth, solution=solution)
+    landmark_dict = mu.AraGeom(station_id).get_known_landmarks(landmarks, radius_map, calpulser_indices,list_of_channels, spice_depth, solution=solution)
     marker_status = landmark_dict.get("_marker_status", {})
 
     for entry in landmark_dict.keys():
@@ -413,7 +416,7 @@ def plot_skymap(the_map,
         marker_style = 5 if status == "sl_fallback" else 29
         marker = ROOT.TMarker(phi, theta, marker_style)
 
-        color = ROOT.kBlack if "CP" in entry else ROOT.kRed
+        color = ROOT.kBlue if "CH" in entry else ROOT.kBlack if "CP" in entry else ROOT.kRed
         marker.SetMarkerColor(color)
 
         # Set Markersize for SL fallback marker and Ray-Traced Marker
