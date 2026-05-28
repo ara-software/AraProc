@@ -264,8 +264,7 @@ class AraGeom:
 
         channels = {}
 
-        total_antennas = list_of_channels  #constants.num_rf_channels
-        print("total channels", total_antennas)
+        total_antennas = list_of_channels  
         for antenna_index in total_antennas:
 
             if antenna_index in excluded_channels:
@@ -276,7 +275,6 @@ class AraGeom:
             channels[f'{antenna_index}'] = [
                 antenna_info.antLocation[i] for i in range(3)
             ]
-        print('channels', channels)
         return channels
 
 
@@ -1256,11 +1254,11 @@ class AraGeom:
             list_of_cal_pulser_indices = [0, 1, 2, 3]
         if list_of_channels is None:
             list_of_channels = []
-        elif list_of_channels == ["vpols"]:
+        elif list_of_channels == "vpols":
             list_of_channels = constants.vpol_channel_ids
-        elif list_of_channels == ["hpols"]:    
+        elif list_of_channels == "hpols":    
             list_of_channels = constants.hpol_channel_ids
-        elif list_of_channels == ["all"]:
+        elif list_of_channels == "all":
             list_of_channels = constants.rf_channels_ids
         if spice_depth is not None and "SPIce" not in list_of_landmarks:
             list_of_landmarks.append("SPIce")

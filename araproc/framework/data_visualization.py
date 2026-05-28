@@ -299,7 +299,7 @@ def plot_skymap(the_map,
         which calpulsers you want to see in your skymap
     landmarks: list ## example ['ICL',IC22S','SPT','IC1S','SPIce','WT']
         which landmarks you want to see in your skymap
-    list_of_channels : string ## example ["vpols"]
+    list_of_channels : string ## example 'vpols', 'hpols' or 'all'
         which channels you want to see in your skymap
     spice_depth : int/float
         the depth of spice pulser ## example -1451.3
