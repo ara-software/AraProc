@@ -838,8 +838,6 @@ class AraGeom:
         #Sort solutions by time-of-flight (TOF) and label them by order
         sorted_paths = sorted(paths, key=lambda p: float(p.pathTime))
 
-
-
         labeled = []
         if len(sorted_paths) >= 1:
             labeled.append((sorted_paths[0], "D")) # shortest TOF
@@ -890,7 +888,8 @@ class AraGeom:
 
             #Find sphere crossing from the forward samples
             # reverse_search=True chooses the crossing closer to the station side for forward-ordered points.
-            
+
+
             inter, _ = self._find_sphere_crossing_from_samples(
                 xp_forward,
                 zs,
@@ -911,87 +910,82 @@ class AraGeom:
 
                 theta_receipt = float(path.receiptAngle)
 
-                # For surface-reflected ('R') rays arriving from above, apply an analytic
-                # geometric projection to find the exact intersection on the reconstruction sphere.
-                # This avoids numerical tracing issues at or above the ice-air interface.
-                if theta_receipt > np.pi / 2 and label == "R":
-                    theta_apparent = np.pi - theta_receipt
-                    xp_c = R * np.sin(theta_apparent)
-                    dz_c = R * np.cos(theta_apparent)
-                    inter = (xp_c, dz_c, 1.0) # 1.0 is a dummy parameter 't' to match tuple unpacking
-                
-                # For direct paths (solution = 0), propagate backward numerically using exact momentum reversal.
-                else:
-                    # Reverse the arrival direction perfectly backward to obtain the true outward launch angle.
-                    theta_launch_back = np.pi - theta_receipt
+                # Reverse the arrival direction perfectly backward to obtain the true outward launch angle.
+                # We apply this to ALL solutions (both D and R) to strictly use only the ray-traced path from AraSim    
+
+                theta_launch_back = np.pi - theta_receipt
                     
-                    # Choose a sufficiently distant backward-trace target so the station-to-outward ray 
-                    # is long enough (and has enough sampled points) to reliably cross the reconstruction 
-                    # circle of radius R.
-                    #   - 3 * R: ensures we trace several sphere radii outward.
-                    #   - r_src + 50 m: ensures we trace at least beyond the source horizontal range 
-                    #     (plus margin) when R is small.
-                    #   - 100 m: absolute minimum to avoid too-short traces for very small R.
+                # Choose a sufficiently distant backward-trace target so the station-to-outward ray 
+                # is long enough (and has enough sampled points) to reliably cross the reconstruction 
+                # circle of radius R.
 
-                    dist = max(3.0 * R, r_src + 50.0, 100.0)
-                    # Dynamically project target coordinates along the reversed launch trajectory.
-                    r_back_target = abs(dist * np.sin(theta_launch_back))
-                    z_back_target = z_rec + dist * np.cos(theta_launch_back)
+                dist = max(3.0 * R, r_src + 50.0, 100.0)
+
+                # Dynamically project target coordinates along the reversed launch trajectory.
+                r_back_target = abs(dist * np.sin(theta_launch_back))
+                z_back_target = z_rec + dist * np.cos(theta_launch_back)
                     
-                    # Safeguard for vertical rays
-                    # AraSim stops tracing as soon as the ray hits either the vertical limit (z_back_target) 
-                    # or the horizontal limit (r_back_target). 
-                    # If a ray is pointing almost straight up or straight down, r_back_target 
-                    # becomes dangerously small (close to 0). This tiny horizontal boundary causes the 
-                    # numerical tracer to accidentally fail almost immediately.
-                    # To fix this, this safeguard target is added to handle purely vertical trajectories.
-                    if r_back_target < 10.0:
-                        r_back_target = dist
-                        z_back_target = z_rec + dist * np.sign(np.cos(theta_launch_back))
+                # Safeguard for vertical rays
+                # AraSim stops tracing as soon as the ray hits either the vertical limit (z_back_target) 
+                # or the horizontal limit (r_back_target). 
+                # If a ray is pointing almost straight up or straight down, r_back_target 
+                # becomes dangerously small (close to 0). This tiny horizontal boundary causes the 
+                # numerical tracer to accidentally fail almost immediately.
+                # To fix this, this safeguard target is added to handle purely vertical trajectories.
 
-                    # Backward trace (station to outward) and save all intermediate points.
+                if r_back_target < 10.0:
+                    r_back_target = dist
+                    z_back_target = z_rec + dist * np.sign(np.cos(theta_launch_back))
 
-                    sol_error_back = ctypes.c_int(0)
-                    ROOT.rt_doTrace_savePoints(
-                        z_rec,
-                        float(theta_launch_back),
-                        ROOT.RayTrace.rayTargetRecord(float(z_back_target), float(r_back_target)),
-                        allowed_used,
-                        float(frequency),
-                        float(polarization),
-                        sol_error_back,
+
+                # Backward trace (station to outward) and save all intermediate points.
+
+                sol_error_back = ctypes.c_int(0)
+                ROOT.rt_doTrace_savePoints(
+                    z_rec,
+                    float(theta_launch_back),
+                    ROOT.RayTrace.rayTargetRecord(float(z_back_target), float(r_back_target)),
+                    allowed_used,
+                    float(frequency),
+                    float(polarization),
+                    sol_error_back,
                     )
 
-                    xs_back = np.asarray(list(ROOT.rt_get_x()), dtype=float)
-                    zs_back = np.asarray(list(ROOT.rt_get_z()), dtype=float)
 
-                    # If backward trace failed, skip this branch
+                xs_back = np.asarray(list(ROOT.rt_get_x()), dtype=float)
+                zs_back = np.asarray(list(ROOT.rt_get_z()), dtype=float)
 
-                    if sol_error_back.value != 0 or len(xs_back) < 2:
-                        self._last_rt_fail_reason = (
-                            f"backward trace failed for label={label}: sol_error={sol_error_back.value}, npts={len(xs_back)}"
-                        )
-                        continue
-                    
-                    # Find the first outward crossing on the backward-trace samples.
+                # If backward trace failed, skip this branch
 
-                    inter, _ = self._find_sphere_crossing_from_samples(
-                        xs_back,
-                        zs_back,
-                        z_rec,
-                        R,
-                        reverse_search=False,
+                if sol_error_back.value != 0 or len(xs_back) < 2:
+                    self._last_rt_fail_reason = (
+                        f"backward trace failed for label={label}: sol_error={sol_error_back.value}, npts={len(xs_back)}"
                     )
+                    continue
+                    
+                # Find the first outward crossing on the backward-trace samples.
+
+                inter, _ = self._find_sphere_crossing_from_samples(
+                    xs_back,
+                    zs_back,
+                    z_rec,
+                    R,
+                    reverse_search=False,
+                )
+
                 
                 # If still no crossing, give up on this RT solution
                 #record the failure reason and print it
                 # so we can see why we fell back / skipped this branch.
+
                 if inter is None:
                     self._last_rt_fail_reason = (
                         f"ray-traced solution found for label={label}, but neither forward nor backward samples crossed "
                         f"R_sphere={R:.3f} m"
                     )
                     continue
+
+
             # convert crossing point (rho_cross, dz_cross) into elevation-azimuth
             xp_c, dz_c, _ = inter
             elev = float(np.degrees(np.arctan2(dz_c, xp_c))) # elevation at sphere crossing (deg)
@@ -1163,8 +1157,6 @@ class AraGeom:
         return elev
 
 
-    
-
     def get_known_landmarks(
         self,
         list_of_landmarks=None,
@@ -1301,6 +1293,8 @@ class AraGeom:
                 station_center=station_center,
             )
 
+
+
             if not rt_sols:
                 marker_status[name] = "sl_fallback"
                 if hasattr(self, "_last_rt_fail_reason") and self._last_rt_fail_reason:
@@ -1342,3 +1336,4 @@ class AraGeom:
 
         return collect
 
+        
