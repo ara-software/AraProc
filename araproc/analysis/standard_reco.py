@@ -85,6 +85,8 @@ class StandardReco:
         if station_id not in const.valid_station_ids:
             raise KeyError(f"Station {station_id} is not supported")
         self.station_id = station_id
+
+        self.icemodel = icemodel
     
         if not isinstance(excluded_channels, np.ndarray):
             raise KeyError(f"Excluded channel list needs to be a 1D numpy array")
@@ -118,12 +120,20 @@ class StandardReco:
 
 
         # always add a "nearby" correlator for 41m away
+       # dir_path = os.path.join(ray_trace_tables_dir,
+       #                         f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.calpulser_r_library[station_id]}_angle_1.00_solution_0_v2.root"
+       #                         )
         dir_path = os.path.join(ray_trace_tables_dir,
-                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.calpulser_r_library[station_id]}_angle_1.00_solution_0_v2.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.calpulser_r_library[station_id]}_angle_1.00_solution_0.root"
                                 )
+
+       # ref_path = os.path.join(ray_trace_tables_dir,
+       #                         f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.calpulser_r_library[station_id]}_angle_1.00_solution_1_v2.root"
+       #                         )
         ref_path = os.path.join(ray_trace_tables_dir,
-                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.calpulser_r_library[station_id]}_angle_1.00_solution_1_v2.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.calpulser_r_library[station_id]}_angle_1.00_solution_1.root"
                                 )
+
         self.rtc_wrapper.add_rtc(ref_name = "nearby",
                 radius=float(const.calpulser_r_library[station_id]),
                 path_to_dir_file=dir_path,
@@ -131,11 +141,17 @@ class StandardReco:
                 )
 
         # always add a "distant" correlator for (145m or 300m) away
+        #dir_path = os.path.join(ray_trace_tables_dir,
+        #                        f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.distant_events_r_library[station_id]}_angle_1.00_solution_0_v2.root"
+        #                        )
+        #ref_path = os.path.join(ray_trace_tables_dir,
+        #                        f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.distant_events_r_library[station_id]}_angle_1.00_solution_1_v2.root"
+        #                        )
         dir_path = os.path.join(ray_trace_tables_dir,
-                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.distant_events_r_library[station_id]}_angle_1.00_solution_0_v2.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.distant_events_r_library[station_id]}_angle_1.00_solution_0.root"
                                 )
         ref_path = os.path.join(ray_trace_tables_dir,
-                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.distant_events_r_library[station_id]}_angle_1.00_solution_1_v2.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.distant_events_r_library[station_id]}_angle_1.00_solution_1.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "distant",
                 radius=float(const.distant_events_r_library[station_id]),
