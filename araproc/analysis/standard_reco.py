@@ -40,7 +40,7 @@ class StandardReco:
         The list of channels you want *exclued* from the interferometry
     station_id : int
         The id of the station you want to reco (only station 1-5 supported)
-    systematics : int
+    icemodel : int
         Which ray trace tables to be used. 40 is nominal, 41 is up, 42 is down.
     requested_maps : set of strings
         The keys for the reco maps to be generated.
@@ -79,7 +79,7 @@ class StandardReco:
                  station_id : int,
                  excluded_channels = np.array([]), # by default no excluded channels
                  requested_maps = const.all_reco_result_maps, # by default create all maps
-                 systematics = 40, # default to using nominal ray tracing tables
+                 icemodel = 40, # default to using nominal ray tracing tables
                 ):
         
         if station_id not in const.valid_station_ids:
@@ -119,10 +119,10 @@ class StandardReco:
 
         # always add a "nearby" correlator for 41m away
         dir_path = os.path.join(ray_trace_tables_dir,
-                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.systematics}_radius_{const.calpulser_r_library[station_id]}_angle_1.00_solution_0_v2.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.calpulser_r_library[station_id]}_angle_1.00_solution_0_v2.root"
                                 )
         ref_path = os.path.join(ray_trace_tables_dir,
-                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.systematics}_radius_{const.calpulser_r_library[station_id]}_angle_1.00_solution_1_v2.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.calpulser_r_library[station_id]}_angle_1.00_solution_1_v2.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "nearby",
                 radius=float(const.calpulser_r_library[station_id]),
@@ -132,10 +132,10 @@ class StandardReco:
 
         # always add a "distant" correlator for (145m or 300m) away
         dir_path = os.path.join(ray_trace_tables_dir,
-                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.systematics}_radius_{const.distant_events_r_library[station_id]}_angle_1.00_solution_0_v2.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.distant_events_r_library[station_id]}_angle_1.00_solution_0_v2.root"
                                 )
         ref_path = os.path.join(ray_trace_tables_dir,
-                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.systematics}_radius_{const.distant_events_r_library[station_id]}_angle_1.00_solution_1_v2.root"
+                                f"arrivaltimes_station_{self.station_id}_icemodel_{self.icemodel}_radius_{const.distant_events_r_library[station_id]}_angle_1.00_solution_1_v2.root"
                                 )
         self.rtc_wrapper.add_rtc(ref_name = "distant",
                 radius=float(const.distant_events_r_library[station_id]),
