@@ -1208,7 +1208,7 @@ class AnalysisDataset:
                  path_to_cw_ids : str = None,
                  always_on_min_cw_id_freq : float = 0.120,
                  always_on_max_cw_id_freq : float = 0.350,
-                 which_phase_file = None,
+                 which_phase_file = "ARA_TwoFilter",
                  ):
     
         self.is_simulation = is_simulation
