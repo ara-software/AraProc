@@ -6,7 +6,7 @@ from . import data
 
 from araproc.framework import waveform_utilities as wu
 
-def load_arasim_phase_response_as_spline(which_phase_file = None):
+def load_arasim_phase_response_as_spline(which_phase_file = "ARA_TwoFilter"):
 
     """
     Load the AraSim phase response of the system to use for de-dispersion.
@@ -19,7 +19,7 @@ def load_arasim_phase_response_as_spline(which_phase_file = None):
         And the phase is unwrapped, in units of radians.
     """
 
-    if which_phase_file is None:
+    if which_phase_file == "ARA_TwoFilter":
        phase_file = "ARA_Electronics_TotalGain_TwoFilters.txt"
        print("Simulated phase file is being used")
        with pkg_resources.open_text(data, phase_file) as file:
