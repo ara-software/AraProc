@@ -77,6 +77,94 @@ def get_filters(station_id, analysis_config):
 
     return cw_filters
 
+
+def find_best_triggering_antenna(report_station, detector_station):
+    """
+    Identify the (string, antenna) index of the triggered antenna with the greatest SNR, so that its
+    `Likely_Sol` can be used to determine which interaction (primary or secondary) likely triggered the
+    detector.
+
+    Parameters
+    ----------
+    report_station : ROOT AraSim Report::StationReport object (i.e. report.stations[0])
+    detector_station : ROOT AraSim Detector::ARA_station object (i.e. detector.stations[0])
+
+    Returns
+    -------
+    best_string, best_antenna : int, int
+        Indices of the triggered antenna with the greatest SNR, or (-1, -1) if none could be identified.
+    """
+
+    # find all antennas that participated in the trigger
+    trig_ants = [
+        (s, a)
+        for s in range(len(report_station.strings))
+        for a in range(len(report_station.strings[s].antennas))
+        if report_station.strings[s].antennas[a].Trig_Pass
+    ]
+    if len(trig_ants) == 0:
+        return -1, -1
+
+    # get triggered antenna polarization type
+    trig_ant_types = [detector_station.strings[s].antennas[a].type for s, a in trig_ants]
+
+    # determine how many vpols and hpols triggered
+    trig_ant_types_counts = np.unique(trig_ant_types, return_counts=True)
+    n_trig_vpols = 0
+    n_trig_hpols = 0
+    if len(trig_ant_types_counts[0]) == 2:
+        # both Hpols and Vpols triggered
+        n_trig_vpols, n_trig_hpols = trig_ant_types_counts[1]
+    elif 0 in trig_ant_types:
+        # only Vpols triggered
+        n_trig_vpols = trig_ant_types_counts[1][0]
+    elif 1 in trig_ant_types:
+        # only Hpols triggered
+        n_trig_hpols = trig_ant_types_counts[1][0]
+
+    # based on if there are 3 Vpols and/or 3 Hpols that triggered, determine
+    #   if the Vpol and/or Hpol triggering channel was activated and indicate
+    #   which corresponding antennas we should analyze for greatest SNR
+    if n_trig_vpols==3 and n_trig_hpols==3: 
+        # Event triggered on both VPols and Hpols, analyze all triggering
+        #   antennas for the one with the highest SNR regardless of antenna type
+        ants_to_analyze = np.arange(len(trig_ants))
+    elif n_trig_vpols == 3:
+        # Event triggered on VPols, analyze triggering Vpols for greatest SNR
+        ants_to_analyze = np.where(np.asarray(trig_ant_types) == 0)[0]
+    else: 
+        # Event triggered on HPols, analyze triggering Hpols for greatest SNR
+        ants_to_analyze = np.where(np.asarray(trig_ant_types) == 1)[0]
+
+    # get the string index, antenna index, and SNR of the antenna with the 
+    #   greatest SNR of antennas that activated the station trigger
+    best_SNR = 0
+    best_ant = (-1, -1)
+    for ant_idx in ants_to_analyze: 
+
+        # get the string and antenna index
+        s, a = trig_ants[ant_idx]
+
+        # get the SNR of this antenna's waveform
+        t = report_station.strings[s].antennas[a].time_mimic    
+        ROOT.SetOwnership(t, False) # ROOT's responsibility 
+        v = report_station.strings[s].antennas[a].V_mimic
+        ROOT.SetOwnership(v, False) # ROOT's responsibility
+        waveform = ROOT.TGraph(len(t), t.data(), v.data())
+        ROOT.SetOwnership(waveform, True) # python's responsibility
+
+        SNR = get_snr(waveform)
+
+        # if this antenna's waveform is greater than the saved SNR, save this 
+        #   antennas string index, antenna index, and SNR as the best
+        if SNR > best_SNR: 
+            best_SNR = SNR
+            best_ant = (s, a)
+
+    # return the triggering antenna with the greatest SNR
+    return best_ant
+
+
 class DataWrapper:
 
     """
@@ -948,77 +1036,12 @@ class SimWrapper:
             objects, respectively
         """
 
-        # Alias the station we're analyzing as it is in the report and detector class
-        station_r = self.report_ptr.stations[0]
-        station_d = self.detector_ptr.stations[0]
-
-        # Get the string and antenna index for each triggered antenna
-        trig_ants = [
-            (s, a) 
-            for s in range(len(station_r.strings)) 
-            for a in range(len(station_r.strings[s].antennas)) 
-            if station_r.strings[s].antennas[a].Trig_Pass]
-        
-        # Get triggered antenna polarization type
-        trig_ant_types = [station_d.strings[s].antennas[a].type for s, a in trig_ants]
-
-        # Determine how many vpols and hpols triggered
-        trig_ant_types_counts = np.unique(trig_ant_types, return_counts=True)
-        n_trig_vpols = 0
-        n_trig_hpols = 0
-        if len(trig_ant_types_counts[0]) == 2:
-            # Both Hpols and Vpols triggered
-            n_trig_vpols, n_trig_hpols = trig_ant_types_counts[1]
-        elif 0 in trig_ant_types: 
-            # Only Vpols triggered
-            n_trig_vpols = trig_ant_types_counts[1][0]
-            n_trig_hpols = 0
-        elif 1 in trig_ant_types:
-            # Only Hpols triggered
-            n_trig_vpols = 0
-            n_trig_hpols = trig_ant_types_counts[1][0]
-        
-        # Based on if there are 3 Vpols and/or 3 Hpols that triggered, determine
-        #   if the Vpol and/or Hpol triggering channel was activated and indicate
-        #   which corresponding antennas we should analyze for greatest SNR 
-        if n_trig_vpols==3 and n_trig_hpols==3: 
-            # Event triggered on both VPols and Hpols, analyze all triggering
-            #   antennas for the one with the highest SNR regardless of antenna type
-            ants_to_analyze = np.arange(len(trig_ants))
-        elif n_trig_vpols == 3:
-            # Event triggered on VPols, analyze triggering Vpols for greatest SNR
-            ants_to_analyze = np.where(np.asarray(trig_ant_types) == 0)[0]
-        else: 
-            # Event triggered on HPols, analyze triggering Hpols for greatest SNR
-            ants_to_analyze = np.where(np.asarray(trig_ant_types) == 1)[0]
-
-        # Get the string index, antenna index, and SNR of the antenna with the 
-        #   greatest SNR of antennas that activated the station trigger
-        best_SNR = 0
-        best_ant = (-1, -1)
-        for ant_idx in ants_to_analyze: 
-
-            # Get the string and antenna index
-            s, a = trig_ants[ant_idx]
-
-            # Get the SNR of this antenna's waveform
-            t = self.report_ptr.stations[0].strings[s].antennas[a].time_mimic    
-            ROOT.SetOwnership(t, False) # ROOT's responsibility 
-            v = self.report_ptr.stations[0].strings[s].antennas[a].V_mimic
-            ROOT.SetOwnership(v, False) # ROOT's responsibility
-            waveform = ROOT.TGraph(len(t), t.data(), v.data())
-            ROOT.SetOwnership(waveform, True) # python's responsibility
-
-            SNR = get_snr(waveform)
-  
-            # If this antenna's waveform is greater than the saved SNR, save this 
-            #   antennas string index, antenna index, and SNR as the best
-            if SNR > best_SNR: 
-                best_SNR = SNR
-                best_ant = (s, a)
-
-        # Return the triggering antenna with the greatest SNR
-        return best_ant
+        # Delegate to the module-level implementation so that other callers
+        # (e.g. fivestation's veff_calculator, which needs to do this same
+        # lookup directly from bare ROOT.TTreeReader objects rather than a
+        # SimWrapper instance) can share the exact same logic instead of
+        # re-implementing it.
+        return find_best_triggering_antenna(self.report_ptr.stations[0], self.detector_ptr.stations[0])
 
     def get_AraSim_xyz_position(self, origin, position):
         """
@@ -1599,6 +1622,6 @@ class AnalysisDataset:
 
         if which_traces == "cropped":
             wavepacket["waveforms"] = cropped_waves
-            return wavepacket 
+            return wavepacket
 
 
