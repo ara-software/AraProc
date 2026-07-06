@@ -1036,11 +1036,6 @@ class SimWrapper:
             objects, respectively
         """
 
-        # Delegate to the module-level implementation so that other callers
-        # (e.g. fivestation's veff_calculator, which needs to do this same
-        # lookup directly from bare ROOT.TTreeReader objects rather than a
-        # SimWrapper instance) can share the exact same logic instead of
-        # re-implementing it.
         return find_best_triggering_antenna(self.report_ptr.stations[0], self.detector_ptr.stations[0])
 
     def get_AraSim_xyz_position(self, origin, position):
