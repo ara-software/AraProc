@@ -187,8 +187,10 @@ def find_avg_receipt_ang(report_station, detector_station):
         if report_station.strings[s].antennas[a].Trig_Pass
     ]
 
+    # if the event doesn't trigger, put a sentinel to mark it
+    # a very negative value will also fail any rec ang cut so it isn't mistakenly counted
     if len(trig_ants) == 0:
-        return -1
+        return -1000 
 
     avg_rec_ang = np.mean(report_station.strings[s].antennas[a].theta_rec for s, a in trig_ants)
 
