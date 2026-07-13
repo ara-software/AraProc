@@ -1049,7 +1049,7 @@ class SimWrapper:
         sim_info["is_noise"] = (int(self.settings_ptr.TRIG_ANALYSIS_MODE) == 2) # modes 0 & 1 are for signal, 2 is pure noise
 
         # get the receipt angle for the triggered antennas
-        sim_info["rec_ang"] = self.find_avg_receipt_ang(self.report_ptr, self.detector_ptr)
+        sim_info["avg_rec_ang"] = self.find_avg_receipt_ang(self.report_ptr, self.detector_ptr)
 
         return sim_info
     
