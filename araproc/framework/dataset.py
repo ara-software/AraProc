@@ -175,7 +175,7 @@ def find_avg_receipt_ang(report_station):
     Returns
     -------
     avg_rec_ang : float
-        Average zenith angle (measured from nadir = 0) of signal seen by triggered antennas.
+        Average zenith angle in radians (measured from nadir = 0) of signal seen by triggered antennas.
     """
 
     rec_angs = [report_station.strings[s].antennas[a].theta_rec for s in report_station.strings for a in report_station.strings[s].antennas[a]]
