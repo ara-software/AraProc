@@ -164,22 +164,33 @@ def find_best_triggering_antenna(report_station, detector_station):
     # return the triggering antenna with the greatest SNR
     return best_ant
 
-def find_avg_receipt_ang(report_station):
+def find_avg_receipt_ang(report_station, interaction_idx = 0):
     """
     Calculate the average receiving angle of the signal by the antennas. 
 
     Parameters
     ----------
     report_station : ROOT AraSim Report::StationReport object (i.e. report.stations[0])
+    interaction_idx : int, default is 0
+        Index of the event interaction from event.Nu_Interaction
 
     Returns
     -------
     avg_rec_ang : float
-        Average zenith angle in radians (measured from nadir = 0) of signal seen by triggered antennas.
+        Average zenith angle in radians (measured from nadir = 0) of signal seen by all antennas.
     """
 
-    rec_angs = [report_station.strings[s].antennas[a].theta_rec for s in report_station.strings for a in report_station.strings[s].antennas[a]]
-    avg_rec_ang = np.mean(rec_angs)
+    # Get the received angles for that interaction
+    rec_angs = [
+        float(rec_ang)
+        for string in report_station.strings
+        for antenna in string.antennas
+        if interaction_idx < len(antenna.theta_rec)
+        for rec_ang in antenna.theta_rec[interaction_idx]
+    ]
+
+    # If the antennas see the ray, we average, else give Nan
+    avg_rec_ang = np.mean(rec_angs) if rec_angs else np.nan
 
     return avg_rec_ang
 
