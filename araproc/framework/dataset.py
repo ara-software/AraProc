@@ -180,6 +180,15 @@ def find_avg_receipt_ang(report_station, interaction_idx = 0):
         Average zenith angle in radians (measured from nadir = 0) of signal seen by all antennas.
     """
 
+    if interaction_idx < 0:
+        warnings.warn(
+            f"Received invalid interaction_idx={interaction_idx}; "
+            "returning np.nan.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return np.nan
+
     # Get the received angles for that interaction
     rec_angs = [
         float(rec_ang)
@@ -189,8 +198,17 @@ def find_avg_receipt_ang(report_station, interaction_idx = 0):
         for rec_ang in antenna.theta_rec[interaction_idx]
     ]
 
+    if not rec_angs:
+        warnings.warn(
+            f"No receiving angles found for interaction_idx={interaction_idx}; "
+            "returning np.nan.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return np.nan
+
     # If the antennas see the ray, we average, else give Nan
-    avg_rec_ang = np.mean(rec_angs) if rec_angs else np.nan
+    avg_rec_ang = np.mean(rec_angs)
 
     return avg_rec_ang
 
