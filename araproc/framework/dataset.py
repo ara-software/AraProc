@@ -191,13 +191,13 @@ def find_avg_receipt_ang(report_station, interaction_idx = 0):
         return np.nan
 
     # Get the received angles for that interaction
-    rec_angs = [
-        float(rec_ang)
-        for string in report_station.strings
-        for antenna in string.antennas
-        if interaction_idx < len(antenna.theta_rec)
-        for rec_ang in antenna.theta_rec[interaction_idx]
-    ]
+    # Just make this a full loop
+    rec_angs = []
+    for string in report_station.strings:
+        for antenna in string.antennas:
+            if interaction_idx < len(antenna.theta_rec):
+                for rec_ang in antenna.theta_rec[interaction_idx]:
+                    rec_angs.append(float(rec_ang))
 
     if not rec_angs:
         warnings.warn(
