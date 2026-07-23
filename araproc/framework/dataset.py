@@ -5,6 +5,7 @@ import os
 import numpy as np
 import ROOT
 import yaml
+import warnings
 from scipy import stats
 
 
@@ -164,21 +165,50 @@ def find_best_triggering_antenna(report_station, detector_station):
     # return the triggering antenna with the greatest SNR
     return best_ant
 
-def find_avg_receipt_ang(report_station):
+def find_avg_receipt_ang(report_station, interaction_idx = 0):
     """
     Calculate the average receiving angle of the signal by the antennas. 
 
     Parameters
     ----------
     report_station : ROOT AraSim Report::StationReport object (i.e. report.stations[0])
+    interaction_idx : int, default is 0
+        Index of the event interaction from event.Nu_Interaction
 
     Returns
     -------
     avg_rec_ang : float
-        Average zenith angle in radians (measured from nadir = 0) of signal seen by triggered antennas.
+        Average zenith angle in radians (measured from nadir = 0) of signal seen by all antennas.
     """
 
-    rec_angs = [report_station.strings[s].antennas[a].theta_rec for s in report_station.strings for a in report_station.strings[s].antennas[a]]
+    if interaction_idx < 0:
+        warnings.warn(
+            f"Received invalid interaction_idx={interaction_idx}; "
+            "returning np.nan.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return np.nan
+
+    # Get the received angles for that interaction
+    # Just make this a full loop
+    rec_angs = []
+    for string in report_station.strings:
+        for antenna in string.antennas:
+            if interaction_idx < len(antenna.theta_rec):
+                for rec_ang in antenna.theta_rec[interaction_idx]:
+                    rec_angs.append(float(rec_ang))
+
+    if not rec_angs:
+        warnings.warn(
+            f"No receiving angles found for interaction_idx={interaction_idx}; "
+            "returning np.nan.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return np.nan
+
+    # If the antennas see the ray, we average, else give Nan
     avg_rec_ang = np.mean(rec_angs)
 
     return avg_rec_ang
@@ -1038,7 +1068,7 @@ class SimWrapper:
         sim_info["is_noise"] = (int(self.settings_ptr.TRIG_ANALYSIS_MODE) == 2) # modes 0 & 1 are for signal, 2 is pure noise
 
         # get the receipt angle for the triggered antennas
-        sim_info["avg_rec_ang"] = self.find_avg_receipt_ang(self.report_ptr)
+        sim_info["avg_rec_ang"] = self.find_avg_receipt_ang(self.report_ptr, likely_interaction)
 
         return sim_info
     
