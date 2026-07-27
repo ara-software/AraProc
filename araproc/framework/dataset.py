@@ -10,12 +10,12 @@ from scipy import stats
 
 
 from araproc.framework import waveform_utilities as wu
-from araproc.framework import constants as const
 from araproc.framework import file_utilities as futil
 from araproc.framework import constants as fconst
 from araproc.analysis import dedisperse as dd
 from araproc.analysis import cw_filter as cwf
 from araproc.analysis.snr import get_snr
+from araproc.framework.ray_tracer import find_ray_paths
 
 import importlib.resources as pkg_resources
 from . import config_files
@@ -42,7 +42,7 @@ def get_filters(station_id, analysis_config):
         to do the filtering.
     """
 
-    if station_id not in const.valid_station_ids:
+    if station_id not in fconst.valid_station_ids:
         raise KeyError(f"Station {station_id} is not supported")
 
     file = pkg_resources.open_text(config_files, 
@@ -165,53 +165,111 @@ def find_best_triggering_antenna(report_station, detector_station):
     # return the triggering antenna with the greatest SNR
     return best_ant
 
-def find_avg_receipt_ang(report_station, interaction_idx = 0):
+def find_avg_receipt_ang(
+    vertex_position,
+    sol_type,
+    station_id,
+    frequency=0.3,
+    accuracy=0.2,
+):
     """
-    Calculate the average receiving angle of the signal by the antennas. 
+    Calculate the average ray-traced receipt angle across a station.
+
+    Each channel is ray traced independently because the antennas have
+    different horizontal positions and depths.
 
     Parameters
     ----------
-    report_station : ROOT AraSim Report::StationReport object (i.e. report.stations[0])
-    interaction_idx : int, default is 0
-        Index of the event interaction from event.Nu_Interaction
+    vertex_position : array-like
+        Vertex ``[x, y, z]`` in meters. The coordinates must be station-centric
+        in x and y, with z measured relative to the local surface. Negative z
+        therefore indicates a position below the surface.
+    sol_type : int
+        Ray solution selected by increasing time of flight:
+
+        - 0: direct solution, having the shortest time of flight.
+        - 1: reflected/refracted solution, having the second-shortest time of
+          flight.
+    station_id : int
+        ARA station ID. Station 100 uses station 1 geometry, matching the
+        existing AraSim convention.
+    frequency : float, default 0.5
+        Frequency passed to the AraSim ray tracer.
+    accuracy : float, default 0.001
+        AraSim path-finding accuracy.
 
     Returns
     -------
-    avg_rec_ang : float
-        Average zenith angle in radians (measured from nadir = 0) of signal seen by all antennas.
+    float
+        Arithmetic mean of the available ``TraceRecord.receiptAngle`` values,
+        in radians. 
+    Raises
+    ------
+    ValueError
+        If ``vertex_position`` is invalid or ``sol_type`` is not 0 or 1.
+    RuntimeError
+        If the requested ray solution is unavailable for every channel.
     """
-
-    if interaction_idx < 0:
-        warnings.warn(
-            f"Received invalid interaction_idx={interaction_idx}; "
-            "returning np.nan.",
-            RuntimeWarning,
-            stacklevel=2,
+    if sol_type not in (0, 1):
+        raise ValueError(
+            f"sol_type must be 0 (direct) or 1 (reflected); got {sol_type!r}."
         )
-        return np.nan
 
-    # Get the received angles for that interaction
-    # Just make this a full loop
-    rec_angs = []
-    for string in report_station.strings:
-        for antenna in string.antennas:
-            if interaction_idx < len(antenna.theta_rec):
-                for rec_ang in antenna.theta_rec[interaction_idx]:
-                    rec_angs.append(float(rec_ang))
+    vertex = np.asarray(vertex_position, dtype=float)
 
-    if not rec_angs:
-        warnings.warn(
-            f"No receiving angles found for interaction_idx={interaction_idx}; "
-            "returning np.nan.",
-            RuntimeWarning,
-            stacklevel=2,
+    if vertex.shape != (3,):
+        raise ValueError(
+            "vertex_position must contain exactly three coordinates "
+            f"[x, y, z]; got shape {vertex.shape}."
         )
-        return np.nan
 
-    # If the antennas see the ray, we average, else give Nan
-    avg_rec_ang = np.mean(rec_angs)
+    if not np.all(np.isfinite(vertex)):
+        raise ValueError(
+            f"vertex_position must contain finite coordinates; got {vertex!r}."
+        )
 
-    return avg_rec_ang
+    # AraSim station 100 uses station 1 geometry.
+    geometry_station_id = 1 if int(station_id) == 100 else int(station_id)
+
+    geometry_tool = ROOT.AraGeomTool.Instance()
+    station_info = geometry_tool.getStationInfo(geometry_station_id)
+
+    receipt_angles = []
+
+    for channel in range(fconst.num_rf_channels):
+        antenna_info = station_info.getAntennaInfo(channel)
+        antenna_position = [
+            float(antenna_info.antLocation[0]),
+            float(antenna_info.antLocation[1]),
+            float(antenna_info.antLocation[2]),
+        ]
+
+        paths = find_ray_paths(
+            source_xyz=vertex,
+            receiver_xyz=antenna_position,
+            frequency=frequency,
+            accuracy=accuracy,
+        )
+
+        # Paths are sorted by time of flight:
+        # index 0 is direct and index 1 is reflected/refracted.
+        if len(paths) <= sol_type:
+            continue
+
+        receipt_angle = float(paths[sol_type].receiptAngle)
+
+        if np.isfinite(receipt_angle):
+            receipt_angles.append(receipt_angle)
+
+    if not receipt_angles:
+        solution_name = "direct" if sol_type == 0 else "reflected"
+        raise RuntimeError(
+            f"No {solution_name} ray-trace solution was found for any "
+            f"channel at station {station_id} for vertex "
+            f"{vertex.tolist()}."
+        )
+
+    return float(np.mean(receipt_angles))
 
 class DataWrapper:
 
@@ -300,7 +358,7 @@ class DataWrapper:
         self.__num_rf_readout_blocks = None
         self.__num_soft_readout_blocks = None
 
-        if station_id not in const.valid_station_ids:
+        if station_id not in fconst.valid_station_ids:
             raise Exception(f"Station id {station_id} is not supported")
         self.station_id = station_id
 
@@ -845,7 +903,7 @@ class SimWrapper:
         self.event_ptr = None
         self.settings_ptr = None
 
-        if station_id not in const.valid_station_ids:
+        if station_id not in fconst.valid_station_ids:
             raise Exception(f"Station id {station_id} is not supported")
         self.station_id = station_id
 
@@ -1068,7 +1126,11 @@ class SimWrapper:
         sim_info["is_noise"] = (int(self.settings_ptr.TRIG_ANALYSIS_MODE) == 2) # modes 0 & 1 are for signal, 2 is pure noise
 
         # get the receipt angle for the triggered antennas
-        sim_info["avg_rec_ang"] = self.find_avg_receipt_ang(self.report_ptr, likely_interaction)
+        if sim_info['ray_solution'] == -1:
+            ray_sol = 0
+        else:
+            ray_sol = sim_info['ray_solution']
+        sim_info["avg_rec_ang"] = self.find_avg_receipt_ang(sim_info["vertex"], ray_sol, self.station_id)
 
         return sim_info
     
@@ -1306,7 +1368,7 @@ class AnalysisDataset:
         self.excluded_channels_and_vpol = None
 
         self.num_rf_channels = 16 # hard coded, but a variable
-        self.rf_channel_indices = const.rf_channels_ids
+        self.rf_channel_indices = fconst.rf_channels_ids
 
         self.rf_channel_polarizations = [ ch//8 for ch in self.rf_channel_indices ]
 
@@ -1364,8 +1426,8 @@ class AnalysisDataset:
             raise
 
         self.excluded_channels = np.asarray(this_station_config["excluded_channels"])
-        self.excluded_channels_and_vpol = np.concatenate((self.excluded_channels, np.asarray(const.vpol_channel_ids)))
-        self.excluded_channels_and_hpol = np.concatenate((self.excluded_channels, np.asarray(const.hpol_channel_ids)))
+        self.excluded_channels_and_vpol = np.concatenate((self.excluded_channels, np.asarray(fconst.vpol_channel_ids)))
+        self.excluded_channels_and_hpol = np.concatenate((self.excluded_channels, np.asarray(fconst.hpol_channel_ids)))
         file.close()
 
     def __setup_bandpass_filters(self):
