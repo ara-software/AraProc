@@ -1,9 +1,10 @@
 import ctypes
+
 import numpy as np
 import ROOT
-import os
-from araproc.framework import constants
 
+from araproc.framework import constants
+from araproc.framework.ray_tracer import load_raytrace_model
 
 def get_corr_map_peak(the_map  = None):
     """
@@ -37,134 +38,6 @@ def get_corr_map_peak(the_map  = None):
     peak_theta = the_map.GetYaxis().GetBinCenter(_peakTheta.value)
     return peak_corr, peak_phi, peak_theta
 
-
-def load_raytrace_model(arasimsrc=None):
-    """
-    Load and initialize the AraSim ray-tracing model into ROOT's interpreter.
-
-    Sets up the exponential refractive index model n(z) = A - B*exp(-C*|z|)
-    with A=1.780, B=0.454 (= A - 1.326), C=0.0202 /m, and registers the
-    rt_doTrace_savePoints function that saves all ray-path (x, z) points
-    for reconstruction-sphere crossing calculations.
-
-    Parameters
-    ----------
-    arasimsrc : str or None
-        Path to the AraSim source directory containing RayTrace.h,
-        RayTrace_IceModels.h, and Vector.h. If None, the path is taken
-        from the ARA_SIM_DIR environment variable.
-    """
-    if arasimsrc is None:
-        arasimsrc = os.getenv("ARA_SIM_DIR", None)
-
-    if not arasimsrc:
-        raise RuntimeError(
-            "ARA_SIM_DIR environment variable not set. "
-            "Please set it to the AraSim source directory."
-        )
-
-    arasimsrc = os.path.abspath(arasimsrc)
-
-    # Load the AraSim ray-tracing headers into ROOT's interpreter so the
-    # corresponding C++ classes can be used from Python.
-
-    ROOT.gInterpreter.ProcessLine(f'#include "{arasimsrc}/RayTrace.h"')
-    ROOT.gInterpreter.ProcessLine(f'#include "{arasimsrc}/RayTrace_IceModels.h"')
-    ROOT.gInterpreter.ProcessLine(f'#include "{arasimsrc}/Vector.h"')
-    ROOT.gInterpreter.ProcessLine('#include <vector>')
-
-    # Instantiate the attenuation model and the exponential refractive-index
-    # model used by the ray tracer. The refractive-index parameters are the
-    # same as those used in the PA analysis paper.
-
-    ROOT.gInterpreter.ProcessLine(
-        'auto _rt_atten = boost::shared_ptr<basicAttenuationModel>'
-        '(new basicAttenuationModel);'
-    )
-    ROOT.gInterpreter.ProcessLine(
-        'auto _rt_refr = boost::shared_ptr<exponentialRefractiveIndex>'
-        '(new exponentialRefractiveIndex(1.3260,1.780,0.0202));'
-    )
-
-    # Create the AraSim ray-tracing engine from the refractive-index and
-    # attenuation models above
-
-    ROOT.gInterpreter.ProcessLine('RayTrace::TraceFinder _rt_tf(_rt_refr, _rt_atten);')
-
-    # Declare source/receiver vectors used by the ray-tracing machinery.
-
-    ROOT.gInterpreter.ProcessLine('Vector _rt_src; Vector _rt_rec;')
-
-    # Declare helper C++ code inside ROOT.
-    #
-    # This block:
-    #  1. defines persistent vectors to store the traced ray path
-    #     (x, z, and RK step type),
-    #  2. defines a callback functor that is called at each tracing step
-    #     and saves the current ray position,
-    #  3. wraps the AraSim doTrace call in a helper function
-    #     (rt_doTrace_savePoints) that clears old path data, runs the trace,
-    #     and records all intermediate path points, and
-    #  4. exposes getter functions so Python can retrieve the saved path.
-    #
-    # We need this because for reconstruction-sphere mapping we do not only
-    # need the final ray-trace solution; we also need the intermediate traced
-    # path points to determine where the selected ray branch crosses the sphere.
-    ROOT.gInterpreter.Declare(r'''
-        #include <vector>
-
-        // Traced x positions along the ray path.
-        static std::vector<double> _rt_x;
-
-        // Traced z positions along the ray path.
-        static std::vector<double> _rt_z;
-
-        // RK step classification saved at each traced point.
-        static std::vector<int> _rt_stepType;
-
-        // Callback invoked at each ray-tracing step to save the current
-        // ray position and step type.
-        struct RTPointSaver {
-            void operator()(const RayTrace::fullRayPosition& p, RayTrace::RKStepType t) const {
-                _rt_x.push_back(p.x);
-                _rt_z.push_back(p.z);
-                _rt_stepType.push_back((int)t);
-            }
-        };
-
-        // Wrapper around AraSim doTrace that clears any previously saved
-        // path information, runs the trace, and records all intermediate
-        // path points through the callback above.
-        RayTrace::TraceRecord rt_doTrace_savePoints(
-            double src_depth,
-            double launch_theta,
-            const RayTrace::rayTargetRecord& target,
-            unsigned short allowedReflections,
-            double frequency,
-            double polarization,
-            int &sol_error
-        ){
-            _rt_x.clear();
-            _rt_z.clear();
-            _rt_stepType.clear();
-
-            RTPointSaver cb;
-
-            return _rt_tf.doTrace<RayTrace::fullRayPosition, RTPointSaver>(
-                src_depth, launch_theta, target, allowedReflections,
-                frequency, polarization, sol_error, cb
-            );
-        }
-
-        // Accessors used from Python to retrieve the saved traced path.
-        const std::vector<double>& rt_get_x(){ return _rt_x; }
-        const std::vector<double>& rt_get_z(){ return _rt_z; }
-        const std::vector<int>& rt_get_stepType(){ return _rt_stepType; }
-    ''')
-
-    # Confirm that the helper function was successfully declared in ROOT.
-    if not hasattr(ROOT, "rt_doTrace_savePoints"):
-        raise RuntimeError("Failed to declare rt_doTrace_savePoints in ROOT.")
 
 #Load Model 
 
