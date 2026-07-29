@@ -267,9 +267,9 @@ def find_avg_receipt_ang(
     station_id : int
         ARA station ID. Station 100 uses station 1 geometry, matching the
         existing AraSim convention.
-    frequency : float, default 0.5
-        Frequency passed to the AraSim ray tracer.
-    accuracy : float, default 0.001
+    frequency : float, default 0.3 (to match AraSim)
+        Frequency passed to the AraSim ray tracer. 
+    accuracy : float, default 0.2 (to match AraSim)
         AraSim path-finding accuracy.
 
     Returns
@@ -337,11 +337,7 @@ def find_avg_receipt_ang(
 
     if not receipt_angles:
         solution_name = "direct" if sol_type == 0 else "reflected"
-        raise RuntimeError(
-            f"No {solution_name} ray-trace solution was found for any "
-            f"channel at station {station_id} for vertex "
-            f"{vertex.tolist()}."
-        )
+        return fconst.no_raytrace_solution
 
     return float(np.mean(receipt_angles))
 
