@@ -472,3 +472,213 @@ def plot_skymap(the_map,
     c.Close()
 
     del c
+
+
+def _th2d_to_grid(hist):
+    """
+    Pull a ROOT TH2D's bin edges and contents out into numpy arrays.
+
+    Returns
+    -------
+    phi_edges : (nx+1,) array, degrees
+    theta_edges : (ny+1,) array, degrees
+    z : (ny, nx) array of bin contents, matching pcolormesh's (row, col)
+        convention
+    """
+    nx = hist.GetNbinsX()
+    ny = hist.GetNbinsY()
+    xaxis = hist.GetXaxis()
+    yaxis = hist.GetYaxis()
+
+    phi_edges = np.array([xaxis.GetBinLowEdge(i) for i in range(1, nx + 2)])
+    theta_edges = np.array([yaxis.GetBinLowEdge(j) for j in range(1, ny + 2)])
+
+    z = np.empty((ny, nx))
+    for iy in range(1, ny + 1):
+        for ix in range(1, nx + 1):
+            z[iy - 1, ix - 1] = hist.GetBinContent(ix, iy)
+
+    return phi_edges, theta_edges, z
+
+
+def _deg2rad(phi_deg, theta_deg):
+    """Degrees -> radians, clipped to what a mollweide axes will accept."""
+    phi_deg = np.asarray(phi_deg, dtype=float)
+    theta_deg = np.asarray(theta_deg, dtype=float)
+    phi = np.radians(np.clip(phi_deg, -180, 180))
+    theta = np.radians(np.clip(theta_deg, -90, 90))
+    return phi, theta
+
+
+def _draw_constant_theta(ax, theta_val, n_samples=181, **line_kwargs):
+    """
+    Draw a curve of constant elevation. In Mollweide this comes out as a
+    straight horizontal line (parallels don't curve), but we still sample
+    many points across the full width for a clean, fully-clipped line.
+    """
+    phis = np.linspace(-180, 180, n_samples)
+    thetas = np.full_like(phis, theta_val)
+    x, y = _deg2rad(phis, thetas)
+    ax.plot(x, y, **line_kwargs)
+
+
+def _draw_constant_phi(ax, phi_val, n_samples=181, **line_kwargs):
+    """
+    Draw a curve of constant azimuth. In Mollweide this is a curved
+    (elliptical) meridian arc, so it must be sampled point-by-point across
+    theta and projected -- it is NOT a straight vertical line except at
+    phi = 0.
+    """
+    thetas = np.linspace(-90, 90, n_samples)
+    phis = np.full_like(thetas, phi_val)
+    x, y = _deg2rad(phis, thetas)
+    ax.plot(x, y, **line_kwargs)
+
+
+def plot_skymap_mpl(
+    the_map,
+    plane_wave_elevation,
+    station_id,
+    map_type,
+    landmarks=None,
+    calpulser_indices=None,
+    list_of_channels=None,
+    spice_depth=None,
+    aravertex_results=None,
+    output_file_path=None,
+    flip_longitude=False,     # True for an RA-like convention (phi increasing to the left)
+    cmap="viridis",
+    dpi=200,                  # resolution of the rasterized correlation map (see below)
+):
+    """
+    Drop-in matplotlib (w/ Mollweide projection) replacement for plot_skymap(). 
+    This has the same signature as plot_skymap, but uses pcolormesh
+    and matplotlib to do the plotting, rather than ROOT and TH2Ds.
+
+    Parameters
+    ----------
+    flip_longitude : bool
+        If True, mirrors phi (equivalent to viewing the sky from behind /
+        an RA-style convention). Off by default, which matches the
+        original TH2D's left-to-right phi orientation.
+    dpi : int
+        Resolution used for the rasterized correlation map (see note
+        below). Higher = crisper, but you probably don't need more than 200.
+    """
+    if the_map is None:
+        raise Exception("the_map is None")
+    if not isinstance(output_file_path, str):
+        raise TypeError("Path to output file must be a string")
+
+    def flip(phi_deg):
+        return -phi_deg if flip_longitude else phi_deg
+
+    corr_peak, peak_phi, peak_theta = mu.get_corr_map_peak(the_map)
+    phi_edges, theta_edges, z = _th2d_to_grid(the_map)
+
+    if flip_longitude:
+        # negating reverses the monotonic order of the edges, so the edges
+        # and the corresponding columns of z both need to be flipped back
+        # into increasing order together
+        phi_edges = -phi_edges[::-1]
+        z = z[:, ::-1]
+
+    fig = plt.figure(figsize=(10, 6))
+    ax = fig.add_subplot(111, projection="mollweide")
+
+    # --- the correlation map itself ---
+    px, py = _deg2rad(phi_edges, theta_edges)
+    mesh = ax.pcolormesh(
+        px, py, z, cmap=cmap, vmin=0, vmax=corr_peak, shading="auto",
+        rasterized=True,
+    )
+    cbar = fig.colorbar(mesh, ax=ax, pad=0.05)
+    cbar.set_label("Correlation")
+
+    ax.set_title(
+        f"Peak \u03c6/\u03b8/Corr = {peak_phi:.1f}\u00b0/ {peak_theta:.1f}\u00b0/ {corr_peak:.2f}",
+        fontsize=11,
+    )
+    ax.grid(True, alpha=0.3)
+
+    # --- plane wave elevation ---
+    if plane_wave_elevation is not None:
+        _draw_constant_theta(
+            ax, plane_wave_elevation,
+            color="orange", linestyle="--", linewidth=2,
+        )
+        lx, ly = _deg2rad(flip(110), plane_wave_elevation + 5)
+        ax.text(lx, ly, "plane wave", color="orange", fontsize=9)
+
+    # --- AraVertex marker (skip the SNR<5 placeholder return) ---
+    if aravertex_results is not None:
+        phi = theta = None
+        for r in aravertex_results.values():
+            if r["valid"]:
+                phi, theta = r["phi"], r["theta"]
+                break
+        if phi is not None and not (abs(theta - 90.0) < 1e-3 and phi == 0.0):
+            mx, my = _deg2rad(flip(phi), theta)
+            ax.plot(mx, my, marker="D", color="blue", markersize=7, linestyle="none")
+            lx, ly = _deg2rad(flip(phi + 3), theta + 3)
+            ax.text(lx, ly, "AraVertex", color="blue", fontsize=8)
+
+    # --- reconstruction sphere radius / solution, unchanged from plot_skymap ---
+    if map_type in ["pulser_v", "pulser_h"]:
+        radius_map = float(const.calpulser_r_library[station_id])
+    else:
+        radius_map = float(const.distant_events_r_library[station_id])
+    solution = 1 if map_type in {"distant_v_ref", "distant_h_ref"} else 0
+
+    landmark_dict = mu.AraGeom(station_id).get_known_landmarks(
+        landmarks, radius_map, calpulser_indices, list_of_channels, spice_depth,
+        solution=solution,
+    )
+    marker_status = landmark_dict.get("_marker_status", {})
+
+    for entry, val in landmark_dict.items():
+        if entry == "_marker_status":
+            continue
+
+        if entry == "critical_angle_rt":
+            critical_ang_rt = val
+            _draw_constant_theta(
+                ax, critical_ang_rt,
+                color="red", linestyle="--", linewidth=2,
+            )
+            lx, ly = _deg2rad(flip(110), critical_ang_rt + 5)
+            ax.text(lx, ly, r"$\theta_c$", color="red", fontsize=9)
+            continue
+
+        phi = val[2]
+        theta = val[1]
+
+        status = marker_status.get(entry, "raytraced")
+        marker = "x" if status == "sl_fallback" else "*"
+        markersize = 9 if status == "sl_fallback" else 13
+        color = "blue" if "CH" in entry else "black" if "CP" in entry else "red"
+
+        mx, my = _deg2rad(flip(phi), theta)
+        ax.plot(mx, my, marker=marker, color=color, markersize=markersize,
+                 linestyle="none", markeredgewidth=1.5)
+
+        offset = 5 if entry in ["IC1S", "SPT", "CP1", "CP3"] else -5
+        lx, ly = _deg2rad(flip(phi + offset), theta - offset)
+        ax.text(lx, ly, entry, color="magenta", fontsize=7)
+
+        if entry == "ICL":
+            _draw_constant_phi(
+                ax, flip(phi),
+                color="cyan", linestyle="--", linewidth=2,
+            )
+            lx, ly = _deg2rad(flip(phi + 2), theta + 30)
+            ax.text(lx, ly, r"$\phi_{SP}$", color="cyan", fontsize=9)
+
+    caption = (
+        "\u2605 : ray-traced direction     "
+        "\u2715 : straight-line fallback when no ray-traced solution is found"
+    )
+    fig.text(0.5, 0.93, caption, ha="center", fontsize=8, color="red")
+
+    fig.savefig(output_file_path, bbox_inches="tight", dpi=dpi)
+    plt.close(fig)
