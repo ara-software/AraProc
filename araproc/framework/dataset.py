@@ -5,16 +5,17 @@ import os
 import numpy as np
 import ROOT
 import yaml
+import warnings
 from scipy import stats
 
 
 from araproc.framework import waveform_utilities as wu
-from araproc.framework import constants as const
 from araproc.framework import file_utilities as futil
 from araproc.framework import constants as fconst
 from araproc.analysis import dedisperse as dd
 from araproc.analysis import cw_filter as cwf
 from araproc.analysis.snr import get_snr
+from araproc.framework.ray_tracer import find_ray_paths
 
 import importlib.resources as pkg_resources
 from . import config_files
@@ -41,7 +42,7 @@ def get_filters(station_id, analysis_config):
         to do the filtering.
     """
 
-    if station_id not in const.valid_station_ids:
+    if station_id not in fconst.valid_station_ids:
         raise KeyError(f"Station {station_id} is not supported")
 
     file = pkg_resources.open_text(config_files, 
@@ -77,111 +78,268 @@ def get_filters(station_id, analysis_config):
 
     return cw_filters
 
-
-def find_best_triggering_antenna(report_station, detector_station):
+def find_likely_triggering_interaction(
+    report_station,
+    detector_station,
+    station_id,
+):
     """
-    Identify the (string, antenna) index of the triggered antenna with the greatest SNR, so that its
-    `Likely_Sol` can be used to determine which interaction (primary or secondary) likely triggered the
-    detector.
+    Identify the interaction and ray most consistently associated with the
+    station trigger.
+
+    Unlike selecting one highest-SNR channel, this function combines the
+    SignalBin-versus-Trig_Pass timing evidence from all channels that
+    participated in the applicable trigger.
 
     Parameters
     ----------
-    report_station : ROOT AraSim Report::StationReport object (i.e. report.stations[0])
-    detector_station : ROOT AraSim Detector::ARA_station object (i.e. detector.stations[0])
+    report_station : ROOT AraSim Report::StationReport
+        Usually ``report.stations[0]``.
+    detector_station : ROOT AraSim Detector::ARA_station
+        Usually ``detector.stations[0]``.
+    station_id : int
+        ARA station ID. Station 6 is treated as the phased-array station.
 
     Returns
     -------
-    best_string, best_antenna : int, int
-        Indices of the triggered antenna with the greatest SNR, or (-1, -1) if none could be identified.
+    interaction_idx, ray_idx : int, int
+        Most strongly supported interaction and ray indices.
+
+    Raises
+    ------
+    RuntimeError
+        If no triggered channel contains usable interaction/ray timing
+        information.
     """
 
-    # find all antennas that participated in the trigger
-    trig_ants = [
-        (s, a)
-        for s in range(len(report_station.strings))
-        for a in range(len(report_station.strings[s].antennas))
-        if report_station.strings[s].antennas[a].Trig_Pass
+    triggered_antennas = []
+
+    for string_idx in range(len(report_station.strings)):
+        report_string = report_station.strings[string_idx]
+        detector_string = detector_station.strings[string_idx]
+
+        for antenna_idx in range(len(report_string.antennas)):
+            report_antenna = report_string.antennas[antenna_idx]
+            detector_antenna = detector_string.antennas[antenna_idx]
+
+            if int(report_antenna.Trig_Pass) <= 0:
+                continue
+
+            antenna_type = int(detector_antenna.type)
+            triggered_antennas.append(
+                (string_idx, antenna_idx, antenna_type)
+            )
+
+    if not triggered_antennas:
+        raise RuntimeError(
+            "No antennas with a positive Trig_Pass were found."
+        )
+
+    if int(station_id) == 6:
+        # AraSim's PA coincidence uses VPol antennas on string 0.
+        antennas_to_analyze = [
+            antenna
+            for antenna in triggered_antennas
+            if antenna[0] == 0 and antenna[2] == 0
+        ]
+    else:
+        n_triggered_vpol = sum(
+            antenna_type == 0
+            for _, _, antenna_type in triggered_antennas
+        )
+        n_triggered_hpol = sum(
+            antenna_type == 1
+            for _, _, antenna_type in triggered_antennas
+        )
+
+        if n_triggered_vpol >= 3 and n_triggered_hpol >= 3:
+            antennas_to_analyze = triggered_antennas
+        elif n_triggered_vpol >= 3:
+            antennas_to_analyze = [
+                antenna
+                for antenna in triggered_antennas
+                if antenna[2] == 0
+            ]
+        elif n_triggered_hpol >= 3:
+            antennas_to_analyze = [
+                antenna
+                for antenna in triggered_antennas
+                if antenna[2] == 1
+            ]
+        else:
+            # Retain useful timing evidence for unusual trigger settings whose
+            # multiplicity is lower than the standard three-channel trigger.
+            antennas_to_analyze = triggered_antennas
+
+    if not antennas_to_analyze:
+        raise RuntimeError(
+            "No applicable triggered antennas were found for interaction "
+            "selection."
+        )
+
+    # SignalBin and SignalExt are transient AraSim members and are not
+    # available after reading the output ROOT file. Use the persistent
+    # per-channel Likely_Sol result and combine the evidence across all
+    # antennas that participated in the applicable station trigger.
+    interaction_votes = {}
+    interaction_ray_votes = {}
+
+    for string_idx, antenna_idx, _ in antennas_to_analyze:
+        antenna = report_station.strings[string_idx].antennas[antenna_idx]
+        likely_solution = np.asarray(antenna.Likely_Sol, dtype=int)
+
+        if likely_solution.size < 2:
+            continue
+
+        interaction_idx = int(likely_solution[0])
+        ray_idx = int(likely_solution[1])
+
+        if interaction_idx < 0 or ray_idx < 0:
+            continue
+
+        interaction_votes[interaction_idx] = (
+            interaction_votes.get(interaction_idx, 0) + 1
+        )
+
+        interaction_ray_votes[(interaction_idx, ray_idx)] = (
+            interaction_ray_votes.get((interaction_idx, ray_idx), 0) + 1
+        )
+
+    if not interaction_votes:
+        raise RuntimeError(
+            "Triggered antennas were found, but none had a valid saved "
+            "Likely_Sol value."
+        )
+
+    # Select the interaction supported by the greatest number of applicable
+    # triggering antennas. Use the lower index only as a deterministic tie
+    # breaker.
+    best_interaction = min(
+        interaction_votes,
+        key=lambda interaction_idx: (
+            -interaction_votes[interaction_idx],
+            interaction_idx,
+        ),
+    )
+
+    rays_for_best_interaction = [
+        (ray_idx, vote_count)
+        for (interaction_idx, ray_idx), vote_count
+        in interaction_ray_votes.items()
+        if interaction_idx == best_interaction
     ]
-    if len(trig_ants) == 0:
-        return -1, -1
 
-    # get triggered antenna polarization type
-    trig_ant_types = [detector_station.strings[s].antennas[a].type for s, a in trig_ants]
+    best_ray = min(
+        rays_for_best_interaction,
+        key=lambda item: (
+            -item[1],
+            item[0],
+        ),
+    )[0]
 
-    # determine how many vpols and hpols triggered
-    trig_ant_types_counts = np.unique(trig_ant_types, return_counts=True)
-    n_trig_vpols = 0
-    n_trig_hpols = 0
-    if len(trig_ant_types_counts[0]) == 2:
-        # both Hpols and Vpols triggered
-        n_trig_vpols, n_trig_hpols = trig_ant_types_counts[1]
-    elif 0 in trig_ant_types:
-        # only Vpols triggered
-        n_trig_vpols = trig_ant_types_counts[1][0]
-    elif 1 in trig_ant_types:
-        # only Hpols triggered
-        n_trig_hpols = trig_ant_types_counts[1][0]
+    return int(best_interaction), int(best_ray)
 
-    # based on if there are 3 Vpols and/or 3 Hpols that triggered, determine
-    #   if the Vpol and/or Hpol triggering channel was activated and indicate
-    #   which corresponding antennas we should analyze for greatest SNR
-    if n_trig_vpols==3 and n_trig_hpols==3: 
-        # Event triggered on both VPols and Hpols, analyze all triggering
-        #   antennas for the one with the highest SNR regardless of antenna type
-        ants_to_analyze = np.arange(len(trig_ants))
-    elif n_trig_vpols == 3:
-        # Event triggered on VPols, analyze triggering Vpols for greatest SNR
-        ants_to_analyze = np.where(np.asarray(trig_ant_types) == 0)[0]
-    else: 
-        # Event triggered on HPols, analyze triggering Hpols for greatest SNR
-        ants_to_analyze = np.where(np.asarray(trig_ant_types) == 1)[0]
-
-    # get the string index, antenna index, and SNR of the antenna with the 
-    #   greatest SNR of antennas that activated the station trigger
-    best_SNR = 0
-    best_ant = (-1, -1)
-    for ant_idx in ants_to_analyze: 
-
-        # get the string and antenna index
-        s, a = trig_ants[ant_idx]
-
-        # get the SNR of this antenna's waveform
-        t = report_station.strings[s].antennas[a].time_mimic    
-        ROOT.SetOwnership(t, False) # ROOT's responsibility 
-        v = report_station.strings[s].antennas[a].V_mimic
-        ROOT.SetOwnership(v, False) # ROOT's responsibility
-        waveform = ROOT.TGraph(len(t), t.data(), v.data())
-        ROOT.SetOwnership(waveform, True) # python's responsibility
-
-        SNR = get_snr(waveform)
-
-        # if this antenna's waveform is greater than the saved SNR, save this 
-        #   antennas string index, antenna index, and SNR as the best
-        if SNR > best_SNR: 
-            best_SNR = SNR
-            best_ant = (s, a)
-
-    # return the triggering antenna with the greatest SNR
-    return best_ant
-
-def find_avg_receipt_ang(report_station):
+def find_avg_receipt_ang(
+    vertex_position,
+    sol_type,
+    station_id,
+    frequency=0.3,
+    accuracy=0.2,
+):
     """
-    Calculate the average receiving angle of the signal by the antennas. 
+    Calculate the average ray-traced receipt angle across a station.
+
+    Each channel is ray traced independently because the antennas have
+    different horizontal positions and depths.
 
     Parameters
     ----------
-    report_station : ROOT AraSim Report::StationReport object (i.e. report.stations[0])
+    vertex_position : array-like
+        Vertex ``[x, y, z]`` in meters. The coordinates must be station-centric
+        in x and y, with z measured relative to the local surface. Negative z
+        therefore indicates a position below the surface.
+    sol_type : int
+        Ray solution selected by increasing time of flight:
+
+        - 0: direct solution, having the shortest time of flight.
+        - 1: reflected/refracted solution, having the second-shortest time of
+          flight.
+    station_id : int
+        ARA station ID. Station 100 uses station 1 geometry, matching the
+        existing AraSim convention.
+    frequency : float, default 0.3 (to match AraSim)
+        Frequency passed to the AraSim ray tracer. 
+    accuracy : float, default 0.2 (to match AraSim)
+        AraSim path-finding accuracy.
 
     Returns
     -------
-    avg_rec_ang : float
-        Average zenith angle in radians (measured from nadir = 0) of signal seen by triggered antennas.
+    float
+        Arithmetic mean of the available ``TraceRecord.receiptAngle`` values,
+        in radians. 
+    Raises
+    ------
+    ValueError
+        If ``vertex_position`` is invalid or ``sol_type`` is not 0 or 1.
+    RuntimeError
+        If the requested ray solution is unavailable for every channel.
     """
+    if sol_type not in (0, 1):
+        raise ValueError(
+            f"sol_type must be 0 (direct) or 1 (reflected); got {sol_type!r}."
+        )
 
-    rec_angs = [report_station.strings[s].antennas[a].theta_rec for s in report_station.strings for a in report_station.strings[s].antennas[a]]
-    avg_rec_ang = np.mean(rec_angs)
+    vertex = np.asarray(vertex_position, dtype=float)
 
-    return avg_rec_ang
+    if vertex.shape != (3,):
+        raise ValueError(
+            "vertex_position must contain exactly three coordinates "
+            f"[x, y, z]; got shape {vertex.shape}."
+        )
+
+    if not np.all(np.isfinite(vertex)):
+        raise ValueError(
+            f"vertex_position must contain finite coordinates; got {vertex!r}."
+        )
+
+    # AraSim station 100 uses station 1 geometry.
+    geometry_station_id = 1 if int(station_id) == 100 else int(station_id)
+
+    geometry_tool = ROOT.AraGeomTool.Instance()
+    station_info = geometry_tool.getStationInfo(geometry_station_id)
+
+    receipt_angles = []
+
+    for channel in range(fconst.num_rf_channels):
+        antenna_info = station_info.getAntennaInfo(channel)
+        antenna_position = [
+            float(antenna_info.antLocation[0]),
+            float(antenna_info.antLocation[1]),
+            float(antenna_info.antLocation[2]),
+        ]
+
+        paths = find_ray_paths(
+            source_xyz=vertex,
+            receiver_xyz=antenna_position,
+            frequency=frequency,
+            accuracy=accuracy,
+        )
+
+        # Paths are sorted by time of flight:
+        # index 0 is direct and index 1 is reflected/refracted.
+        if len(paths) <= sol_type:
+            continue
+
+        receipt_angle = float(paths[sol_type].receiptAngle)
+
+        if np.isfinite(receipt_angle):
+            receipt_angles.append(receipt_angle)
+
+    if not receipt_angles:
+        solution_name = "direct" if sol_type == 0 else "reflected"
+        return fconst.no_raytrace_solution
+
+    return float(np.mean(receipt_angles))
 
 class DataWrapper:
 
@@ -270,7 +428,7 @@ class DataWrapper:
         self.__num_rf_readout_blocks = None
         self.__num_soft_readout_blocks = None
 
-        if station_id not in const.valid_station_ids:
+        if station_id not in fconst.valid_station_ids:
             raise Exception(f"Station id {station_id} is not supported")
         self.station_id = station_id
 
@@ -815,7 +973,7 @@ class SimWrapper:
         self.event_ptr = None
         self.settings_ptr = None
 
-        if station_id not in const.valid_station_ids:
+        if station_id not in fconst.valid_station_ids:
             raise Exception(f"Station id {station_id} is not supported")
         self.station_id = station_id
 
@@ -1005,11 +1163,14 @@ class SimWrapper:
             logging.critical(f"Getting entry {event_idx} in sim_tree failed.")
             raise 
 
-        # Identify the triggering antenna with the greatest SNR and extract 
-        #   AraSim's guess for the interaction that triggered this antenna
-        string, antenna = self.get_best_antenna()
-        likely_interaction = int( np.asarray(
-            self.report_ptr.stations[0].strings[string].antennas[antenna].Likely_Sol)[0] )
+        # find best guess for the interaction index
+        likely_interaction, likely_ray = (
+            find_likely_triggering_interaction(
+                report_station=self.report_ptr.stations[0],
+                detector_station=self.detector_ptr.stations[0],
+                station_id=self.station_id,
+            )
+        )
 
         sim_info = {}
         sim_info["weight"] = self.event_ptr.Nu_Interaction[0].weight
@@ -1030,7 +1191,7 @@ class SimWrapper:
         ) # Although this references the mostly likely triggering interaction, 
         # the direction of all particles in the same event should be the same
 
-        sim_info['ray_solution'] = self.report_ptr.stations[0].strings[string].antennas[antenna].Likely_Sol[1]
+        sim_info['ray_solution'] = likely_ray 
         # 0 means the direction solution likely triggered the detector
         # 1 means the refracted/reflected solution likely triggered
         # -1 means a solution was not determined
@@ -1038,27 +1199,11 @@ class SimWrapper:
         sim_info["is_noise"] = (int(self.settings_ptr.TRIG_ANALYSIS_MODE) == 2) # modes 0 & 1 are for signal, 2 is pure noise
 
         # get the receipt angle for the triggered antennas
-        sim_info["avg_rec_ang"] = self.find_avg_receipt_ang(self.report_ptr)
+        ray_sol = sim_info['ray_solution']
+        sim_info["avg_rec_ang"] = self.find_avg_receipt_ang(sim_info["vertex"], ray_sol, self.station_id)
 
         return sim_info
     
-
-    def get_best_antenna(self):
-        """
-        Returns the string and antenna indices for the triggering antenna with 
-        the greatest SNR along with the antenna's SNR
-        
-        Returns
-        -------
-        best_ant : tuple
-            Tuple containing the index of this antenna in the 
-            `file.AraTree2.report.stations[0].strings` and the 
-            `file.AraTree2.report.stations[0].strings[string_index].antennas`
-            objects, respectively
-        """
-
-        return find_best_triggering_antenna(self.report_ptr.stations[0], self.detector_ptr.stations[0])
-
     def get_AraSim_xyz_position(self, origin, position):
         """
         Return the XY displacement of a position from the origin, and the position depth with respect to
@@ -1276,7 +1421,7 @@ class AnalysisDataset:
         self.excluded_channels_and_vpol = None
 
         self.num_rf_channels = 16 # hard coded, but a variable
-        self.rf_channel_indices = const.rf_channels_ids
+        self.rf_channel_indices = fconst.rf_channels_ids
 
         self.rf_channel_polarizations = [ ch//8 for ch in self.rf_channel_indices ]
 
@@ -1334,8 +1479,8 @@ class AnalysisDataset:
             raise
 
         self.excluded_channels = np.asarray(this_station_config["excluded_channels"])
-        self.excluded_channels_and_vpol = np.concatenate((self.excluded_channels, np.asarray(const.vpol_channel_ids)))
-        self.excluded_channels_and_hpol = np.concatenate((self.excluded_channels, np.asarray(const.hpol_channel_ids)))
+        self.excluded_channels_and_vpol = np.concatenate((self.excluded_channels, np.asarray(fconst.vpol_channel_ids)))
+        self.excluded_channels_and_hpol = np.concatenate((self.excluded_channels, np.asarray(fconst.hpol_channel_ids)))
         file.close()
 
     def __setup_bandpass_filters(self):
