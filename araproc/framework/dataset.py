@@ -205,11 +205,8 @@ def find_likely_triggering_interaction(
             interaction_ray_votes.get((interaction_idx, ray_idx), 0) + 1
         )
 
-    if not interaction_votes:
-        raise RuntimeError(
-            "Triggered antennas were found, but none had a valid saved "
-            "Likely_Sol value."
-        )
+    if not interaction_votes: # AraSim didn't associate triggered channels with a simulated ray/interaction, possibly due to noise-assisted triggers
+        return 0, 0
 
     # Select the interaction supported by the greatest number of applicable
     # triggering antennas. Use the lower index only as a deterministic tie
