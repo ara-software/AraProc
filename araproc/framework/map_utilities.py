@@ -5,6 +5,7 @@ import ROOT
 
 from araproc.framework import constants
 from araproc.framework.ray_tracer import load_raytrace_model
+_UNSET = object()   # module-level sentinel, distinct from None
 
 def get_corr_map_peak(the_map  = None):
     """
@@ -226,6 +227,7 @@ class AraGeom:
            ICL : stands for IceCube Lab
            WT : Wind Turbine
            SPT : South Pole Telescope
+           SP : Location of the south pole
 
         Returns
         -------
@@ -246,6 +248,9 @@ class AraGeom:
             landmarks.append(self.get_array_from_lat_long(-89.93120, 144.51249))
         elif landmark_type == "SPT":
             corner = self.geomTool.getSouthPoleTelescope()
+            landmarks.append([corner[0], corner[1], corner[2]])
+        elif landmark_type == "SP":
+            corner = self.geomTool.getSouthPole2011_12()
             landmarks.append([corner[0], corner[1], corner[2]])
         else:
             raise ValueError(f"Unknown landmark type: {landmark_type}")
@@ -1063,7 +1068,6 @@ class AraGeom:
         elev = float(np.degrees(np.arctan2(dz_c, xp_c)))
         return elev
 
-
     def get_known_landmarks(
         self,
         list_of_landmarks=None,
@@ -1107,7 +1111,7 @@ class AraGeom:
         ----------
         list_of_landmarks : list of str, optional
             Landmark names to include. Supported values:
-            'ICL', 'IC22S', 'SPT', 'IC1S', 'SPIce', 'WT', 'SPRESSO'.
+            'ICL', 'IC22S', 'SPT', 'IC1S', 'SPIce', 'WT', 'SPRESSO', 'SP'
             Pass ['all'] to include all of the above.
             Default is ['IC22S', 'ICL', 'SPRESSO'].
         R_map : float
@@ -1141,12 +1145,16 @@ class AraGeom:
         if R_map <= 0:
             raise ValueError(f"R_map must be positive, got {R_map}.")
 
-        if list_of_landmarks is None:
-            list_of_landmarks = ["IC22S", "ICL", "SPRESSO"]
+        if list_of_landmarks is _UNSET:
+            list_of_landmarks = ["IC22S", "ICL", "SPRESSO"]   # historical default, only when omitted
+        elif list_of_landmarks is None:
+            list_of_landmarks = []                            # explicit "give me none"
         elif list_of_landmarks == ["all"]:
-            list_of_landmarks = ["ICL", "IC22S", "IC1S", "WT", "SPRESSO", "SPT"]
-        if list_of_cal_pulser_indices is None:
-            list_of_cal_pulser_indices = [1, 3]
+            list_of_landmarks = ["ICL", "IC22S", "IC1S", "WT", "SPRESSO", "SPT", "SP"]
+        if list_of_cal_pulser_indices is _UNSET:
+            list_of_cal_pulser_indices = [1, 3]               # historical default, only when omitted
+        elif list_of_cal_pulser_indices is None:
+            list_of_cal_pulser_indices = []                   # explicit "give me none"
         elif list_of_cal_pulser_indices == ["all"]:
             list_of_cal_pulser_indices = [0, 1, 2, 3]
         if list_of_channels is None:
@@ -1242,10 +1250,12 @@ class AraGeom:
 
         # South Pole surface landmarks
         
-        for known_loc in ["ICL", "WT", "SPRESSO", "SPT"]:
+        for known_loc in ["ICL", "WT", "SPRESSO", "SPT", "SP"]:
             if known_loc in list_of_landmarks:
                 this_loc = np.array(self.get_southpole_landmarks(known_loc))[0]
                 st_centric = self.get_global_to_station_centric(this_loc)
+                if known_loc == "SP":
+                    st_centric[2] = 1000 # for the south pole marker, push it way above the surface to avoid ray tracing issues
                 collect[known_loc] = _resolve(known_loc, st_centric, station_center, R_map, solution)
 
         # Ray-traced critical angle

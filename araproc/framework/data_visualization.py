@@ -281,11 +281,16 @@ def plot_skymap(the_map,
                 station_id, 
                 map_type, 
                 landmarks = None,
+                landmark_labels = None,
                 calpulser_indices = None,
+                cp_labels = None,
                 list_of_channels = None,
                 spice_depth = None,
                 aravertex_results = None,
-                output_file_path = None
+                output_file_path = None,
+                include_legend_helper=True,
+                write_peak_on_map=True,
+                include_critical_angle_rt=True,
                 ):
     """
     This function returns skymap for given map type
@@ -297,8 +302,18 @@ def plot_skymap(the_map,
         elevation angle (in degrees) from plane wave reco 
     calpulser_indices : list ## example [0,1,2,3]
         which calpulsers you want to see in your skymap
-    landmarks: list ## example ['ICL',IC22S','SPT','IC1S','SPIce','WT']
+    cp_labels : list of str, optional
+        Custom display text for the calpulsers requested in calpulser_indices,
+        matched 1-to-1 in order (assumes landmark_dict keys them as
+        "CP" + index). Only works when calpulser_indices is listed
+        individually, not "all".
+    landmarks: list ## example ['ICL',IC22S','SPT','IC1S','SPIce','WT', 'SP']
         which landmarks you want to see in your skymap
+        Selecting "SP" will get you only a vertical dashed line
+    landmark_labels : list of str, optional
+        Custom display text for the markers requested in landmarks, matched
+        1-to-1 in order. Only works when landmarks is listed individually,
+        not "all".
     list_of_channels : string ## example 'vpols', 'hpols' or 'all'
         which channels you want to see in your skymap
     spice_depth : int/float
@@ -307,7 +322,11 @@ def plot_skymap(the_map,
         path to the output file
     aravertex_results : dict or None
         AraVertex reconstruction results; no marker is shown if hit-channel SNR < 5   
-  
+    include_legend_helper : bool
+        Whether or not to write the little reminder of what star vs x means for reco
+    write_peak_on_map : bool
+        Whether you want the peak theta/phi/corr written on the map
+        
     Returns
     -------
     A plotted skymap in pdf
@@ -318,9 +337,22 @@ def plot_skymap(the_map,
 
     if not isinstance(output_file_path, str):
         raise TypeError("Path to output file must be a string")
-   
+
+    if landmark_labels is not None:
+        custom_labels = _zip_custom_labels(
+            landmarks, landmark_labels, "landmark_labels", "landmarks"
+        )
+    else:
+        custom_labels = {}
+    if cp_labels is not None:
+        custom_labels.update(_zip_custom_labels(
+            calpulser_indices, cp_labels, "cp_labels", "calpulser_indices",
+            key_fn=lambda idx: f"CP{idx}",
+        ))
+
     corr_peak, peak_phi, peak_theta = mu.get_corr_map_peak(the_map)
-    the_map.SetTitle(f"Peak #phi/#theta/Corr = {peak_phi:.1f}^{{o}}/ {peak_theta:.1f}^{{o}}/ {corr_peak:.2f}")
+    if write_peak_on_map:
+        the_map.SetTitle(f"Peak #phi/#theta/Corr = {peak_phi:.1f}^{{o}}/ {peak_theta:.1f}^{{o}}/ {corr_peak:.2f}")
     the_map.GetXaxis().SetTitle("Azimuth, #phi (^{o})")
     the_map.GetYaxis().SetTitle("Elevation, #theta (^{o})")
     the_map.GetZaxis().SetTitle("Correlation")
@@ -386,13 +418,16 @@ def plot_skymap(the_map,
     # Add known locations to the skymap 
     
     landmark_dict = mu.AraGeom(station_id).get_known_landmarks(landmarks, radius_map, calpulser_indices,list_of_channels, spice_depth, solution=solution)
+    if include_critical_angle_rt == False:
+        del landmark_dict["critical_angle_rt"]
+
     marker_status = landmark_dict.get("_marker_status", {})
 
     for entry in landmark_dict.keys():
     
         if entry == "_marker_status":
             continue
-        if entry == 'critical_angle_rt':
+        if entry == 'critical_angle_rt' and include_critical_angle_rt:
             critical_ang_rt = landmark_dict[entry]
             horizontal_line_rt = ROOT.TLine(-180, critical_ang_rt, 180, critical_ang_rt) # Draw line from phi=-180 to phi=180 
             horizontal_line_rt.SetLineColor(ROOT.kRed)
@@ -406,12 +441,23 @@ def plot_skymap(the_map,
             labels.append(label_rt)
             continue
 
-
         phi = landmark_dict[entry][2]
         theta = landmark_dict[entry][1]
-        
-        # Draw the marker
-        
+
+        if entry=="SP":
+           vertical_line = ROOT.TLine(phi, -90, phi, 90)  # Draw line from theta=-90 to theta=90
+           vertical_line.SetLineColor(ROOT.kCyan)
+           vertical_line.SetLineStyle(2)  # Dashed line
+           vertical_line.SetLineWidth(2)
+           vertical_line.Draw("SAME")
+           label = ROOT.TLatex(phi + 2, theta + 30, "#phi_{SP}")  # Offset for clarity
+           label.SetTextColor(ROOT.kCyan)
+           label.SetTextSize(0.03)
+           label.Draw("SAME")
+           labels.append(label)
+           continue
+             
+        # Draw the marker   
         status = marker_status.get(entry, "raytraced")
         marker_style = 5 if status == "sl_fallback" else 29
         marker = ROOT.TMarker(phi, theta, marker_style)
@@ -433,39 +479,29 @@ def plot_skymap(the_map,
            offset = 5 
         else:
            offset = -5
-        label = ROOT.TLatex(phi + offset, theta - offset, entry)  # Offset for clarity
+        label_text = custom_labels.get(entry, entry)
+        label = ROOT.TLatex(phi + offset, theta - offset, label_text)  # Offset for clarity
         label.SetTextColor(ROOT.kMagenta)
         label.SetTextSize(0.02)
         label.Draw("SAME")
         labels.append(label)
 
-        if entry == "ICL":
-           vertical_line = ROOT.TLine(phi, -90, phi, 90)  # Draw line from theta=-90 to theta=90
-           vertical_line.SetLineColor(ROOT.kCyan)
-           vertical_line.SetLineStyle(2)  # Dashed line
-           vertical_line.SetLineWidth(2)
-           vertical_line.Draw("SAME")
-           label = ROOT.TLatex(phi + 2, theta + 30, "#phi_{SP}")  # Offset for clarity
-           label.SetTextColor(ROOT.kCyan)
-           label.SetTextSize(0.03)
-           label.Draw("SAME")
-           labels.append(label)
-
     ROOT.gStyle.SetPalette(112) # viridis
     ROOT.gPad.SetRightMargin(0.15) # make space for the z axis
 
-    # Add note about markers
-    caption_text = (
-    "#lower[0.35]{#scale[2.0]{*}} : ray-traced direction;  "
-    "#scale[1.0]{#times} : straight-line fallback when no ray-traced solution is found"
-    )
-    caption = ROOT.TLatex(0.5, 0.92, caption_text)
-    caption.SetNDC(True)
-    caption.SetTextAlign(22)
-    caption.SetTextSize(0.030)
-    caption.SetTextColor(ROOT.kRed)
-    caption.Draw()
-    labels.append(caption)
+    if include_legend_helper:
+        # Add note about markers
+        caption_text = (
+        "#lower[0.35]{#scale[2.0]{*}} : ray-traced direction;  "
+        "#scale[1.0]{#times} : straight-line fallback when no ray-traced solution is found"
+        )
+        caption = ROOT.TLatex(0.5, 0.92, caption_text)
+        caption.SetNDC(True)
+        caption.SetTextAlign(22)
+        caption.SetTextSize(0.030)
+        caption.SetTextColor(ROOT.kRed)
+        caption.Draw()
+        labels.append(caption)
 
     c.SaveAs(output_file_path)
     ROOT.gPad.SetRightMargin(0) # reset, so we don't affect settings globally
@@ -473,6 +509,8 @@ def plot_skymap(the_map,
 
     del c
 
+
+### starty
 
 def _th2d_to_grid(hist):
     """
@@ -535,17 +573,40 @@ def _draw_constant_phi(ax, phi_val, n_samples=181, **line_kwargs):
     ax.plot(x, y, **line_kwargs)
 
 
+def _zip_custom_labels(entries, custom, param_name, entries_param_name, key_fn=lambda x: x):
+    """
+    Build an {entry_in_landmark_dict: custom_label} lookup, matching
+    `custom` 1-to-1 against `entries` in order. Shared by landmark_labels
+    (zipped directly against landmarks) and cp_labels (zipped against
+    calpulser_indices, with key_fn turning e.g. "1" into "CP1" to match
+    how those entries are actually keyed in landmark_dict).
+    """
+    if custom is None:
+        return {}
+    if entries is None or len(custom) != len(entries):
+        raise ValueError(
+            f"{param_name} must be the same length as {entries_param_name}, "
+            f"matched 1-to-1 in order"
+        )
+    return {key_fn(e): c for e, c in zip(entries, custom)}
+
+
 def plot_skymap_mpl(
     the_map,
     plane_wave_elevation,
     station_id,
     map_type,
     landmarks=None,
+    landmark_labels=None,
     calpulser_indices=None,
+    cp_labels=None,
     list_of_channels=None,
     spice_depth=None,
     aravertex_results=None,
     output_file_path=None,
+    include_legend_helper=True,
+    write_peak_on_map=True,
+    include_critical_angle_rt=True,
     flip_longitude=False,     # True for an RA-like convention (phi increasing to the left)
     cmap="viridis",
     dpi=200,                  # resolution of the rasterized correlation map (see below)
@@ -564,11 +625,44 @@ def plot_skymap_mpl(
     dpi : int
         Resolution used for the rasterized correlation map (see note
         below). Higher = crisper, but you probably don't need more than 200.
+    landmark_labels : list of str, optional
+        Custom display text for the markers requested in `landmarks`,
+        matched 1-to-1 in order. Doesn't work if `landmarks` is the "all"
+        sentinel rather than an explicit list.
+    cp_labels : list of str, optional
+        Same idea, but for calpulser_indices. Assumes landmark_dict keys
+        calpulser entries as "CP" + index (e.g. index "1" -> "CP1") --
+        worth double-checking against what get_known_landmarks actually
+        returns if labels don't land where you expect.
     """
     if the_map is None:
         raise Exception("the_map is None")
     if not isinstance(output_file_path, str):
         raise TypeError("Path to output file must be a string")
+    if landmark_labels is not None:
+        custom_labels = _zip_custom_labels(
+            landmarks, landmark_labels, "landmark_labels", "landmarks"
+        )
+    else:
+        custom_labels = {}
+    if cp_labels is not None:
+        custom_labels.update(_zip_custom_labels(
+            calpulser_indices, cp_labels, "cp_labels", "calpulser_indices",
+            key_fn=lambda idx: f"CP{idx}",
+        ))
+
+    # Create figure
+    import matplotlib as mpl
+    mpl.rcParams.update({'font.size':28})
+    mpl.rcParams['font.family'] = 'STIXGeneral'
+    mpl.rcParams['mathtext.fontset'] = 'stix'
+    plt.rcParams.update({
+        "axes.titlesize": 28,
+        "axes.labelsize": 28,
+        "xtick.labelsize": 28,
+        "ytick.labelsize": 28,
+        "legend.fontsize": 28
+    })
 
     def flip(phi_deg):
         return -phi_deg if flip_longitude else phi_deg
@@ -583,8 +677,8 @@ def plot_skymap_mpl(
         phi_edges = -phi_edges[::-1]
         z = z[:, ::-1]
 
-    fig = plt.figure(figsize=(10, 6))
-    ax = fig.add_subplot(111, projection="mollweide")
+    fig = plt.figure(figsize=(10, 6.5))
+    ax = fig.add_axes([0.05, 0.22, 0.90, 0.72], projection="mollweide")
 
     # --- the correlation map itself ---
     px, py = _deg2rad(phi_edges, theta_edges)
@@ -592,14 +686,27 @@ def plot_skymap_mpl(
         px, py, z, cmap=cmap, vmin=0, vmax=corr_peak, shading="auto",
         rasterized=True,
     )
-    cbar = fig.colorbar(mesh, ax=ax, pad=0.05)
+    fig.canvas.draw()
+    pos = ax.get_position()
+
+    ax.set_xlabel(r"Azimuth, $\phi$ (°)", labelpad=25)
+    ax.set_ylabel(r"Elevation, $\theta$ (°)")
+    fig.canvas.draw()   # re-draw so the xlabel's real rendered position is available
+
+    xlabel_bbox = ax.xaxis.label.get_window_extent().transformed(fig.transFigure.inverted())
+    cbar_gap = 0.02 # gap between the xlabel and the colorbar, in figure-fraction
+    cbar_height = 0.03
+    cax = fig.add_axes([pos.x0, xlabel_bbox.y0 - cbar_gap - cbar_height, pos.width, cbar_height])
+    cbar = fig.colorbar(mesh, cax=cax, orientation="horizontal")
     cbar.set_label("Correlation")
 
-    ax.set_title(
-        f"Peak \u03c6/\u03b8/Corr = {peak_phi:.1f}\u00b0/ {peak_theta:.1f}\u00b0/ {corr_peak:.2f}",
-        fontsize=11,
-    )
-    ax.grid(True, alpha=0.3)
+    if write_peak_on_map:
+        ax.set_title(
+            f"Peak \u03c6/\u03b8/Corr = {peak_phi:.1f}\u00b0/ {peak_theta:.1f}\u00b0/ {corr_peak:.2f}",
+            fontsize=11,
+        )
+    ax.grid(True, alpha=0.5)
+    ax.tick_params(axis='x', colors='white')   # or 'gray' / '0.7' / etc.
 
     # --- plane wave elevation ---
     if plane_wave_elevation is not None:
@@ -607,7 +714,7 @@ def plot_skymap_mpl(
             ax, plane_wave_elevation,
             color="orange", linestyle="--", linewidth=2,
         )
-        lx, ly = _deg2rad(flip(110), plane_wave_elevation + 5)
+        lx, ly = _deg2rad(flip(110), plane_wave_elevation - 10)
         ax.text(lx, ly, "plane wave", color="orange", fontsize=9)
 
     # --- AraVertex marker (skip the SNR<5 placeholder return) ---
@@ -634,13 +741,15 @@ def plot_skymap_mpl(
         landmarks, radius_map, calpulser_indices, list_of_channels, spice_depth,
         solution=solution,
     )
+    if include_critical_angle_rt == False:
+        del landmark_dict["critical_angle_rt"]
     marker_status = landmark_dict.get("_marker_status", {})
 
     for entry, val in landmark_dict.items():
         if entry == "_marker_status":
             continue
 
-        if entry == "critical_angle_rt":
+        if entry == 'critical_angle_rt':
             critical_ang_rt = val
             _draw_constant_theta(
                 ax, critical_ang_rt,
@@ -649,36 +758,47 @@ def plot_skymap_mpl(
             lx, ly = _deg2rad(flip(110), critical_ang_rt + 5)
             ax.text(lx, ly, r"$\theta_c$", color="red", fontsize=9)
             continue
-
+    
         phi = val[2]
         theta = val[1]
+
+        if entry == "SP":
+            _draw_constant_phi(
+                ax, flip(phi),
+                color="C9", linestyle="--", linewidth=2,
+            )
+            lx, ly = _deg2rad(flip(phi + 20), 50) # fix the theta value to 50 (total guess)
+            ax.text(lx, ly, r"$SP$", color="C9", fontsize=28)
+            continue
 
         status = marker_status.get(entry, "raytraced")
         marker = "x" if status == "sl_fallback" else "*"
         markersize = 9 if status == "sl_fallback" else 13
-        color = "blue" if "CH" in entry else "black" if "CP" in entry else "red"
+        color = "blue" if "CH" in entry else "C4" if "CP" in entry else "red"
 
         mx, my = _deg2rad(flip(phi), theta)
-        ax.plot(mx, my, marker=marker, color=color, markersize=markersize,
-                 linestyle="none", markeredgewidth=1.5)
+        import matplotlib.patheffects as pe
+        ax.plot(mx, my, marker=marker, color="C6", markersize=markersize,
+                linestyle="none", alpha=0.75)
+        #markeredgewidth=1.5, alpha=0.75,
+        #        markeredgecolor="white")
+
 
         offset = 5 if entry in ["IC1S", "SPT", "CP1", "CP3"] else -5
         lx, ly = _deg2rad(flip(phi + offset), theta - offset)
-        ax.text(lx, ly, entry, color="magenta", fontsize=7)
-
-        if entry == "ICL":
-            _draw_constant_phi(
-                ax, flip(phi),
-                color="cyan", linestyle="--", linewidth=2,
-            )
-            lx, ly = _deg2rad(flip(phi + 2), theta + 30)
-            ax.text(lx, ly, r"$\phi_{SP}$", color="cyan", fontsize=9)
-
-    caption = (
-        "\u2605 : ray-traced direction     "
-        "\u2715 : straight-line fallback when no ray-traced solution is found"
-    )
-    fig.text(0.5, 0.93, caption, ha="center", fontsize=8, color="red")
+        label_text = custom_labels.get(entry, entry)
+        txt = ax.text(lx, ly, label_text, color="C6", fontsize=28)
+        # txt.set_path_effects([pe.withStroke(linewidth=1.5, foreground="white")])
+    
+    if include_legend_helper:
+        caption = (
+            "\u2605 : ray-traced direction     "
+            "\u2715 : straight-line fallback when no ray-traced solution is found"
+        )
+        fig.text(0.5, 0.93, caption, ha="center", fontsize=8, color="red")
+    
+    ax.set_longitude_grid(60)
+    ax.set_latitude_grid(30)
 
     fig.savefig(output_file_path, bbox_inches="tight", dpi=dpi)
     plt.close(fig)
