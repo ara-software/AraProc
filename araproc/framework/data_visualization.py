@@ -291,6 +291,8 @@ def plot_skymap(the_map,
                 include_legend_helper=True,
                 write_peak_on_map=True,
                 include_critical_angle_rt=True,
+                vmin=0,
+                vmax=None,   # None -> auto-scale to this event's peak correlation; pass e.g. 1 to force a fixed 0-1 scale
                 ):
     """
     This function returns skymap for given map type
@@ -326,6 +328,12 @@ def plot_skymap(the_map,
         Whether or not to write the little reminder of what star vs x means for reco
     write_peak_on_map : bool
         Whether you want the peak theta/phi/corr written on the map
+    vmin : float
+        Lower bound of the color scale. Default 0.
+    vmax : float or None
+        Upper bound of the color scale. None (default) auto-scales to this
+        event's peak correlation; pass e.g. 1 to force a fixed 0-1 scale,
+        useful for comparing multiple plots.
         
     Returns
     -------
@@ -351,6 +359,8 @@ def plot_skymap(the_map,
         ))
 
     corr_peak, peak_phi, peak_theta = mu.get_corr_map_peak(the_map)
+    if vmax is None:
+        vmax = corr_peak
     if write_peak_on_map:
         the_map.SetTitle(f"Peak #phi/#theta/Corr = {peak_phi:.1f}^{{o}}/ {peak_theta:.1f}^{{o}}/ {corr_peak:.2f}")
     the_map.GetXaxis().SetTitle("Azimuth, #phi (^{o})")
@@ -358,7 +368,7 @@ def plot_skymap(the_map,
     the_map.GetZaxis().SetTitle("Correlation")
     ROOT.gStyle.SetTitleFontSize(0.04)
  
-    the_map.GetZaxis().SetRangeUser(0, corr_peak)
+    the_map.GetZaxis().SetRangeUser(vmin, vmax)
     the_map.GetXaxis().CenterTitle(1)
     the_map.GetYaxis().CenterTitle(1)
     the_map.GetZaxis().CenterTitle(1)
@@ -376,7 +386,7 @@ def plot_skymap(the_map,
        horizontal_line0.SetLineStyle(2)  # Dashed line
        horizontal_line0.SetLineWidth(2)
        horizontal_line0.Draw("SAME")
-       label0 = ROOT.TLatex(110, plane_wave_elevation + 5, "plane wave")  # Offset for clarity
+       label0 = ROOT.TLatex(110, plane_wave_elevation - 10, "plane wave")  # Offset for clarity
        label0.SetTextColor(ROOT.kOrange)
        label0.SetTextSize(0.03)
        label0.Draw("SAME")
@@ -445,13 +455,14 @@ def plot_skymap(the_map,
         theta = landmark_dict[entry][1]
 
         if entry=="SP":
+           sp_color = ROOT.TColor.GetColor(23, 190, 207)  # matplotlib tab10 "C9", to match plot_skymap_mpl
            vertical_line = ROOT.TLine(phi, -90, phi, 90)  # Draw line from theta=-90 to theta=90
-           vertical_line.SetLineColor(ROOT.kCyan)
+           vertical_line.SetLineColor(sp_color)
            vertical_line.SetLineStyle(2)  # Dashed line
            vertical_line.SetLineWidth(2)
            vertical_line.Draw("SAME")
-           label = ROOT.TLatex(phi + 2, theta + 30, "#phi_{SP}")  # Offset for clarity
-           label.SetTextColor(ROOT.kCyan)
+           label = ROOT.TLatex(phi + 20, 50, "#it{SP}")  # matches plot_skymap_mpl's fixed theta=50, phi+20 offset
+           label.SetTextColor(sp_color)
            label.SetTextSize(0.03)
            label.Draw("SAME")
            labels.append(label)
@@ -462,7 +473,8 @@ def plot_skymap(the_map,
         marker_style = 5 if status == "sl_fallback" else 29
         marker = ROOT.TMarker(phi, theta, marker_style)
 
-        color = ROOT.kBlue if "CH" in entry else ROOT.kBlack if "CP" in entry else ROOT.kRed
+        cp_color = ROOT.TColor.GetColor(148, 103, 189)  # matplotlib tab10 "C4" purple, matches plot_skymap_mpl's CP color
+        color = ROOT.kBlue if "CH" in entry else cp_color if "CP" in entry else ROOT.kRed
         marker.SetMarkerColor(color)
 
         # Set Markersize for SL fallback marker and Ray-Traced Marker
@@ -481,7 +493,7 @@ def plot_skymap(the_map,
            offset = -5
         label_text = custom_labels.get(entry, entry)
         label = ROOT.TLatex(phi + offset, theta - offset, label_text)  # Offset for clarity
-        label.SetTextColor(ROOT.kMagenta)
+        label.SetTextColor(ROOT.kBlack)
         label.SetTextSize(0.02)
         label.Draw("SAME")
         labels.append(label)
@@ -607,6 +619,8 @@ def plot_skymap_mpl(
     include_legend_helper=True,
     write_peak_on_map=True,
     include_critical_angle_rt=True,
+    vmin=0,
+    vmax=None,   # None -> auto-scale to this event's peak correlation; pass e.g. 1 to force a fixed 0-1 scale
     flip_longitude=False,     # True for an RA-like convention (phi increasing to the left)
     cmap="viridis",
     dpi=200,                  # resolution of the rasterized correlation map (see below)
@@ -668,6 +682,8 @@ def plot_skymap_mpl(
         return -phi_deg if flip_longitude else phi_deg
 
     corr_peak, peak_phi, peak_theta = mu.get_corr_map_peak(the_map)
+    if vmax is None:
+        vmax = corr_peak
     phi_edges, theta_edges, z = _th2d_to_grid(the_map)
 
     if flip_longitude:
@@ -683,7 +699,7 @@ def plot_skymap_mpl(
     # --- the correlation map itself ---
     px, py = _deg2rad(phi_edges, theta_edges)
     mesh = ax.pcolormesh(
-        px, py, z, cmap=cmap, vmin=0, vmax=corr_peak, shading="auto",
+        px, py, z, cmap=cmap, vmin=vmin, vmax=vmax, shading="auto",
         rasterized=True,
     )
     fig.canvas.draw()
