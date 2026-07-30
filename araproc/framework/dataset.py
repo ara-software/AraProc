@@ -1197,7 +1197,7 @@ class SimWrapper:
 
         # get the receipt angle for the triggered antennas
         ray_sol = sim_info['ray_solution']
-        sim_info["avg_rec_ang"] = self.find_avg_receipt_ang(sim_info["vertex"], ray_sol, self.station_id)
+        sim_info["avg_rec_ang"] = find_avg_receipt_ang(sim_info["vertex"], ray_sol, self.station_id)
 
         return sim_info
     
