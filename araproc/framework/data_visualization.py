@@ -903,23 +903,21 @@ def plot_skymap_mpl(
             continue
 
         status = marker_status.get(entry, "raytraced")
-        marker = "x" if status == "sl_fallback" else "*"
+        marker = "x" if status == "sl_fallback" else "x"
         markersize = 9 if status == "sl_fallback" else 13
         color = "blue" if "CH" in entry else "C4" if "CP" in entry else "red"
 
         mx, my = _deg2rad(flip(phi), theta)
         import matplotlib.patheffects as pe
-        ax.plot(mx, my, marker=marker, color="C6", markersize=markersize,
-                linestyle="none", alpha=0.75)
-        #markeredgewidth=1.5, alpha=0.75,
-        #        markeredgecolor="white")
+        ax.plot(mx, my, marker=marker, color="white", markersize=markersize,
+                markeredgewidth=2,
+                linestyle="none", alpha=1)
 
 
         offset = 5 if entry in ["IC1S", "SPT", "CP1", "CP3"] else -5
         lx, ly = _deg2rad(flip(phi + offset), theta - offset)
         label_text = custom_labels.get(entry, entry)
-        txt = ax.text(lx, ly, label_text, color="C6", fontsize=28)
-        # txt.set_path_effects([pe.withStroke(linewidth=1.5, foreground="white")])
+        txt = ax.text(lx, ly, label_text, color="white", fontsize=28)
     
     if include_legend_helper:
         caption = (
