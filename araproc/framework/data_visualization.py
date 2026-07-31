@@ -346,18 +346,11 @@ def plot_waveform_bundle_pretty(
     mpl.rcParams.update({'font.size':28})
     mpl.rcParams['font.family'] = 'STIXGeneral'
     mpl.rcParams['mathtext.fontset'] = 'stix'
-    # plt.rcParams.update({
-    #     "axes.titlesize": 28,
-    #     "axes.labelsize": 28,
-    #     "xtick.labelsize": 28,
-    #     "ytick.labelsize": 28,
-    #     "legend.fontsize": 28
-    # })
 
     fig, axes = plt.subplots(
-        4, 4, figsize=(12, 10), sharex=True, sharey=True, # layout="constrained",
+        4, 4, figsize=(20, 10), sharex=True, sharey=True, # layout="constrained",
     )
-    fig.subplots_adjust(wspace=0, hspace=0, left=0.09, right=0.98, top=0.98, bottom=0.08)
+    fig.subplots_adjust(wspace=0, hspace=0, left=0.08, right=0.98, top=0.98, bottom=0.11)
 
     for row, row_channels in enumerate(_PRETTY_CHANNEL_LAYOUT):
         for col, ch in enumerate(row_channels):
@@ -372,8 +365,8 @@ def plot_waveform_bundle_pretty(
 
             pol_label = _PRETTY_CHANNEL_POL_LABELS[ch]
             ax.text(
-                0.97, 0.96, f"Channel {ch}",
-                transform=ax.transAxes, ha="right", va="top", fontsize=24,
+                0.97, 0.95, f"Channel {ch}",
+                transform=ax.transAxes, ha="right", va="top", fontsize=26,
             )
             if ch in excluded_channels:
                 ax.annotate(
@@ -389,11 +382,11 @@ def plot_waveform_bundle_pretty(
                 ax.set_xticks(xticks)
             if yticks is not None:
                 ax.set_yticks(yticks)
-            ax.tick_params(axis="both", direction="in", labelsize=24, top=True, right=True)
+            ax.tick_params(axis="both", direction="in", labelsize=28, top=True, right=True)
             ax.label_outer()  # tick labels only on the bottom row / left column
 
-    fig.supxlabel("Time (ns)", fontsize=28)
-    fig.supylabel("Voltage (V)", fontsize=28)
+    fig.supxlabel("Time (ns)", fontsize=32)
+    fig.supylabel("Voltage (V)", fontsize=32)
 
     fig.savefig(output_file_path, dpi=300)
     plt.close(fig)
