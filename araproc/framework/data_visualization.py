@@ -275,6 +275,121 @@ def plot_waveform_bundle(
     plt.close(fig)
     del fig, axd
 
+# Row order: THPol, TVPol, BHPol, BVPol -- matches the physical antenna
+# layout (Top/Bottom string x H/V polarization) used in plot_waveform_bundle_pretty,
+# not raw channel number order.
+_PRETTY_CHANNEL_LAYOUT = [
+    [8, 9, 10, 11],
+    [0, 1, 2, 3],
+    [12, 13, 14, 15],
+    [4, 5, 6, 7],
+]
+_PRETTY_CHANNEL_POL_LABELS = {
+    8: "THPol", 9: "THPol", 10: "THPol", 11: "THPol",
+    0: "TVPol", 1: "TVPol", 2: "TVPol", 3: "TVPol",
+    12: "BHPol", 13: "BHPol", 14: "BHPol", 15: "BHPol",
+    4: "BVPol", 5: "BVPol", 6: "BVPol", 7: "BVPol",
+}
+
+
+def plot_waveform_bundle_pretty(
+    waveform_dict,
+    output_file_path=None,
+    excluded_channels=(),
+    xlim=None,
+    ylim=None,
+    xticks=None,
+    yticks=None,
+    ):
+    """
+    Plot all 16 ARA waveform channels as a 4x4 grid, laid out by physical
+    antenna position/polarization (THPol/TVPol/BHPol/BVPol -- see
+    _PRETTY_CHANNEL_LAYOUT) rather than raw channel number. A cosmetically
+    nicer, presentation-oriented sibling to plot_waveform_bundle() -- not a
+    replacement. Time-domain only (no frequency-domain mode); fixed shared
+    axis limits/ticks by design, meant for quick-look/paper-figure use
+    rather than per-event scanning.
+
+    Takes the same waveform_dict input contract as plot_waveform_bundle(),
+    so it should drop in wherever that function's inputs come from.
+
+    Parameters
+    ----------
+    waveform_dict : dict
+        Keyed by channel number (0-15, int); each value is anything
+        wu.tgraph_to_arrays() accepts. Missing channels are left blank
+        rather than raising.
+    output_file_path : str
+        Path to save the figure to.
+    excluded_channels : iterable
+        Channels to flag as masked to analysis (same convention as
+        plot_waveform_bundle()/get_wf_color()).
+    xlim, ylim : tuple of float or None
+        Axis limits, shared across all panels. None (default) lets
+        matplotlib auto-scale to the data instead of forcing fixed limits.
+    xticks, yticks : tuple of float or None
+        Tick locations, shared across all panels. None (default) lets
+        matplotlib pick its own ticks. When xticks is explicitly set, the
+        last tick's label is left blank (matching the original script this
+        was based on) so it doesn't crowd the panel edge -- this blanking
+        only happens when xticks is given explicitly, since there's no
+        principled "last tick" to blank when matplotlib is choosing them.
+    """
+    if not isinstance(output_file_path, str):
+        raise TypeError("Path to output file must be a string")
+
+    # Set styling BEFORE creating the figure/axes -- tick-label Text objects
+    # get their font baked in at axes-creation time, so setting rcParams
+    # afterward (as before) leaves the tick numbers on the old font while
+    # everything created later (ax.text, supxlabel/supylabel) picks it up.
+    import matplotlib as mpl
+    mpl.rcParams.update({'font.size':28})
+    mpl.rcParams['font.family'] = 'STIXGeneral'
+    mpl.rcParams['mathtext.fontset'] = 'stix'
+
+    fig, axes = plt.subplots(
+        4, 4, figsize=(20, 10), sharex=True, sharey=True, # layout="constrained",
+    )
+    fig.subplots_adjust(wspace=0, hspace=0, left=0.08, right=0.98, top=0.98, bottom=0.11)
+
+    for row, row_channels in enumerate(_PRETTY_CHANNEL_LAYOUT):
+        for col, ch in enumerate(row_channels):
+            ax = axes[row, col]
+            if ch not in waveform_dict:
+                ax.axis("off")
+                continue
+
+            times, volts = wu.tgraph_to_arrays(waveform_dict[ch])  # times in ns, volts in mV
+            ax.axhline(0, color="lightgray", linestyle="--", linewidth=1, zorder=0)
+            ax.plot(times, volts/1000., color=get_wf_color(ch, excluded_channels), linewidth=1.5) # millivolts
+
+            pol_label = _PRETTY_CHANNEL_POL_LABELS[ch]
+            ax.text(
+                0.97, 0.95, f"Channel {ch}",
+                transform=ax.transAxes, ha="right", va="top", fontsize=26,
+            )
+            if ch in excluded_channels:
+                ax.annotate(
+                    "Masked to Analysis", (0.03, 0.87),
+                    xycoords="axes fraction", color="grey", fontsize=9,
+                )
+
+            if xlim is not None:
+                ax.set_xlim(*xlim)
+            if ylim is not None:
+                ax.set_ylim(*ylim)
+            if xticks is not None:
+                ax.set_xticks(xticks)
+            if yticks is not None:
+                ax.set_yticks(yticks)
+            ax.tick_params(axis="both", direction="in", labelsize=28, top=True, right=True)
+            ax.label_outer()  # tick labels only on the bottom row / left column
+
+    fig.supxlabel("Time (ns)", fontsize=32)
+    fig.supylabel("Voltage (V)", fontsize=32)
+
+    fig.savefig(output_file_path, dpi=300)
+    plt.close(fig)
 
 def plot_skymap(the_map,
                 plane_wave_elevation, 
