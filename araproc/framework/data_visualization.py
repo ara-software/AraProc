@@ -350,7 +350,7 @@ def plot_waveform_bundle_pretty(
     fig, axes = plt.subplots(
         4, 4, figsize=(20, 10), sharex=True, sharey=True, # layout="constrained",
     )
-    fig.subplots_adjust(wspace=0, hspace=0, left=0.08, right=0.98, top=0.98, bottom=0.11)
+    fig.subplots_adjust(wspace=0, hspace=0, left=0.10, right=0.95, top=0.93, bottom=0.11)
 
     for row, row_channels in enumerate(_PRETTY_CHANNEL_LAYOUT):
         for col, ch in enumerate(row_channels):
@@ -384,6 +384,16 @@ def plot_waveform_bundle_pretty(
                 ax.set_yticks(yticks)
             ax.tick_params(axis="both", direction="in", labelsize=28, top=True, right=True)
             ax.label_outer()  # tick labels only on the bottom row / left column
+
+    # String labels over each column, polarization labels to the right of each row
+    for col in range(4):
+        axes[0, col].set_title(f"String {col+1}", color="gray", fontsize=26, pad=6)
+    for row, label in enumerate(["Top HPol", "Top VPol", "Bottom HPol", "Bottom VPol"]):
+        axes[row, -1].text(
+            1.02, 0.5, label,
+            transform=axes[row, -1].transAxes, rotation=270, ha="left", va="center",
+            fontsize=22, color=get_wf_color(_PRETTY_CHANNEL_LAYOUT[row][0], ()),
+        )
 
     fig.supxlabel("Time (ns)", fontsize=32)
     fig.supylabel("Voltage (V)", fontsize=32)
