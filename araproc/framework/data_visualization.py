@@ -296,6 +296,7 @@ def plot_waveform_bundle_pretty(
     waveform_dict,
     output_file_path=None,
     excluded_channels=(),
+    override_excluded_channel_change=True,
     xlim=None,
     ylim=None,
     xticks=None,
@@ -337,6 +338,8 @@ def plot_waveform_bundle_pretty(
     """
     if not isinstance(output_file_path, str):
         raise TypeError("Path to output file must be a string")
+    if override_excluded_channel_change:
+        excluded_channels = () # force these to zero
 
     # Set styling BEFORE creating the figure/axes -- tick-label Text objects
     # get their font baked in at axes-creation time, so setting rcParams
@@ -749,6 +752,9 @@ def plot_skymap_mpl(
     flip_longitude=False,     # True for an RA-like convention (phi increasing to the left)
     cmap="viridis",
     dpi=200,                  # resolution of the rasterized correlation map (see below)
+    inset=False,              # True: add a zoomed inset around the correlation peak; CP markers go only there
+    inset_half_width=10.,     # half-width of the inset window in degrees (both phi and theta)
+    azimuth_labels=None,      # e.g. [-120, -60, 0, 120]: only these azimuth labels are shown (None = all)
 ):
     """
     Drop-in matplotlib (w/ Mollweide projection) replacement for plot_skymap(). 
@@ -773,6 +779,20 @@ def plot_skymap_mpl(
         calpulser entries as "CP" + index (e.g. index "1" -> "CP1") --
         worth double-checking against what get_known_landmarks actually
         returns if labels don't land where you expect.
+    inset : bool
+        If True, draw a box around the correlation peak on the full map
+        and a zoomed (non-projected, phi/theta in degrees) inset of that
+        region, with connector lines. The inset always sits in the white
+        space at the lower right, between the map and the colorbar, sized
+        so it only slightly overlaps the map. Calpulser markers are drawn
+        only in the inset, not on the full map.
+    inset_half_width : float
+        Half-width of the zoom window in degrees, in both phi and theta.
+    azimuth_labels : list of float, optional
+        Azimuth tick labels (in degrees, as displayed on the map) to show
+        on the main map; every other azimuth label is left blank. None
+        (default) shows them all. Only the text is affected; all meridian
+        gridlines stay.
     """
     if the_map is None:
         raise Exception("the_map is None")
@@ -886,6 +906,7 @@ def plot_skymap_mpl(
         del landmark_dict["critical_angle_rt"]
     marker_status = landmark_dict.get("_marker_status", {})
 
+    inset_markers = []  # CP markers diverted to the inset when inset=True
     for entry, val in landmark_dict.items():
         if entry == "_marker_status":
             continue
@@ -917,6 +938,10 @@ def plot_skymap_mpl(
         markersize = 9 if status == "sl_fallback" else 13
         color = "blue" if "CH" in entry else "C4" if "CP" in entry else "red"
 
+        if inset and "CP" in entry:
+            inset_markers.append((entry, phi, theta))
+            continue
+
         mx, my = _deg2rad(flip(phi), theta)
         import matplotlib.patheffects as pe
         ax.plot(mx, my, marker=marker, color="white", markersize=markersize,
@@ -928,6 +953,84 @@ def plot_skymap_mpl(
         lx, ly = _deg2rad(flip(phi + offset), theta - offset)
         label_text = custom_labels.get(entry, entry)
         txt = ax.text(lx, ly, label_text, color="white", fontsize=28)
+
+    if inset:
+        from matplotlib.patches import ConnectionPatch
+
+        # zoom window, in (possibly flipped) display-phi and theta
+        c_phi, c_theta = flip(peak_phi), peak_theta
+        hw = inset_half_width
+        phi_lo, phi_hi = c_phi - hw, c_phi + hw
+        th_lo, th_hi = max(c_theta - hw, -90.), min(c_theta + hw, 90.)
+
+        # zoom box on the full map, densely sampled so it follows the projection
+        t = np.linspace(0, 1, 50)
+        box_phi = np.concatenate([phi_lo + (phi_hi - phi_lo)*t, np.full(50, phi_hi),
+                                  phi_hi - (phi_hi - phi_lo)*t, np.full(50, phi_lo)])
+        box_th = np.concatenate([np.full(50, th_hi), th_hi - (th_hi - th_lo)*t,
+                                 np.full(50, th_lo), th_lo + (th_hi - th_lo)*t])
+        bx, by = _deg2rad(box_phi, box_th)
+        # zorder 1.2: above the pcolormesh (1) but below the axis artists (1.5), so the
+        # azimuth tick labels draw over the box
+        ax.plot(bx, by, color="0.6", linewidth=1.5, zorder=1.2)
+
+        # placement: always in the white space at the lower right, between the map
+        # ellipse and the colorbar. The right edge lines up with the map/colorbar,
+        # the bottom sits just above the colorbar (leaving room for the inset's x
+        # tick labels), and the size is the largest square whose top-left corner
+        # just reaches the ellipse (dipping in slightly, per `overlap`).
+        W, H = fig.get_figwidth(), fig.get_figheight()
+        xc, yc = pos.x0 + pos.width/2, pos.y0 + pos.height/2
+        a, b = pos.width/2, pos.height/2            # ellipse semi-axes, figure fraction
+        label_room = 1.6 * 20 / 72 / H              # room for 20 pt x tick labels under the inset
+        x_r = pos.x1
+        y_b = xlabel_bbox.y0 + label_room
+        overlap = 0.85                               # < 1 lets the corner dip slightly into the map
+
+        def corner_r2(w):
+            h = w * W / H
+            return ((x_r - w - xc)/a)**2 + ((y_b + h - yc)/b)**2
+
+        lo, hi = 0.0, pos.width/2
+        for _ in range(50):
+            mid = 0.5*(lo + hi)
+            if corner_r2(mid) >= overlap:
+                lo = mid
+            else:
+                hi = mid
+        in_w = lo
+        in_h = in_w * W / H                          # square on the page
+        x0, y0 = x_r - in_w, y_b
+        ax_in = fig.add_axes([x0, y0, in_w, in_h])
+
+        ax_in.pcolormesh(phi_edges, theta_edges, z, cmap=cmap, vmin=vmin, vmax=vmax,
+                         shading="auto", rasterized=True)
+        ax_in.set_xlim(phi_lo, phi_hi)
+        ax_in.set_ylim(th_lo, th_hi)
+
+        # tick labels on the bottom and right, out in the white space, so they're black
+        ax_in.yaxis.tick_right()
+        ax_in.tick_params(labelsize=20, direction="in", color="white", labelcolor="black")
+        for spine in ax_in.spines.values():
+            spine.set_edgecolor("0.6")
+            spine.set_linewidth(1.5)
+
+        # CP markers live only here
+        for entry, phi, theta in inset_markers:
+            ax_in.plot(flip(phi), theta, marker="x", color="white", markersize=13,
+                       markeredgewidth=2, linestyle="none")
+            ax_in.annotate(custom_labels.get(entry, entry), (flip(phi), theta),
+                           xytext=(-10, 10), textcoords="offset points",
+                           ha="right", va="bottom", color="white", fontsize=26)
+
+        # connector lines: first-quadrant (upper-right) and third-quadrant (lower-left)
+        # corners of the box to the matching corners of the inset, for a 3D look.
+        # Mid-gray so they show on both the dark map and the white background.
+        for (fx, fy), (bphi, bth) in [((1, 1), (phi_hi, th_hi)), ((0, 0), (phi_lo, th_lo))]:
+            con = ConnectionPatch(xyA=(fx, fy), coordsA=ax_in.transAxes,
+                                  xyB=_deg2rad(bphi, bth), coordsB=ax.transData,
+                                  color="0.6", linewidth=1)
+            fig.add_artist(con)
     
     if include_legend_helper:
         caption = (
@@ -938,6 +1041,17 @@ def plot_skymap_mpl(
     
     ax.set_longitude_grid(60)
     ax.set_latitude_grid(30)
+    ax.set_longitude_grid_ends(90)   # run the meridian gridlines all the way to the poles (default stops at 75)
+
+    # show only the requested azimuth labels (gridlines stay); must come after
+    # set_longitude_grid, which installs the formatter we wrap here
+    if azimuth_labels is not None:
+        from matplotlib.ticker import FuncFormatter
+        base_fmt = ax.xaxis.get_major_formatter()
+        show = {int(round(v)) for v in azimuth_labels}
+        ax.xaxis.set_major_formatter(FuncFormatter(
+            lambda x, p: base_fmt(x, p) if int(round(np.degrees(x))) in show else ""
+        ))
 
     fig.savefig(output_file_path, bbox_inches="tight", dpi=dpi)
     plt.close(fig)
